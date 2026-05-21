@@ -1,13 +1,12 @@
 package cl.antucayen;
 
-import cl.antucayen.view.VLogin;
+import cl.antucayen.view.VPrincipal;
 
 public class Main {
     public static void main(String[] args) {
-        // Ejecutar la interfaz en el hilo de Swing
         javax.swing.SwingUtilities.invokeLater(() -> {
-            VLogin login = new VLogin();
-            login.setVisible(true);
+            VPrincipal principal = new VPrincipal("Felipe Salas", "Administrador");
+            principal.setVisible(true);
         });
     }
 }
