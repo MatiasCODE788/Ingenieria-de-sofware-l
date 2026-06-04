@@ -1,28 +1,36 @@
 package cl.antucayen.model.entity;
 
 public class Usuario {
-    private int    idUsuario;
-    private String nombreUsuario;
-    private String contrasenaHash;
-    private String rol;
+    private int     idUsuario;
+    private String  username;
+    private String  passwordHash;
+    private boolean estadoActivo;
+    private int     idPerfil;
+    private String  nombrePerfil; // se carga con JOIN
 
     public Usuario() {}
 
-    public Usuario(int idUsuario, String nombreUsuario,
-                   String contrasenaHash, String rol) {
-        this.idUsuario      = idUsuario;
-        this.nombreUsuario  = nombreUsuario;
-        this.contrasenaHash = contrasenaHash;
-        this.rol            = rol;
+    public Usuario(int idUsuario, String username, String passwordHash,
+                   boolean estadoActivo, int idPerfil, String nombrePerfil) {
+        this.idUsuario    = idUsuario;
+        this.username     = username;
+        this.passwordHash = passwordHash;
+        this.estadoActivo = estadoActivo;
+        this.idPerfil     = idPerfil;
+        this.nombrePerfil = nombrePerfil;
     }
 
-    public int    getIdUsuario()      { return idUsuario; }
-    public String getNombreUsuario()  { return nombreUsuario; }
-    public String getContrasenaHash() { return contrasenaHash; }
-    public String getRol()            { return rol; }
+    public int     getIdUsuario()    { return idUsuario; }
+    public String  getUsername()     { return username; }
+    public String  getPasswordHash() { return passwordHash; }
+    public boolean isEstadoActivo()  { return estadoActivo; }
+    public int     getIdPerfil()     { return idPerfil; }
+    public String  getNombrePerfil() { return nombrePerfil; }
 
-    public void setIdUsuario(int idUsuario)           { this.idUsuario = idUsuario; }
-    public void setNombreUsuario(String nombreUsuario){ this.nombreUsuario = nombreUsuario; }
-    public void setContrasenaHash(String hash)        { this.contrasenaHash = hash; }
-    public void setRol(String rol)                    { this.rol = rol; }
+    public void setIdUsuario(int idUsuario)          { this.idUsuario = idUsuario; }
+    public void setUsername(String username)          { this.username = username; }
+    public void setPasswordHash(String passwordHash)  { this.passwordHash = passwordHash; }
+    public void setEstadoActivo(boolean estadoActivo) { this.estadoActivo = estadoActivo; }
+    public void setIdPerfil(int idPerfil)             { this.idPerfil = idPerfil; }
+    public void setNombrePerfil(String nombrePerfil)  { this.nombrePerfil = nombrePerfil; }
 }

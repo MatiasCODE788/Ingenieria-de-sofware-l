@@ -5,18 +5,17 @@ import java.awt.*;
 
 public class VFormularioProducto extends JDialog {
 
-    private JTextField txtNombre;
-    private JTextField txtSKU;
-    private JTextField txtCodigoBarras;
-    private JComboBox<String> cmbUnidadMedida;
-    private JTextField txtStock;
+    private JTextField        txtSku;
+    private JTextField        txtNombre;
+    private JTextField        txtCodigoBarras;
+    private JComboBox<String> cmbUnidad;
+    private JTextField        txtStock;
     private JComboBox<String> cmbEstado;
-    private JButton btnGuardar;
-    private JButton btnCancelar;
-    private JButton btnInactivar;
-    private JLabel lblError;
-
-    private boolean modoEdicion;
+    private JButton           btnGuardar;
+    private JButton           btnCancelar;
+    private JButton           btnInactivar;
+    private JLabel            lblError;
+    private boolean           modoEdicion;
 
     public VFormularioProducto(JFrame parent, boolean modoEdicion) {
         super(parent, modoEdicion ? "Editar Producto" : "Nuevo Producto", true);
@@ -25,107 +24,90 @@ public class VFormularioProducto extends JDialog {
     }
 
     private void initComponents() {
-        setSize(480, 480);
+        setSize(500, 460);
         setLocationRelativeTo(getParent());
         setResizable(false);
         setLayout(new BorderLayout());
 
-        // ── HEADER ────────────────────────────────────────────────
-        JPanel panelHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 14));
-        panelHeader.setBackground(new Color(30, 48, 84));
-
+        // Header
+        JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 14));
+        header.setBackground(new Color(17, 24, 39));
         JLabel lblTitulo = new JLabel(modoEdicion ? "✏️  Editar Producto" : "📦  Nuevo Producto");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 15));
         lblTitulo.setForeground(Color.WHITE);
-        panelHeader.add(lblTitulo);
+        header.add(lblTitulo);
 
-        // ── FORMULARIO ────────────────────────────────────────────
-        JPanel panelForm = new JPanel(new GridBagLayout());
-        panelForm.setBackground(Color.WHITE);
-        panelForm.setBorder(BorderFactory.createEmptyBorder(20, 24, 10, 24));
+        // Form
+        JPanel form = new JPanel(new GridBagLayout());
+        form.setBackground(Color.WHITE);
+        form.setBorder(BorderFactory.createEmptyBorder(20, 24, 10, 24));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 0, 5, 0);
-        gbc.gridwidth = 2;
+        gbc.insets = new Insets(5, 0, 5, 8);
+        gbc.weightx = 0.5;
 
-        // Nombre
-        gbc.gridx = 0; gbc.gridy = 0;
-        panelForm.add(crearLabel("Nombre del producto *"), gbc);
-        txtNombre = crearCampo();
-        gbc.gridy = 1;
-        panelForm.add(txtNombre, gbc);
+        // SKU y Código de barras
+        gbc.gridx = 0; gbc.gridy = 0; form.add(crearLabel("SKU *"), gbc);
+        gbc.gridx = 1;               form.add(crearLabel("Código de barras *"), gbc);
 
-        // SKU y Código de barras en la misma fila
-        gbc.gridwidth = 1; gbc.gridy = 2;
-        gbc.gridx = 0; gbc.weightx = 0.5;
-        panelForm.add(crearLabel("SKU *"), gbc);
-        gbc.gridx = 1;
-        panelForm.add(crearLabel("Código de barras"), gbc);
-
-        gbc.gridy = 3;
-        gbc.gridx = 0;
-        txtSKU = crearCampo();
-        if (modoEdicion) txtSKU.setEditable(false); // SKU no editable en modo edición
-        panelForm.add(txtSKU, gbc);
-        gbc.gridx = 1;
+        txtSku = crearCampo();
+        if (modoEdicion) txtSku.setEditable(false);
+        gbc.gridx = 0; gbc.gridy = 1; form.add(txtSku, gbc);
         txtCodigoBarras = crearCampo();
-        panelForm.add(txtCodigoBarras, gbc);
+        gbc.gridx = 1;               form.add(txtCodigoBarras, gbc);
 
-        // Unidad de medida y Stock en la misma fila
-        gbc.gridy = 4;
-        gbc.gridx = 0;
-        panelForm.add(crearLabel("Unidad de medida *"), gbc);
-        gbc.gridx = 1;
-        panelForm.add(crearLabel("Stock actual *"), gbc);
+        // Nombre (fila completa)
+        gbc.gridwidth = 2; gbc.gridx = 0; gbc.gridy = 2;
+        form.add(crearLabel("Nombre del producto *"), gbc);
+        txtNombre = crearCampo();
+        gbc.gridy = 3;
+        form.add(txtNombre, gbc);
 
-        gbc.gridy = 5;
-        gbc.gridx = 0;
-        cmbUnidadMedida = new JComboBox<>(new String[]{
-                "unidad", "kg", "g", "L", "mL", "caja", "paquete", "bolsa"
-        });
-        cmbUnidadMedida.setFont(new Font("Arial", Font.PLAIN, 13));
-        cmbUnidadMedida.setPreferredSize(new Dimension(0, 32));
-        panelForm.add(cmbUnidadMedida, gbc);
+        // Unidad y Stock
+        gbc.gridwidth = 1; gbc.gridy = 4;
+        gbc.gridx = 0; form.add(crearLabel("Unidad de medida *"), gbc);
+        gbc.gridx = 1; form.add(crearLabel("Stock actual"), gbc);
 
-        gbc.gridx = 1;
+        cmbUnidad = new JComboBox<>(new String[]{"un", "kg", "g", "L", "mL", "caja", "paquete"});
+        cmbUnidad.setFont(new Font("Arial", Font.PLAIN, 13));
+        cmbUnidad.setPreferredSize(new Dimension(0, 32));
+        gbc.gridx = 0; gbc.gridy = 5; form.add(cmbUnidad, gbc);
         txtStock = crearCampo();
         txtStock.setText("0");
-        panelForm.add(txtStock, gbc);
+        gbc.gridx = 1; form.add(txtStock, gbc);
 
-        // Estado (solo en modo edición)
+        // Estado (solo edición)
         if (modoEdicion) {
             gbc.gridwidth = 2; gbc.gridx = 0; gbc.gridy = 6;
-            panelForm.add(crearLabel("Estado"), gbc);
-            gbc.gridy = 7;
+            form.add(crearLabel("Estado"), gbc);
             cmbEstado = new JComboBox<>(new String[]{"Activo", "Inactivo"});
             cmbEstado.setFont(new Font("Arial", Font.PLAIN, 13));
-            cmbEstado.setPreferredSize(new Dimension(0, 32));
-            panelForm.add(cmbEstado, gbc);
+            gbc.gridy = 7; form.add(cmbEstado, gbc);
         }
 
-        // Label error
-        gbc.gridy = modoEdicion ? 8 : 6;
+        // Error
         gbc.gridwidth = 2; gbc.gridx = 0;
+        gbc.gridy = modoEdicion ? 8 : 6;
         lblError = new JLabel("");
         lblError.setFont(new Font("Arial", Font.PLAIN, 12));
         lblError.setForeground(new Color(220, 38, 38));
         lblError.setVisible(false);
-        panelForm.add(lblError, gbc);
+        form.add(lblError, gbc);
 
-        // ── BOTONES ───────────────────────────────────────────────
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 14));
-        panelBotones.setBackground(new Color(248, 250, 252));
-        panelBotones.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 227, 237)));
+        // Botones
+        JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 14));
+        botones.setBackground(new Color(248, 250, 252));
+        botones.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(229, 231, 235)));
 
         if (modoEdicion) {
-            btnInactivar = new JButton("Inactivar producto");
+            btnInactivar = new JButton("Inactivar");
             btnInactivar.setFont(new Font("Arial", Font.BOLD, 12));
             btnInactivar.setBackground(new Color(234, 88, 12));
             btnInactivar.setForeground(Color.WHITE);
             btnInactivar.setFocusPainted(false);
             btnInactivar.setBorderPainted(false);
             btnInactivar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            panelBotones.add(btnInactivar);
+            botones.add(btnInactivar);
         }
 
         btnCancelar = new JButton("Cancelar");
@@ -136,7 +118,7 @@ public class VFormularioProducto extends JDialog {
         btnCancelar.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnCancelar.addActionListener(e -> dispose());
 
-        btnGuardar = new JButton(modoEdicion ? "Guardar cambios" : "Registrar producto");
+        btnGuardar = new JButton(modoEdicion ? "Guardar cambios" : "Registrar");
         btnGuardar.setFont(new Font("Arial", Font.BOLD, 12));
         btnGuardar.setBackground(new Color(5, 150, 105));
         btnGuardar.setForeground(Color.WHITE);
@@ -144,60 +126,56 @@ public class VFormularioProducto extends JDialog {
         btnGuardar.setBorderPainted(false);
         btnGuardar.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        panelBotones.add(btnCancelar);
-        panelBotones.add(btnGuardar);
+        botones.add(btnCancelar);
+        botones.add(btnGuardar);
 
-        add(panelHeader, BorderLayout.NORTH);
-        add(panelForm, BorderLayout.CENTER);
-        add(panelBotones, BorderLayout.SOUTH);
+        add(header,  BorderLayout.NORTH);
+        add(form,    BorderLayout.CENTER);
+        add(botones, BorderLayout.SOUTH);
     }
 
-    private JLabel crearLabel(String texto) {
-        JLabel lbl = new JLabel(texto);
-        lbl.setFont(new Font("Arial", Font.BOLD, 12));
-        lbl.setForeground(new Color(71, 85, 105));
-        return lbl;
+    private JLabel crearLabel(String t) {
+        JLabel l = new JLabel(t);
+        l.setFont(new Font("Arial", Font.BOLD, 12));
+        l.setForeground(new Color(71, 85, 105));
+        return l;
     }
 
     private JTextField crearCampo() {
-        JTextField txt = new JTextField();
-        txt.setFont(new Font("Arial", Font.PLAIN, 13));
-        txt.setPreferredSize(new Dimension(0, 32));
-        txt.setBorder(BorderFactory.createCompoundBorder(
+        JTextField t = new JTextField();
+        t.setFont(new Font("Arial", Font.PLAIN, 13));
+        t.setPreferredSize(new Dimension(0, 32));
+        t.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(203, 213, 225)),
                 BorderFactory.createEmptyBorder(4, 8, 4, 8)
         ));
-        return txt;
+        return t;
     }
 
-    // ── GETTERS PARA EL CONTROLADOR ───────────────────────────────
-    public String getNombre()        { return txtNombre.getText().trim(); }
-    public String getSKU()           { return txtSKU.getText().trim(); }
-    public String getCodigoBarras()  { return txtCodigoBarras.getText().trim(); }
-    public String getUnidadMedida()  { return (String) cmbUnidadMedida.getSelectedItem(); }
-    public String getStock()         { return txtStock.getText().trim(); }
-    public String getEstado()        { return cmbEstado != null ? (String) cmbEstado.getSelectedItem() : "Activo"; }
+    public String getSku()          { return txtSku.getText().trim(); }
+    public String getNombre()       { return txtNombre.getText().trim(); }
+    public String getCodigoBarras() { return txtCodigoBarras.getText().trim(); }
+    public String getUnidad()       { return (String) cmbUnidad.getSelectedItem(); }
+    public String getStock()        { return txtStock.getText().trim(); }
+    public String getEstado()       { return cmbEstado != null ? (String) cmbEstado.getSelectedItem() : "Activo"; }
 
     public JButton getBtnGuardar()   { return btnGuardar; }
     public JButton getBtnCancelar()  { return btnCancelar; }
     public JButton getBtnInactivar() { return btnInactivar; }
 
-    public void mostrarError(String mensaje) {
-        lblError.setText("⚠ " + mensaje);
-        lblError.setVisible(true);
+    public void mostrarError(String msg) { lblError.setText("⚠ " + msg); lblError.setVisible(true); }
+    public void limpiarError()           { lblError.setVisible(false); }
+
+    public void marcarSkuError() {
+        txtSku.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
     }
 
-    public void limpiarError() {
-        lblError.setVisible(false);
-    }
-
-    // Para cargar datos en modo edición
-    public void setDatos(String nombre, String sku, String codBarras,
+    public void setDatos(String sku, String nombre, String cb,
                          String unidad, int stock, String estado) {
+        txtSku.setText(sku);
         txtNombre.setText(nombre);
-        txtSKU.setText(sku);
-        txtCodigoBarras.setText(codBarras);
-        cmbUnidadMedida.setSelectedItem(unidad);
+        txtCodigoBarras.setText(cb);
+        cmbUnidad.setSelectedItem(unidad);
         txtStock.setText(String.valueOf(stock));
         if (cmbEstado != null) cmbEstado.setSelectedItem(estado);
     }

@@ -5,176 +5,172 @@ import java.awt.*;
 
 public class VPrincipal extends JFrame {
 
-    // Paneles principales
-    private JPanel panelSidebar;
-    private JPanel panelContenido;
-    private JLabel lblTituloPagina;
+    private JPanel  panelContenido;
+    private JLabel  lblTituloPagina;
 
-    // Botones del menú (visibilidad según rol)
+    // Botones sidebar
+    private JButton btnDashboard;
     private JButton btnProductos;
     private JButton btnProveedores;
-    private JButton btnInventario;
-    private JButton btnUsuarios;
+    private JButton btnFacturas;
+    private JButton btnProcesarFactura;
+    private JButton btnImportarInventario;
     private JButton btnHistorial;
+    private JButton btnUsuarios;
     private JButton btnCerrarSesion;
 
-    // Rol del usuario actual
-    private String rolUsuario;
-    private String nombreUsuario;
+    private String perfil;
+    private String username;
 
-    public VPrincipal(String nombreUsuario, String rolUsuario) {
-        this.nombreUsuario = nombreUsuario;
-        this.rolUsuario = rolUsuario;
+    public VPrincipal(String username, String perfil) {
+        this.username = username;
+        this.perfil   = perfil;
         initComponents();
-        configurarMenuSegunRol();
+        configurarMenuSegunPerfil();
     }
 
     private void initComponents() {
         setTitle("Minimarket Antucayen — Sistema de Gestión");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1100, 680);
+        setSize(1280, 760);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // ── SIDEBAR ──────────────────────────────────────────────
-        panelSidebar = new JPanel();
-        panelSidebar.setBackground(new Color(30, 48, 84));
-        panelSidebar.setPreferredSize(new Dimension(220, 0));
-        panelSidebar.setLayout(new BorderLayout());
+        // ── SIDEBAR ───────────────────────────────────────────────
+        JPanel sidebar = new JPanel();
+        sidebar.setBackground(new Color(17, 24, 39));
+        sidebar.setPreferredSize(new Dimension(220, 0));
+        sidebar.setLayout(new BorderLayout());
 
-        // Panel superior del sidebar (logo + menú)
-        JPanel panelMenu = new JPanel();
-        panelMenu.setBackground(new Color(30, 48, 84));
-        panelMenu.setLayout(new BoxLayout(panelMenu, BoxLayout.Y_AXIS));
-        panelMenu.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        JPanel menuPanel = new JPanel();
+        menuPanel.setBackground(new Color(17, 24, 39));
+        menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
 
-        // Logo/Brand
-        JPanel panelBrand = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 16));
-        panelBrand.setBackground(new Color(30, 48, 84));
-        panelBrand.setMaximumSize(new Dimension(220, 60));
+        // Brand
+        JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 16));
+        brand.setBackground(new Color(17, 24, 39));
+        brand.setMaximumSize(new Dimension(220, 64));
+        JLabel iconoBrand = new JLabel("🏪");
+        iconoBrand.setFont(new Font("Arial", Font.PLAIN, 24));
+        JPanel brandTexto = new JPanel();
+        brandTexto.setBackground(new Color(17, 24, 39));
+        brandTexto.setLayout(new BoxLayout(brandTexto, BoxLayout.Y_AXIS));
+        JLabel lblBrand = new JLabel("Antucayen");
+        lblBrand.setFont(new Font("Arial", Font.BOLD, 14));
+        lblBrand.setForeground(Color.WHITE);
+        JLabel lblBrandSub = new JLabel("Minimarket");
+        lblBrandSub.setFont(new Font("Arial", Font.PLAIN, 10));
+        lblBrandSub.setForeground(new Color(107, 114, 128));
+        brandTexto.add(lblBrand);
+        brandTexto.add(lblBrandSub);
+        brand.add(iconoBrand);
+        brand.add(brandTexto);
 
-        JLabel lblIcono = new JLabel("🏪");
-        lblIcono.setFont(new Font("Arial", Font.PLAIN, 22));
+        menuPanel.add(brand);
+        menuPanel.add(crearSeparador());
 
-        JPanel panelBrandTexto = new JPanel();
-        panelBrandTexto.setBackground(new Color(30, 48, 84));
-        panelBrandTexto.setLayout(new BoxLayout(panelBrandTexto, BoxLayout.Y_AXIS));
-        JLabel lblNombre = new JLabel("Antucayen");
-        lblNombre.setFont(new Font("Arial", Font.BOLD, 14));
-        lblNombre.setForeground(Color.WHITE);
-        JLabel lblSub = new JLabel("Gestión de Inventario");
-        lblSub.setFont(new Font("Arial", Font.PLAIN, 10));
-        lblSub.setForeground(new Color(150, 170, 210));
-        panelBrandTexto.add(lblNombre);
-        panelBrandTexto.add(lblSub);
+        // Secciones del menú
+        menuPanel.add(crearSeccion("PRINCIPAL"));
+        btnDashboard = crearBotonMenu("📊  Dashboard");
+        menuPanel.add(btnDashboard);
 
-        panelBrand.add(lblIcono);
-        panelBrand.add(panelBrandTexto);
+        menuPanel.add(crearSeccion("INVENTARIO"));
+        btnProductos  = crearBotonMenu("📦  Productos");
+        btnProveedores = crearBotonMenu("🏭  Proveedores");
+        menuPanel.add(btnProductos);
+        menuPanel.add(btnProveedores);
 
-        // Separador
-        JSeparator sep1 = new JSeparator();
-        sep1.setForeground(new Color(60, 80, 120));
-        sep1.setMaximumSize(new Dimension(220, 1));
+        menuPanel.add(crearSeccion("FACTURACIÓN"));
+        btnFacturas        = crearBotonMenu("📄  Facturas");
+        btnProcesarFactura = crearBotonMenu("⚙️  Procesar factura");
+        menuPanel.add(btnFacturas);
+        menuPanel.add(btnProcesarFactura);
 
-        // Sección menú
-        JLabel lblSeccionMenu = new JLabel("  MENÚ PRINCIPAL");
-        lblSeccionMenu.setFont(new Font("Arial", Font.BOLD, 10));
-        lblSeccionMenu.setForeground(new Color(100, 130, 180));
-        lblSeccionMenu.setBorder(BorderFactory.createEmptyBorder(14, 10, 4, 0));
-        lblSeccionMenu.setMaximumSize(new Dimension(220, 30));
+        menuPanel.add(crearSeccion("INVENTARIO MASIVO"));
+        btnImportarInventario = crearBotonMenu("📂  Importar inventario");
+        menuPanel.add(btnImportarInventario);
 
-        // Botones del menú
-        btnProductos    = crearBotonMenu("📦  Productos");
-        btnProveedores  = crearBotonMenu("🏭  Proveedores");
-        btnInventario   = crearBotonMenu("📋  Inventario");
-        btnUsuarios     = crearBotonMenu("👥  Usuarios");
-        btnHistorial    = crearBotonMenu("🕒  Historial");
+        menuPanel.add(crearSeccion("ANÁLISIS"));
+        btnHistorial = crearBotonMenu("🕒  Historial");
+        menuPanel.add(btnHistorial);
 
-        panelMenu.add(panelBrand);
-        panelMenu.add(sep1);
-        panelMenu.add(lblSeccionMenu);
-        panelMenu.add(btnProductos);
-        panelMenu.add(btnProveedores);
-        panelMenu.add(btnInventario);
-        panelMenu.add(btnUsuarios);
-        panelMenu.add(btnHistorial);
-        panelMenu.add(Box.createVerticalGlue());
+        menuPanel.add(crearSeccion("ADMINISTRACIÓN"));
+        btnUsuarios = crearBotonMenu("👥  Usuarios y permisos");
+        menuPanel.add(btnUsuarios);
 
-        // Panel inferior del sidebar (usuario + cerrar sesión)
-        JPanel panelUsuario = new JPanel();
-        panelUsuario.setBackground(new Color(22, 36, 66));
-        panelUsuario.setLayout(new BoxLayout(panelUsuario, BoxLayout.Y_AXIS));
-        panelUsuario.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
-        panelUsuario.setMaximumSize(new Dimension(220, 90));
+        menuPanel.add(Box.createVerticalGlue());
 
-        JLabel lblNombreUsuario = new JLabel(nombreUsuario);
-        lblNombreUsuario.setFont(new Font("Arial", Font.BOLD, 12));
-        lblNombreUsuario.setForeground(Color.WHITE);
+        // Panel usuario inferior
+        JPanel panelUser = new JPanel();
+        panelUser.setBackground(new Color(31, 41, 55));
+        panelUser.setLayout(new BoxLayout(panelUser, BoxLayout.Y_AXIS));
+        panelUser.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
 
-        JLabel lblRol = new JLabel(rolUsuario);
-        lblRol.setFont(new Font("Arial", Font.PLAIN, 11));
-        lblRol.setForeground(new Color(150, 170, 210));
+        JLabel lblUsername = new JLabel(username);
+        lblUsername.setFont(new Font("Arial", Font.BOLD, 12));
+        lblUsername.setForeground(Color.WHITE);
+        JLabel lblPerfil = new JLabel(perfil);
+        lblPerfil.setFont(new Font("Arial", Font.PLAIN, 11));
+        lblPerfil.setForeground(new Color(107, 114, 128));
 
         btnCerrarSesion = new JButton("Cerrar sesión");
         btnCerrarSesion.setFont(new Font("Arial", Font.BOLD, 11));
-        btnCerrarSesion.setBackground(new Color(180, 40, 40));
+        btnCerrarSesion.setBackground(new Color(185, 28, 28));
         btnCerrarSesion.setForeground(Color.WHITE);
         btnCerrarSesion.setFocusPainted(false);
-        btnCerrarSesion.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnCerrarSesion.setBorderPainted(false);
+        btnCerrarSesion.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnCerrarSesion.setMaximumSize(new Dimension(200, 30));
         btnCerrarSesion.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        panelUsuario.add(lblNombreUsuario);
-        panelUsuario.add(lblRol);
-        panelUsuario.add(Box.createVerticalStrut(8));
-        panelUsuario.add(btnCerrarSesion);
+        panelUser.add(lblUsername);
+        panelUser.add(lblPerfil);
+        panelUser.add(Box.createVerticalStrut(8));
+        panelUser.add(btnCerrarSesion);
 
-        panelSidebar.add(panelMenu, BorderLayout.CENTER);
-        panelSidebar.add(panelUsuario, BorderLayout.SOUTH);
+        sidebar.add(menuPanel, BorderLayout.CENTER);
+        sidebar.add(panelUser, BorderLayout.SOUTH);
 
-        // ── ÁREA DE CONTENIDO ─────────────────────────────────────
-        JPanel panelDerecho = new JPanel(new BorderLayout());
-        panelDerecho.setBackground(new Color(240, 244, 248));
+        // ── ÁREA PRINCIPAL ────────────────────────────────────────
+        JPanel areaPrincipal = new JPanel(new BorderLayout());
+        areaPrincipal.setBackground(new Color(243, 244, 246));
 
-        // Topbar
         JPanel topbar = new JPanel(new BorderLayout());
         topbar.setBackground(Color.WHITE);
-        topbar.setPreferredSize(new Dimension(0, 54));
-        topbar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 227, 237)));
+        topbar.setPreferredSize(new Dimension(0, 56));
+        topbar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(229, 231, 235)));
 
         lblTituloPagina = new JLabel("  Dashboard");
         lblTituloPagina.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTituloPagina.setForeground(new Color(30, 41, 59));
+        lblTituloPagina.setForeground(new Color(17, 24, 39));
         topbar.add(lblTituloPagina, BorderLayout.WEST);
 
-        // Contenido central
         panelContenido = new JPanel(new BorderLayout());
-        panelContenido.setBackground(new Color(240, 244, 248));
-        panelContenido.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+        panelContenido.setBackground(new Color(243, 244, 246));
+        panelContenido.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Mensaje de bienvenida por defecto
+        // Mensaje de bienvenida
         JLabel lblBienvenida = new JLabel(
-                "<html><center><br><br><span style='font-size:18px'>👋 Bienvenido, "
-                        + nombreUsuario + "</span><br><br>"
-                        + "<span style='color:#64748B'>Selecciona una opción del menú para comenzar</span></center></html>"
+                "<html><center><br><br><span style='font-size:20px'>👋 Bienvenido, " + username + "</span>"
+                        + "<br><br><span style='color:#6B7280'>Selecciona una opción del menú lateral</span></center></html>",
+                SwingConstants.CENTER
         );
-        lblBienvenida.setHorizontalAlignment(SwingConstants.CENTER);
         lblBienvenida.setFont(new Font("Arial", Font.PLAIN, 14));
         panelContenido.add(lblBienvenida, BorderLayout.CENTER);
 
-        panelDerecho.add(topbar, BorderLayout.NORTH);
-        panelDerecho.add(panelContenido, BorderLayout.CENTER);
+        areaPrincipal.add(topbar, BorderLayout.NORTH);
+        areaPrincipal.add(panelContenido, BorderLayout.CENTER);
 
-        add(panelSidebar, BorderLayout.WEST);
-        add(panelDerecho, BorderLayout.CENTER);
+        add(sidebar, BorderLayout.WEST);
+        add(areaPrincipal, BorderLayout.CENTER);
     }
 
     private JButton crearBotonMenu(String texto) {
         JButton btn = new JButton(texto);
         btn.setFont(new Font("Arial", Font.PLAIN, 13));
-        btn.setForeground(new Color(180, 200, 230));
-        btn.setBackground(new Color(30, 48, 84));
+        btn.setForeground(new Color(156, 163, 175));
+        btn.setBackground(new Color(17, 24, 39));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
@@ -182,32 +178,45 @@ public class VPrincipal extends JFrame {
         btn.setMaximumSize(new Dimension(220, 38));
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
-
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(new Color(45, 65, 105));
+                btn.setBackground(new Color(31, 41, 55));
                 btn.setForeground(Color.WHITE);
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(new Color(30, 48, 84));
-                btn.setForeground(new Color(180, 200, 230));
+                btn.setBackground(new Color(17, 24, 39));
+                btn.setForeground(new Color(156, 163, 175));
             }
         });
         return btn;
     }
 
-    private void configurarMenuSegunRol() {
-        // Por defecto todos pueden ver estos
-        btnProductos.setVisible(true);
-        btnProveedores.setVisible(true);
-        btnInventario.setVisible(true);
-        btnHistorial.setVisible(true);
-
-        // Solo Administrador ve Usuarios
-        btnUsuarios.setVisible(rolUsuario.equalsIgnoreCase("Administrador"));
+    private JLabel crearSeccion(String texto) {
+        JLabel lbl = new JLabel("  " + texto);
+        lbl.setFont(new Font("Arial", Font.BOLD, 10));
+        lbl.setForeground(new Color(75, 85, 99));
+        lbl.setBorder(BorderFactory.createEmptyBorder(12, 10, 4, 0));
+        lbl.setMaximumSize(new Dimension(220, 28));
+        return lbl;
     }
 
-    // Método para cambiar el contenido central
+    private JSeparator crearSeparador() {
+        JSeparator sep = new JSeparator();
+        sep.setForeground(new Color(31, 41, 55));
+        sep.setMaximumSize(new Dimension(220, 1));
+        return sep;
+    }
+
+    private void configurarMenuSegunPerfil() {
+        boolean esAdmin    = "Administrador".equalsIgnoreCase(perfil);
+        boolean esBodeguero = "Bodeguero".equalsIgnoreCase(perfil);
+
+        btnFacturas.setVisible(esAdmin || esBodeguero);
+        btnProcesarFactura.setVisible(esAdmin || esBodeguero);
+        btnImportarInventario.setVisible(esAdmin || esBodeguero);
+        btnUsuarios.setVisible(esAdmin);
+    }
+
     public void setContenido(JPanel panel, String titulo) {
         panelContenido.removeAll();
         panelContenido.add(panel, BorderLayout.CENTER);
@@ -216,11 +225,13 @@ public class VPrincipal extends JFrame {
         panelContenido.repaint();
     }
 
-    // Getters para el Controlador
-    public JButton getBtnProductos()    { return btnProductos; }
-    public JButton getBtnProveedores()  { return btnProveedores; }
-    public JButton getBtnInventario()   { return btnInventario; }
-    public JButton getBtnUsuarios()     { return btnUsuarios; }
-    public JButton getBtnHistorial()    { return btnHistorial; }
-    public JButton getBtnCerrarSesion() { return btnCerrarSesion; }
+    public JButton getBtnDashboard()          { return btnDashboard; }
+    public JButton getBtnProductos()          { return btnProductos; }
+    public JButton getBtnProveedores()        { return btnProveedores; }
+    public JButton getBtnFacturas()           { return btnFacturas; }
+    public JButton getBtnProcesarFactura()    { return btnProcesarFactura; }
+    public JButton getBtnImportarInventario() { return btnImportarInventario; }
+    public JButton getBtnHistorial()          { return btnHistorial; }
+    public JButton getBtnUsuarios()           { return btnUsuarios; }
+    public JButton getBtnCerrarSesion()       { return btnCerrarSesion; }
 }

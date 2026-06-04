@@ -12,30 +12,19 @@ public class DBConexion {
     private static DBConexion instancia;
     private Connection conexion;
 
-    private String host;
-    private String port;
-    private String nombre;
-    private String usuario;
-    private String contrasena;
+    private String host, port, nombre, usuario, contrasena;
 
-    private DBConexion() {
-        cargarPropiedades();
-    }
+    private DBConexion() { cargarPropiedades(); }
 
-    // Singleton: solo una instancia de la conexión
     public static DBConexion getInstancia() {
-        if (instancia == null) {
-            instancia = new DBConexion();
-        }
+        if (instancia == null) instancia = new DBConexion();
         return instancia;
     }
 
     private void cargarPropiedades() {
         try (InputStream input = getClass().getClassLoader()
                 .getResourceAsStream("config.properties")) {
-            if (input == null) {
-                throw new RuntimeException("No se encontró config.properties");
-            }
+            if (input == null) throw new RuntimeException("No se encontró config.properties");
             Properties props = new Properties();
             props.load(input);
             host      = props.getProperty("db.host");
@@ -65,19 +54,6 @@ public class DBConexion {
             }
         } catch (SQLException e) {
             System.err.println("Error al cerrar conexión: " + e.getMessage());
-        }
-    }
-
-    // Probar la conexión
-    public static void main(String[] args) {
-        try {
-            Connection con = DBConexion.getInstancia().getConexion();
-            if (con != null) {
-                System.out.println("✅ Conexión exitosa a la base de datos minimarket");
-                DBConexion.getInstancia().cerrarConexion();
-            }
-        } catch (SQLException e) {
-            System.err.println("❌ Error de conexión: " + e.getMessage());
         }
     }
 }

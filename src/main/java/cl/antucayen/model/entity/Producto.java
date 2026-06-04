@@ -3,44 +3,39 @@ package cl.antucayen.model.entity;
 public class Producto {
     private String sku;
     private String nombre;
-    private String categoria;
+    private String codigoBarras;
     private String unidadMedida;
-    private double precioCompra;
-    private double precioVenta;
-    private int stockActual;
+    private int    stockActual;
+    private String estado;
 
     public Producto() {}
 
-    public Producto(String sku, String nombre, String categoria,
-                    String unidadMedida, double precioCompra,
-                    double precioVenta, int stockActual) {
+    public Producto(String sku, String nombre, String codigoBarras,
+                    String unidadMedida, int stockActual, String estado) {
         this.sku          = sku;
         this.nombre       = nombre;
-        this.categoria    = categoria;
+        this.codigoBarras = codigoBarras;
         this.unidadMedida = unidadMedida;
-        this.precioCompra = precioCompra;
-        this.precioVenta  = precioVenta;
         this.stockActual  = stockActual;
+        this.estado       = estado;
     }
 
-    public String getSku()            { return sku; }
-    public String getNombre()         { return nombre; }
-    public String getCategoria()      { return categoria; }
-    public String getUnidadMedida()   { return unidadMedida; }
-    public double getPrecioCompra()   { return precioCompra; }
-    public double getPrecioVenta()    { return precioVenta; }
-    public int    getStockActual()    { return stockActual; }
+    public String getSku()           { return sku; }
+    public String getNombre()        { return nombre; }
+    public String getCodigoBarras()  { return codigoBarras; }
+    public String getUnidadMedida()  { return unidadMedida; }
+    public int    getStockActual()   { return stockActual; }
+    public String getEstado()        { return estado; }
 
     public void setSku(String sku)                  { this.sku = sku; }
     public void setNombre(String nombre)            { this.nombre = nombre; }
-    public void setCategoria(String categoria)      { this.categoria = categoria; }
+    public void setCodigoBarras(String codigoBarras){ this.codigoBarras = codigoBarras; }
     public void setUnidadMedida(String unidadMedida){ this.unidadMedida = unidadMedida; }
-    public void setPrecioCompra(double precioCompra){ this.precioCompra = precioCompra; }
-    public void setPrecioVenta(double precioVenta)  { this.precioVenta = precioVenta; }
     public void setStockActual(int stockActual)     { this.stockActual = stockActual; }
+    public void setEstado(String estado)            { this.estado = estado; }
 
     @Override
     public String toString() {
-        return "Producto{sku='" + sku + "', nombre='" + nombre + "', stock=" + stockActual + "}";
+        return sku + " — " + nombre;
     }
 }
