@@ -1,0 +1,173 @@
+<mxfile host="app.diagrams.net" pages="2">
+  <diagram name="Diagrama de Componentes" id="comp-uml-v2">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;fontColor=#1a1a2e;" value="Diagrama de Componentes — Sistema de Gestión de Inventario y Facturas" vertex="1">
+          <mxGeometry height="35" width="1820" x="50" y="15" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontStyle=1;fontSize=11;" value=":Usuario" vertex="1">
+          <mxGeometry height="110" width="55" x="30" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="L1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;strokeWidth=2;fontStyle=1;fontSize=12;spacingLeft=10;spacingTop=8;dashed=0;" value="«subsystem» Capa de Presentación  (Java Swing — Desktop Client)" vertex="1">
+          <mxGeometry height="185" width="1750" x="130" y="155" as="geometry" />
+        </mxCell>
+        <mxCell id="cUI" parent="1" style="shape=component;align=center;spacingLeft=36;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:9px;color:#1a3a5c&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;InterfazDesktop&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;(Java Swing)&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="240" x="830" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="L2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;strokeWidth=2;fontStyle=1;fontSize=12;spacingLeft=10;spacingTop=8;dashed=0;" value="«subsystem» Capa de Negocio  (API REST — Spring Boot)" vertex="1">
+          <mxGeometry height="210" width="1750" x="130" y="395" as="geometry" />
+        </mxCell>
+        <mxCell id="cS1" parent="1" style="shape=component;align=center;spacingLeft=36;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:9px;color:#3d1660&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;ProductoService&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;CRUD producto&lt;br&gt;Validar stock / precios&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="225" x="155" y="435" as="geometry" />
+        </mxCell>
+        <mxCell id="cS2" parent="1" style="shape=component;align=center;spacingLeft=36;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:9px;color:#3d1660&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;ProveedorService&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;CRUD proveedor&lt;br&gt;Validar RUT&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="230" x="415" y="435" as="geometry" />
+        </mxCell>
+        <mxCell id="cS3" parent="1" style="shape=component;align=center;spacingLeft=36;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:9px;color:#3d1660&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;FacturaService&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;Registrar factura&lt;br&gt;Detalles · Equivalencias&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="95" width="235" x="685" y="435" as="geometry" />
+        </mxCell>
+        <mxCell id="cS4" parent="1" style="shape=component;align=center;spacingLeft=36;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:9px;color:#3d1660&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;MovInventarioService&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;Registrar movimientos&lt;br&gt;Actualizar stock · Log&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="95" width="250" x="975" y="435" as="geometry" />
+        </mxCell>
+        <mxCell id="cS5" parent="1" style="shape=component;align=center;spacingLeft=36;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:9px;color:#3d1660&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;UsuarioService&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:9px&#39;&gt;Autenticación&lt;br&gt;Gestión de roles&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="225" x="1280" y="435" as="geometry" />
+        </mxCell>
+        <mxCell id="L3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;strokeWidth=2;fontStyle=1;fontSize=12;spacingLeft=10;spacingTop=8;dashed=0;" value="«subsystem» Capa de Acceso a Datos  (Repositorios JPA / JDBC)" vertex="1">
+          <mxGeometry height="210" width="1750" x="130" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="rP" parent="1" style="shape=component;align=center;spacingLeft=30;whiteSpace=wrap;html=1;fontSize=9;fontStyle=0;strokeWidth=1.5;" value="&lt;font style=&#39;font-size:8px;color:#0d4d26&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;Producto&lt;br&gt;Repository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="175" x="145" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="rPr" parent="1" style="shape=component;align=center;spacingLeft=30;whiteSpace=wrap;html=1;fontSize=9;fontStyle=0;strokeWidth=1.5;" value="&lt;font style=&#39;font-size:8px;color:#0d4d26&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;Proveedor&lt;br&gt;Repository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="185" x="340" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="rF" parent="1" style="shape=component;align=center;spacingLeft=30;whiteSpace=wrap;html=1;fontSize=9;fontStyle=0;strokeWidth=1.5;" value="&lt;font style=&#39;font-size:8px;color:#0d4d26&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;Factura&lt;br&gt;Repository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="175" x="540" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="rDF" parent="1" style="shape=component;align=center;spacingLeft=30;whiteSpace=wrap;html=1;fontSize=9;fontStyle=0;strokeWidth=1.5;" value="&lt;font style=&#39;font-size:8px;color:#0d4d26&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;DetalleFactura&lt;br&gt;Repository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="735" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="rES" parent="1" style="shape=component;align=center;spacingLeft=30;whiteSpace=wrap;html=1;fontSize=9;fontStyle=0;strokeWidth=1.5;" value="&lt;font style=&#39;font-size:8px;color:#0d4d26&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;EquivalenciaSKU&lt;br&gt;Repository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="215" x="955" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="rM" parent="1" style="shape=component;align=center;spacingLeft=30;whiteSpace=wrap;html=1;fontSize=9;fontStyle=0;strokeWidth=1.5;" value="&lt;font style=&#39;font-size:8px;color:#0d4d26&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;MovInventario&lt;br&gt;Repository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="205" x="1190" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="rU" parent="1" style="shape=component;align=center;spacingLeft=30;whiteSpace=wrap;html=1;fontSize=9;fontStyle=0;strokeWidth=1.5;" value="&lt;font style=&#39;font-size:8px;color:#0d4d26&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;Usuario&lt;br&gt;Repository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="175" x="1415" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="rL" parent="1" style="shape=component;align=center;spacingLeft=30;whiteSpace=wrap;html=1;fontSize=9;fontStyle=0;strokeWidth=1.5;" value="&lt;font style=&#39;font-size:8px;color:#0d4d26&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;LogArchivo&lt;br&gt;Repository&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="185" x="1610" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="db" parent="1" style="shape=mxgraph.flowchart.database;html=1;whiteSpace=wrap;strokeWidth=2;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=4;" value="&lt;&lt;database&gt;&gt;&#xa;minimarket_db&#xa;(MySQL 8)" vertex="1">
+          <mxGeometry height="90" width="260" x="875" y="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" edge="1" parent="1" source="actor" style="edgeStyle=orthogonalEdgeStyle;dashed=0;endArrow=open;endFill=0;strokeColor=#1a3a5c;strokeWidth=2;" target="cUI" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="cUI" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="cS1" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="cUI" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="cS2" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="cUI" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="cS3" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="cUI" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="cS4" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="cUI" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="cS5" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="cS1" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="rP" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="cS2" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="rPr" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="cS3" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="rF" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="cS3" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="rDF" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="cS3" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rES" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="970" y="483" />
+              <mxPoint x="970" y="680" />
+              <mxPoint x="1063" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="cS4" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="rM" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="cS4" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="rL" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1100" y="550" />
+              <mxPoint x="1703" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="cS5" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.5;fontStyle=1;fontSize=10;" target="rU" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="rP" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=2;fontStyle=1;fontSize=10;fontColor=#1a7a40;" target="db" value="JDBC">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="232" y="840" />
+              <mxPoint x="1005" y="840" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e21" edge="1" parent="1" source="rPr" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=2;fontStyle=1;fontSize=10;fontColor=#1a7a40;" target="db" value="JDBC">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="432" y="810" />
+              <mxPoint x="1005" y="810" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e22" edge="1" parent="1" source="L3" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=2;fontStyle=1;fontSize=10;fontColor=#1a7a40;" target="db" value="JDBC">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="715" y="735" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e23" edge="1" parent="1" source="rDF" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=2;fontStyle=1;fontSize=10;fontColor=#1a7a40;" target="db" value="JDBC">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="835" y="925" />
+              <mxPoint x="1005" y="925" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e24" edge="1" parent="1" source="rES" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=2;fontStyle=1;fontSize=10;fontColor=#1a7a40;" target="db" value="JDBC">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e25" edge="1" parent="1" source="rM" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=2;fontStyle=1;fontSize=10;fontColor=#1a7a40;exitX=0.557;exitY=0.971;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="db" value="JDBC">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1304" y="810" />
+              <mxPoint x="1005" y="810" />
+            </Array>
+            <mxPoint x="1355.705" y="840.0500000000002" as="sourcePoint" />
+            <mxPoint x="1150" y="1179.03" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="PhU9vGDY6opkTrJ-71vI" name="Página-2">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
