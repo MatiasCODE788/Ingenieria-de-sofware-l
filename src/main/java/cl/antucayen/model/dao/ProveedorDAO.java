@@ -1,6 +1,5 @@
 package cl.antucayen.model.dao;
 
-import cl.antucayen.model.entity.Equivalencia;
 import cl.antucayen.model.entity.Proveedor;
 import cl.antucayen.util.DBConexion;
 
@@ -61,54 +60,6 @@ public class ProveedorDAO {
         String sql = "SELECT COUNT(*) FROM proveedor WHERE nombre=?";
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
             ps.setString(1, nombre);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(1) > 0;
-        }
-        return false;
-    }
-
-    // ── EQUIVALENCIAS ────────────────────────────────────────────
-    public void insertarEquivalencia(Equivalencia e) throws SQLException {
-        String sql = "INSERT INTO equivalencia (id_proveedor, codigo_interno_proveedor, sku) VALUES (?,?,?)";
-        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setInt   (1, e.getIdProveedor());
-            ps.setString(2, e.getCodigoInternoProveedor());
-            ps.setString(3, e.getSku());
-            ps.executeUpdate();
-        }
-    }
-
-    public void eliminarEquivalencia(int idProveedor, String codigoInterno) throws SQLException {
-        String sql = "DELETE FROM equivalencia WHERE id_proveedor=? AND codigo_interno_proveedor=?";
-        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setInt   (1, idProveedor);
-            ps.setString(2, codigoInterno);
-            ps.executeUpdate();
-        }
-    }
-
-    public List<Equivalencia> listarEquivalencias(int idProveedor) throws SQLException {
-        String sql = "SELECT * FROM equivalencia WHERE id_proveedor=?";
-        List<Equivalencia> lista = new ArrayList<>();
-        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setInt(1, idProveedor);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                lista.add(new Equivalencia(
-                        rs.getInt   ("id_proveedor"),
-                        rs.getString("codigo_interno_proveedor"),
-                        rs.getString("sku")
-                ));
-            }
-        }
-        return lista;
-    }
-
-    public boolean existeEquivalencia(int idProveedor, String codigoInterno) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM equivalencia WHERE id_proveedor=? AND codigo_interno_proveedor=?";
-        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setInt   (1, idProveedor);
-            ps.setString(2, codigoInterno);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getInt(1) > 0;
         }
