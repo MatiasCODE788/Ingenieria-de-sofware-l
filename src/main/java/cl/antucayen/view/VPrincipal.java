@@ -12,6 +12,7 @@ public class VPrincipal extends JFrame {
     private JButton btnDashboard;
     private JButton btnProductos;
     private JButton btnProveedores;
+    private JButton btnEquivalencias;
     private JButton btnFacturas;
     private JButton btnProcesarFactura;
     private JButton btnImportarInventario;
@@ -78,8 +79,10 @@ public class VPrincipal extends JFrame {
         menuPanel.add(crearSeccion("INVENTARIO"));
         btnProductos  = crearBotonMenu("📦  Productos");
         btnProveedores = crearBotonMenu("🏭  Proveedores");
+        btnEquivalencias = crearBotonMenu("🔗  Equivalencias");
         menuPanel.add(btnProductos);
         menuPanel.add(btnProveedores);
+        menuPanel.add(btnEquivalencias);
 
         menuPanel.add(crearSeccion("FACTURACIÓN"));
         btnFacturas        = crearBotonMenu("📄  Facturas");
@@ -228,6 +231,7 @@ public class VPrincipal extends JFrame {
     public JButton getBtnDashboard()          { return btnDashboard; }
     public JButton getBtnProductos()          { return btnProductos; }
     public JButton getBtnProveedores()        { return btnProveedores; }
+    public JButton getBtnEquivalencias()      { return btnEquivalencias; }
     public JButton getBtnFacturas()           { return btnFacturas; }
     public JButton getBtnProcesarFactura()    { return btnProcesarFactura; }
     public JButton getBtnImportarInventario() { return btnImportarInventario; }

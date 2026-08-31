@@ -1,8 +1,11 @@
 package cl.antucayen.view;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.List;
 
 public class VFormularioProveedor extends JDialog {
 
@@ -13,6 +16,7 @@ public class VFormularioProveedor extends JDialog {
     private JTable            tblEquivalencias;
     private DefaultTableModel modeloEquiv;
     private JButton           btnAgregarEquiv;
+    private JButton           btnEditarEquiv;
     private JButton           btnEliminarEquiv;
     private JButton           btnGuardar;
     private JButton           btnCancelar;
@@ -24,7 +28,7 @@ public class VFormularioProveedor extends JDialog {
     }
 
     private void initComponents(boolean modoEdicion) {
-        setSize(560, 520);
+        setSize(560, 540);
         setLocationRelativeTo(getParent());
         setResizable(false);
         setLayout(new BorderLayout());
@@ -80,10 +84,13 @@ public class VFormularioProveedor extends JDialog {
         JPanel botonesEquiv = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         botonesEquiv.setBackground(Color.WHITE);
         btnAgregarEquiv  = VBuscadorProductos.crearBoton("+ Agregar",  new Color(5, 150, 105));
+        btnEditarEquiv   = VBuscadorProductos.crearBoton("✎ Editar",   new Color(37, 99, 235));
         btnEliminarEquiv = VBuscadorProductos.crearBoton("🗑 Eliminar", new Color(220, 38, 38));
-        btnAgregarEquiv.setPreferredSize(new Dimension(110, 28));
-        btnEliminarEquiv.setPreferredSize(new Dimension(110, 28));
+        btnAgregarEquiv.setPreferredSize(new Dimension(100, 28));
+        btnEditarEquiv.setPreferredSize(new Dimension(90, 28));
+        btnEliminarEquiv.setPreferredSize(new Dimension(100, 28));
         botonesEquiv.add(btnAgregarEquiv);
+        botonesEquiv.add(btnEditarEquiv);
         botonesEquiv.add(btnEliminarEquiv);
 
         topEquiv.add(lblEquiv,     BorderLayout.WEST);
@@ -95,7 +102,7 @@ public class VFormularioProveedor extends JDialog {
         };
         tblEquivalencias = VBuscadorProductos.crearTabla(modeloEquiv);
         JScrollPane scrollEquiv = new JScrollPane(tblEquivalencias);
-        scrollEquiv.setPreferredSize(new Dimension(0, 110));
+        scrollEquiv.setPreferredSize(new Dimension(0, 130));
 
         panelEquiv.add(topEquiv,    BorderLayout.NORTH);
         panelEquiv.add(scrollEquiv, BorderLayout.CENTER);
@@ -159,6 +166,7 @@ public class VFormularioProveedor extends JDialog {
     public JButton getBtnGuardar()        { return btnGuardar; }
     public JButton getBtnCancelar()       { return btnCancelar; }
     public JButton getBtnAgregarEquiv()   { return btnAgregarEquiv; }
+    public JButton getBtnEditarEquiv()    { return btnEditarEquiv; }
     public JButton getBtnEliminarEquiv()  { return btnEliminarEquiv; }
     public JTable  getTblEquivalencias()  { return tblEquivalencias; }
     public DefaultTableModel getModeloEquiv() { return modeloEquiv; }
@@ -177,7 +185,92 @@ public class VFormularioProveedor extends JDialog {
         modeloEquiv.addRow(new Object[]{codigo, sku});
     }
 
+    public void actualizarFilaEquivalencia(int fila, String codigo, String sku) {
+        modeloEquiv.setValueAt(codigo, fila, 0);
+        modeloEquiv.setValueAt(sku,    fila, 1);
+    }
+
     public int getFilaEquivSeleccionada() {
         return tblEquivalencias.getSelectedRow();
+    }
+
+    /**
+     * Abre un sub-diálogo modal para agregar o editar una equivalencia
+     * (código interno + SKU), con validación visual en vivo de duplicados
+     * contra las equivalencias ya cargadas en la tabla.
+     *
+     * @param codigoInicial código a precargar (edición) o null (nuevo)
+     * @param skuInicial    SKU a precargar (edición) o null (nuevo)
+     * @param codigosExistentes lista de códigos ya registrados (para detectar duplicado)
+     * @return String[]{codigo, sku} si el usuario confirma, o null si cancela
+     */
+    public String[] mostrarDialogoEquivalencia(String codigoInicial, String skuInicial,
+                                               List<String> codigosExistentes) {
+        JTextField txtCodigo = crearCampo();
+        JTextField txtSku    = crearCampo();
+        if (codigoInicial != null) txtCodigo.setText(codigoInicial);
+        if (skuInicial != null)    txtSku.setText(skuInicial);
+
+        JLabel lblDuplicado = new JLabel(" ");
+        lblDuplicado.setFont(new Font("Arial", Font.BOLD, 11));
+        lblDuplicado.setForeground(new Color(220, 38, 38));
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(4, 4, 4, 4);
+        gbc.gridx = 0; gbc.gridy = 0; panel.add(crearLabel("Código interno del proveedor *"), gbc);
+        gbc.gridy = 1; panel.add(txtCodigo, gbc);
+        gbc.gridy = 2; panel.add(crearLabel("SKU interno del sistema *"), gbc);
+        gbc.gridy = 3; panel.add(txtSku, gbc);
+        gbc.gridy = 4; panel.add(lblDuplicado, gbc);
+
+        JOptionPane pane = new JOptionPane(panel, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+        JDialog dialogo = pane.createDialog(this,
+                codigoInicial == null ? "Nueva equivalencia" : "Editar equivalencia");
+
+        // Validación visual en vivo: código duplicado (ignorando el propio código en edición)
+        DocumentListener validador = new DocumentListener() {
+            public void insertUpdate(DocumentEvent e)  { validar(); }
+            public void removeUpdate(DocumentEvent e)  { validar(); }
+            public void changedUpdate(DocumentEvent e) { validar(); }
+            private void validar() {
+                String codigoActual = txtCodigo.getText().trim();
+                boolean duplicado = codigosExistentes != null && codigosExistentes.stream()
+                        .anyMatch(c -> c.equalsIgnoreCase(codigoActual)
+                                && !c.equalsIgnoreCase(codigoInicial == null ? "" : codigoInicial));
+                if (duplicado) {
+                    lblDuplicado.setText("⚠ Ya existe una equivalencia con ese código para este proveedor");
+                    txtCodigo.setBorder(BorderFactory.createLineBorder(new Color(220, 38, 38), 2));
+                } else {
+                    lblDuplicado.setText(" ");
+                    txtCodigo.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(new Color(203, 213, 225)),
+                            BorderFactory.createEmptyBorder(4, 8, 4, 8)));
+                }
+            }
+        };
+        txtCodigo.getDocument().addDocumentListener(validador);
+
+        dialogo.setVisible(true);
+
+        Object seleccion = pane.getValue();
+        if (seleccion == null || (int) seleccion != JOptionPane.OK_OPTION) return null;
+
+        String codigo = txtCodigo.getText().trim();
+        String sku    = txtSku.getText().trim();
+        if (codigo.isEmpty() || sku.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Código y SKU son obligatorios");
+            return null;
+        }
+        boolean duplicado = codigosExistentes != null && codigosExistentes.stream()
+                .anyMatch(c -> c.equalsIgnoreCase(codigo)
+                        && !c.equalsIgnoreCase(codigoInicial == null ? "" : codigoInicial));
+        if (duplicado) {
+            JOptionPane.showMessageDialog(this,
+                    "Ya existe una equivalencia con ese código para este proveedor");
+            return null;
+        }
+        return new String[]{codigo, sku};
     }
 }

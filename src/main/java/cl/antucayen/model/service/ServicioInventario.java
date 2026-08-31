@@ -18,6 +18,33 @@ public class ServicioInventario {
     private final MovimientoInventarioDAO movDAO         = new MovimientoInventarioDAO();
     private final AjusteInventarioDAO    ajusteDAO       = new AjusteInventarioDAO();
 
+    /**
+     * Ingresa stock por la compra registrada en una factura ya validada
+     * (ítem con SKU resuelto). Genera el movimiento tipo 'Ingreso por compra'
+     * vinculado a la factura, para trazabilidad permanente.
+     */
+    public void registrarIngresoPorCompra(String sku, int cantidad, int idFactura) throws SQLException {
+        if (cantidad <= 0)
+            throw new IllegalArgumentException("La cantidad a ingresar debe ser mayor que cero");
+
+        Producto p = productoDAO.buscarPorSku(sku);
+        if (p == null) throw new IllegalArgumentException("SKU no encontrado: " + sku);
+
+        int stockAnterior   = p.getStockActual();
+        int stockResultante = stockAnterior + cantidad;
+        productoDAO.actualizarStock(sku, stockResultante);
+
+        MovimientoInventario mov = new MovimientoInventario();
+        mov.setSku(sku);
+        mov.setIdUsuario(SesionActual.getUsuario().getIdUsuario());
+        mov.setIdFactura(idFactura);
+        mov.setTipoMovimiento("Ingreso por compra");
+        mov.setStockAnterior(stockAnterior);
+        mov.setCantidadAplicada(cantidad);
+        mov.setStockResultante(stockResultante);
+        movDAO.insertar(mov);
+    }
+
     public void ajustarStock(String sku, int cantidad,
                              String modalidad) throws SQLException {
         Producto p = productoDAO.buscarPorSku(sku);

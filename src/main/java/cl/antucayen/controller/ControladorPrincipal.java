@@ -29,6 +29,12 @@ public class ControladorPrincipal {
             vista.setContenido(panel, "Proveedores");
         });
 
+        vista.getBtnEquivalencias().addActionListener(e -> {
+            VConsultaEquivalencias panel = new VConsultaEquivalencias();
+            new ControladorProveedor(panel);
+            vista.setContenido(panel, "Consulta de Equivalencias");
+        });
+
         vista.getBtnFacturas().addActionListener(e -> {
             VFacturas panel = new VFacturas();
             new ControladorFactura(panel);

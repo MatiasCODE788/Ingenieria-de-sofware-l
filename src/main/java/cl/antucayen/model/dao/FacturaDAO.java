@@ -89,6 +89,48 @@ public class FacturaDAO {
         return lista;
     }
 
+    public boolean existeNumeroPorProveedor(int idProveedor, String numeroFactura) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM factura WHERE id_proveedor=? AND numero_factura=?";
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setInt   (1, idProveedor);
+            ps.setString(2, numeroFactura);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        }
+        return false;
+    }
+
+    /**
+     * Consulta combinada por número (parcial), proveedor y rango de fechas de emisión.
+     * Cualquier parámetro puede venir null/vacío; los filtros se combinan con AND.
+     */
+    public List<Factura> buscarConFiltro(String numero, Integer idProveedor,
+                                         java.time.LocalDate desde, java.time.LocalDate hasta) throws SQLException {
+        StringBuilder sqlBuilder = new StringBuilder("""
+            SELECT f.*, p.nombre AS nombre_proveedor
+            FROM factura f
+            JOIN proveedor p ON f.id_proveedor = p.id_proveedor
+            WHERE 1=1
+            """);
+        if (numero != null && !numero.isBlank())      sqlBuilder.append(" AND f.numero_factura LIKE ?");
+        if (idProveedor != null && idProveedor > 0)    sqlBuilder.append(" AND f.id_proveedor = ?");
+        if (desde != null)                             sqlBuilder.append(" AND f.fecha_emision >= ?");
+        if (hasta != null)                             sqlBuilder.append(" AND f.fecha_emision <= ?");
+        sqlBuilder.append(" ORDER BY f.fecha_emision DESC");
+
+        List<Factura> lista = new ArrayList<>();
+        try (PreparedStatement ps = getConexion().prepareStatement(sqlBuilder.toString())) {
+            int i = 1;
+            if (numero != null && !numero.isBlank())   ps.setString(i++, "%" + numero + "%");
+            if (idProveedor != null && idProveedor > 0) ps.setInt  (i++, idProveedor);
+            if (desde != null)                          ps.setDate (i++, Date.valueOf(desde));
+            if (hasta != null)                          ps.setDate (i,   Date.valueOf(hasta));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) lista.add(mapear(rs));
+        }
+        return lista;
+    }
+
     private Factura mapear(ResultSet rs) throws SQLException {
         return new Factura(
                 rs.getInt   ("id_factura"),
