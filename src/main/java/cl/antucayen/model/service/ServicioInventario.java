@@ -45,8 +45,17 @@ public class ServicioInventario {
         movDAO.insertar(mov);
     }
 
-    public void ajustarStock(String sku, int cantidad,
-                             String modalidad) throws SQLException {
+    /**
+     * Ajusta el stock de un producto. Si la cantidad resultante en el
+     * archivo es negativa, solo se permite cuando el llamador indica que
+     * fue autorizada explícitamente por un Administrador (correcciónAutorizada).
+     */
+    public void ajustarStock(String sku, int cantidad, String modalidad,
+                             boolean correccionAutorizada) throws SQLException {
+        if (cantidad < 0 && !correccionAutorizada)
+            throw new IllegalArgumentException(
+                    "Cantidad negativa no permitida sin Corrección autorizada (Administrador)");
+
         Producto p = productoDAO.buscarPorSku(sku);
         if (p == null) throw new IllegalArgumentException("SKU no encontrado: " + sku);
 
@@ -69,12 +78,19 @@ public class ServicioInventario {
         MovimientoInventario mov = new MovimientoInventario();
         mov.setSku(sku);
         mov.setIdUsuario(SesionActual.getUsuario().getIdUsuario());
-        mov.setTipoMovimiento(cantidad >= 0 ? "Ajuste positivo" : "Ajuste negativo");
+        // El tipo de movimiento se determina por el efecto real sobre el stock,
+        // no por el signo de la cantidad ingresada (evita etiquetar mal un "Restar").
+        mov.setTipoMovimiento(stockResultante >= stockAnterior ? "Ajuste positivo" : "Ajuste negativo");
         mov.setStockAnterior(stockAnterior);
         mov.setCantidadAplicada(cantidad);
         mov.setStockResultante(stockResultante);
         mov.setModalidadAjuste(modalidad);
         movDAO.insertar(mov);
+    }
+
+    /** Sobrecarga de compatibilidad: sin corrección autorizada (rechaza negativos). */
+    public void ajustarStock(String sku, int cantidad, String modalidad) throws SQLException {
+        ajustarStock(sku, cantidad, modalidad, false);
     }
 
     public int crearCabeceraAjuste(String modalidad) throws SQLException {
