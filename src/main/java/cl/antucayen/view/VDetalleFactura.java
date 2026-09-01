@@ -19,6 +19,7 @@ public class VDetalleFactura extends JDialog {
     private DefaultTableModel modeloItems;
     private JButton btnProcesar;
     private JButton btnObservar;
+    private JButton btnProcesarItems;
     private JButton btnCerrar;
 
     public VDetalleFactura(JFrame parent) {
@@ -116,8 +117,16 @@ public class VDetalleFactura extends JDialog {
         btnProcesar.setFocusPainted(false);
         btnProcesar.setBorderPainted(false);
 
+        btnProcesarItems = new JButton("Procesar Ítems");
+        btnProcesarItems.setFont(new Font("Arial", Font.BOLD, 12));
+        btnProcesarItems.setBackground(new Color(37, 99, 235));
+        btnProcesarItems.setForeground(Color.WHITE);
+        btnProcesarItems.setFocusPainted(false);
+        btnProcesarItems.setBorderPainted(false);
+
         botones.add(btnCerrar);
         botones.add(btnObservar);
+        botones.add(btnProcesarItems);
         botones.add(btnProcesar);
 
         add(header, BorderLayout.NORTH);
@@ -156,7 +165,8 @@ public class VDetalleFactura extends JDialog {
         modeloItems.setRowCount(0);
         for (ItemFactura it : items) {
             modeloItems.addRow(new Object[]{
-                    it.getSku() != null ? it.getSku() : "(sin equivalencia)",
+                    it.getSku() != null ? it.getSku()
+                            : "(sin resolver: " + it.getCodigoInternoProveedor() + ")",
                     it.getCantidadFacturada(),
                     it.getPrecioUnitarioCompra(),
                     it.getEstadoItem()
@@ -164,7 +174,8 @@ public class VDetalleFactura extends JDialog {
         }
     }
 
-    public JButton getBtnProcesar()  { return btnProcesar; }
-    public JButton getBtnObservar()  { return btnObservar; }
-    public JButton getBtnCerrar()    { return btnCerrar; }
+    public JButton getBtnProcesar()      { return btnProcesar; }
+    public JButton getBtnObservar()      { return btnObservar; }
+    public JButton getBtnProcesarItems() { return btnProcesarItems; }
+    public JButton getBtnCerrar()        { return btnCerrar; }
 }

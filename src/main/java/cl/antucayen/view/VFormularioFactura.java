@@ -102,7 +102,7 @@ public class VFormularioFactura extends JDialog {
         topItems.add(lblItems,     BorderLayout.WEST);
         topItems.add(botonesItems, BorderLayout.EAST);
 
-        String[] colsItems = {"SKU", "Cantidad", "Precio unitario compra"};
+        String[] colsItems = {"Código proveedor", "SKU (si ya se conoce)", "Cantidad", "Precio unitario compra"};
         modeloItems = new DefaultTableModel(colsItems, 0);
         tblItems = VBuscadorProductos.crearTabla(modeloItems);
         JScrollPane scrollItems = new JScrollPane(tblItems);
@@ -142,7 +142,7 @@ public class VFormularioFactura extends JDialog {
         add(centro, BorderLayout.CENTER);
         add(botones, BorderLayout.SOUTH);
 
-        btnAgregarItem.addActionListener(e -> modeloItems.addRow(new Object[]{"", "", ""}));
+        btnAgregarItem.addActionListener(e -> modeloItems.addRow(new Object[]{"", "", "", ""}));
         btnQuitarItem.addActionListener(e -> {
             int fila = tblItems.getSelectedRow();
             if (fila >= 0) modeloItems.removeRow(fila);
