@@ -9,6 +9,7 @@ import cl.antucayen.util.SesionActual;
 import cl.antucayen.view.VDetalleFactura;
 import cl.antucayen.view.VFacturas;
 import cl.antucayen.view.VFormularioFactura;
+import cl.antucayen.view.VProcesamientoFactura;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -146,11 +147,13 @@ public class ControladorFactura {
         DefaultTableModel modelo = form.getModeloItems();
         List<ItemFactura> items = new ArrayList<>();
         for (int i = 0; i < modelo.getRowCount(); i++) {
-            String sku = String.valueOf(modelo.getValueAt(i, 0)).trim();
-            int cantidad = Integer.parseInt(String.valueOf(modelo.getValueAt(i, 1)).trim());
-            int precio   = Integer.parseInt(String.valueOf(modelo.getValueAt(i, 2)).trim());
+            String codigoProveedor = String.valueOf(modelo.getValueAt(i, 0)).trim();
+            String sku      = String.valueOf(modelo.getValueAt(i, 1)).trim();
+            int cantidad    = Integer.parseInt(String.valueOf(modelo.getValueAt(i, 2)).trim());
+            int precio      = Integer.parseInt(String.valueOf(modelo.getValueAt(i, 3)).trim());
 
             ItemFactura item = new ItemFactura();
+            item.setCodigoInternoProveedor(codigoProveedor.isBlank() ? null : codigoProveedor);
             item.setSku(sku.isBlank() ? null : sku);
             item.setCantidadFacturada(cantidad);
             item.setPrecioUnitarioCompra(precio);
@@ -179,11 +182,19 @@ public class ControladorFactura {
 
             detalle.getBtnProcesar().addActionListener(e -> cambiarEstado(idFactura, "Procesada", detalle));
             detalle.getBtnObservar().addActionListener(e -> cambiarEstado(idFactura, "Observada", detalle));
+            detalle.getBtnProcesarItems().addActionListener(e -> abrirProcesamiento(idFactura, f.getIdProveedor()));
 
             detalle.setVisible(true);
         } catch (SQLException ex) {
             mostrarError(ex);
         }
+    }
+
+    private void abrirProcesamiento(int idFactura, int idProveedor) {
+        VProcesamientoFactura vistaProc = new VProcesamientoFactura(null);
+        new ControladorProcesamientoFactura(vistaProc, idFactura, idProveedor);
+        vistaProc.setVisible(true);
+        cargarTodas(); // por si el reproceso cambió estados visibles en la tabla principal
     }
 
     private void cambiarEstado(int idFactura, String nuevoEstado, VDetalleFactura detalle) {
