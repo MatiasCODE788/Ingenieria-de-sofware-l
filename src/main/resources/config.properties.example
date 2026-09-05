@@ -1,0 +1,11 @@
+# Copia este archivo como "config.properties" en la misma carpeta,
+# en CADA equipo/dispositivo donde vayas a correr el proyecto.
+# config.properties está en .gitignore a propósito (no debe subirse a git),
+# pero este .example sí queda versionado para que nunca se pierdan
+# los datos de conexión al migrar de dispositivo.
+
+db.host=127.0.0.1
+db.port=3306
+db.nombre=minimarket
+db.usuario=antucayen_app
+db.contrasena=Antucayen2026

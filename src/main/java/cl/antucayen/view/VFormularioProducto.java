@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.util.SesionActual;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -9,11 +11,13 @@ public class VFormularioProducto extends JDialog {
     private JTextField        txtNombre;
     private JTextField        txtCodigoBarras;
     private JComboBox<String> cmbUnidad;
+    private JTextField        txtPrecioVenta;
     private JTextField        txtStock;
     private JComboBox<String> cmbEstado;
     private JButton           btnGuardar;
     private JButton           btnCancelar;
     private JButton           btnInactivar;
+    private JButton           btnEliminar;
     private JLabel            lblError;
     private boolean           modoEdicion;
 
@@ -24,12 +28,11 @@ public class VFormularioProducto extends JDialog {
     }
 
     private void initComponents() {
-        setSize(500, 460);
+        setSize(500, 520);
         setLocationRelativeTo(getParent());
         setResizable(false);
         setLayout(new BorderLayout());
 
-        // Header
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 14));
         header.setBackground(new Color(17, 24, 39));
         JLabel lblTitulo = new JLabel(modoEdicion ? "✏️  Editar Producto" : "📦  Nuevo Producto");
@@ -37,7 +40,6 @@ public class VFormularioProducto extends JDialog {
         lblTitulo.setForeground(Color.WHITE);
         header.add(lblTitulo);
 
-        // Form
         JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(Color.WHITE);
         form.setBorder(BorderFactory.createEmptyBorder(20, 24, 10, 24));
@@ -46,7 +48,6 @@ public class VFormularioProducto extends JDialog {
         gbc.insets = new Insets(5, 0, 5, 8);
         gbc.weightx = 0.5;
 
-        // SKU y Código de barras
         gbc.gridx = 0; gbc.gridy = 0; form.add(crearLabel("SKU *"), gbc);
         gbc.gridx = 1;               form.add(crearLabel("Código de barras *"), gbc);
 
@@ -56,48 +57,62 @@ public class VFormularioProducto extends JDialog {
         txtCodigoBarras = crearCampo();
         gbc.gridx = 1;               form.add(txtCodigoBarras, gbc);
 
-        // Nombre (fila completa)
         gbc.gridwidth = 2; gbc.gridx = 0; gbc.gridy = 2;
         form.add(crearLabel("Nombre del producto *"), gbc);
         txtNombre = crearCampo();
         gbc.gridy = 3;
         form.add(txtNombre, gbc);
 
-        // Unidad y Stock
         gbc.gridwidth = 1; gbc.gridy = 4;
         gbc.gridx = 0; form.add(crearLabel("Unidad de medida *"), gbc);
-        gbc.gridx = 1; form.add(crearLabel("Stock actual"), gbc);
+        gbc.gridx = 1; form.add(crearLabel("Precio de venta ($) *"), gbc);
 
         cmbUnidad = new JComboBox<>(new String[]{"un", "kg", "g", "L", "mL", "caja", "paquete"});
         cmbUnidad.setFont(new Font("Arial", Font.PLAIN, 13));
         cmbUnidad.setPreferredSize(new Dimension(0, 32));
         gbc.gridx = 0; gbc.gridy = 5; form.add(cmbUnidad, gbc);
+        txtPrecioVenta = crearCampo();
+        txtPrecioVenta.setText("0");
+        gbc.gridx = 1; form.add(txtPrecioVenta, gbc);
+
+        gbc.gridwidth = 1; gbc.gridx = 0; gbc.gridy = 6;
+        form.add(crearLabel("Stock actual"), gbc);
         txtStock = crearCampo();
         txtStock.setText("0");
-        gbc.gridx = 1; form.add(txtStock, gbc);
+        gbc.gridy = 7; form.add(txtStock, gbc);
 
-        // Estado (solo edición)
         if (modoEdicion) {
-            gbc.gridwidth = 2; gbc.gridx = 0; gbc.gridy = 6;
+            gbc.gridwidth = 2; gbc.gridx = 0; gbc.gridy = 8;
             form.add(crearLabel("Estado"), gbc);
             cmbEstado = new JComboBox<>(new String[]{"Activo", "Inactivo"});
             cmbEstado.setFont(new Font("Arial", Font.PLAIN, 13));
-            gbc.gridy = 7; form.add(cmbEstado, gbc);
+            gbc.gridy = 9; form.add(cmbEstado, gbc);
         }
 
-        // Error
         gbc.gridwidth = 2; gbc.gridx = 0;
-        gbc.gridy = modoEdicion ? 8 : 6;
+        gbc.gridy = modoEdicion ? 10 : 8;
         lblError = new JLabel("");
         lblError.setFont(new Font("Arial", Font.PLAIN, 12));
         lblError.setForeground(new Color(220, 38, 38));
         lblError.setVisible(false);
         form.add(lblError, gbc);
 
-        // Botones
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 14));
         botones.setBackground(new Color(248, 250, 252));
         botones.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(229, 231, 235)));
+
+        boolean esAdmin = SesionActual.esAdministrador();
+
+        if (modoEdicion && esAdmin) {
+            btnEliminar = new JButton("Eliminar");
+            btnEliminar.setFont(new Font("Arial", Font.BOLD, 12));
+            btnEliminar.setBackground(new Color(220, 38, 38));
+            btnEliminar.setForeground(Color.WHITE);
+            btnEliminar.setFocusPainted(false);
+            btnEliminar.setBorderPainted(false);
+            btnEliminar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            botones.add(btnEliminar);
+        }
 
         if (modoEdicion) {
             btnInactivar = new JButton("Inactivar");
@@ -156,12 +171,14 @@ public class VFormularioProducto extends JDialog {
     public String getNombre()       { return txtNombre.getText().trim(); }
     public String getCodigoBarras() { return txtCodigoBarras.getText().trim(); }
     public String getUnidad()       { return (String) cmbUnidad.getSelectedItem(); }
+    public String getPrecioVenta()  { return txtPrecioVenta.getText().trim(); }
     public String getStock()        { return txtStock.getText().trim(); }
     public String getEstado()       { return cmbEstado != null ? (String) cmbEstado.getSelectedItem() : "Activo"; }
 
     public JButton getBtnGuardar()   { return btnGuardar; }
     public JButton getBtnCancelar()  { return btnCancelar; }
     public JButton getBtnInactivar() { return btnInactivar; }
+    public JButton getBtnEliminar()  { return btnEliminar; }
 
     public void mostrarError(String msg) { lblError.setText("⚠ " + msg); lblError.setVisible(true); }
     public void limpiarError()           { lblError.setVisible(false); }
@@ -170,12 +187,13 @@ public class VFormularioProducto extends JDialog {
         txtSku.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
     }
 
-    public void setDatos(String sku, String nombre, String cb,
-                         String unidad, int stock, String estado) {
+    public void setDatos(String sku, String nombre, String cb, String unidad,
+                         int precioVenta, int stock, String estado) {
         txtSku.setText(sku);
         txtNombre.setText(nombre);
         txtCodigoBarras.setText(cb);
         cmbUnidad.setSelectedItem(unidad);
+        txtPrecioVenta.setText(String.valueOf(precioVenta));
         txtStock.setText(String.valueOf(stock));
         if (cmbEstado != null) cmbEstado.setSelectedItem(estado);
     }

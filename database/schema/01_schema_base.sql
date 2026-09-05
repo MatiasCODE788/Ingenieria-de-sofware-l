@@ -263,10 +263,12 @@ VALUES
 ('Bodeguero'),
 ('Consulta');
 
+-- Contraseñas en texto plano de referencia: guido_admin/admin123, matias_bodega/bodega123
+-- El hash se genera con SHA2(<password>,256) para calzar con UsuarioDAO.autenticar()
 INSERT INTO usuario (username, password_hash, estado_activo, id_perfil)
 VALUES
-('guido_admin', '$2b$12$EixZaYVK1fsbw1ZfiDX3YO9WwF6fTz3eT3KzP9.68kH.e1N2145Wy', 1, 1),
-('matias_bodega', '$2b$12$Kjsdhfiuwyh438fnywe783yfhnw78eyfhnw78eyfhnw78eyfhnw78', 1, 2);
+('guido_admin', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 1, 1),
+('matias_bodega', '3e2388e8ceddc313076daab3e4eb98a3feb2c0da2464e9c632eff130483208eb', 1, 2);
 
 INSERT INTO producto (sku, nombre, codigo_barras, unidad_medida, stock_actual, estado)
 VALUES

@@ -7,6 +7,10 @@ public class ControladorPrincipal {
 
     private final VPrincipal vista;
 
+    // Se cachea para que el carrito y los pagos en curso no se pierdan al cambiar de módulo y volver.
+    private VVentas         panelVentas;
+    private ControladorVenta controladorVenta;
+
     public ControladorPrincipal(VPrincipal vista) {
         this.vista = vista;
         iniciarEventos();
@@ -16,6 +20,8 @@ public class ControladorPrincipal {
 
     private void iniciarEventos() {
         vista.getBtnDashboard().addActionListener(e -> mostrarDashboard());
+
+        vista.getBtnVentas().addActionListener(e -> mostrarVentas());
 
         vista.getBtnProductos().addActionListener(e -> {
             VBuscadorProductos panel = new VBuscadorProductos();
@@ -72,6 +78,21 @@ public class ControladorPrincipal {
         VDashboard panel = new VDashboard();
         new ControladorDashboard(panel);
         vista.setContenido(panel, "Dashboard");
+    }
+
+    /**
+     * Muestra el Punto de Venta reutilizando siempre el mismo panel/controlador:
+     * así el carrito y los montos de pago ingresados no se pierden si el
+     * usuario navega a otro módulo (ej. a consultar Productos) y vuelve.
+     */
+    private void mostrarVentas() {
+        if (panelVentas == null) {
+            panelVentas = new VVentas();
+            controladorVenta = new ControladorVenta(panelVentas);
+        } else {
+            controladorVenta.alMostrar();
+        }
+        vista.setContenido(panelVentas, "Punto de Venta");
     }
 
     private void cerrarSesion() {

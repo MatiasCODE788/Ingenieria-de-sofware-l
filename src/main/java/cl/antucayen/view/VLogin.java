@@ -1,5 +1,8 @@
 package cl.antucayen.view;
 
+import cl.antucayen.util.GestorTemas;
+import cl.antucayen.util.Tema;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -9,6 +12,8 @@ public class VLogin extends JFrame {
     private JPasswordField txtPassword;
     private JButton        btnIngresar;
     private JLabel         lblError;
+
+    private Tema tema = GestorTemas.getInstancia().getTema();
 
     public VLogin() {
         initComponents();
@@ -22,7 +27,7 @@ public class VLogin extends JFrame {
         setLocationRelativeTo(null);
         setResizable(true);
 
-        // Panel exterior con gradiente azul
+        // Panel exterior con gradiente según el tema
         JPanel panelExterior = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -30,29 +35,27 @@ public class VLogin extends JFrame {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 GradientPaint gp = new GradientPaint(
-                        0, 0,                   new Color(15, 30, 56),
-                        getWidth(), getHeight(), new Color(26, 74, 110)
+                        0, 0,                   tema.gradienteInicio,
+                        getWidth(), getHeight(), tema.gradienteFin
                 );
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
             }
         };
         panelExterior.setOpaque(true);
+        panelExterior.setLayout(new BorderLayout());
+
+        JPanel centro = new JPanel(new GridBagLayout());
+        centro.setOpaque(false);
 
         // Tarjeta blanca centrada
         JPanel card = new JPanel(new GridBagLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
-                BorderFactory.createEmptyBorder(36, 40, 36, 40)
-        ));
-        card.setPreferredSize(new Dimension(420, 480));
-
-        // Sombra simulada con borde
-        card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(203, 213, 225), 1),
                 BorderFactory.createEmptyBorder(36, 40, 36, 40)
         ));
+        card.setPreferredSize(new Dimension(420, 480));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill      = GridBagConstraints.HORIZONTAL;
@@ -70,7 +73,7 @@ public class VLogin extends JFrame {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(5, 150, 105));
+                g2.setColor(tema.colorAcento);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Arial", Font.PLAIN, 18));
@@ -87,7 +90,7 @@ public class VLogin extends JFrame {
         panelNombreLogo.setLayout(new BoxLayout(panelNombreLogo, BoxLayout.Y_AXIS));
         JLabel lblNombre = new JLabel("Antucayen");
         lblNombre.setFont(new Font("Arial", Font.BOLD, 18));
-        lblNombre.setForeground(new Color(15, 30, 56));
+        lblNombre.setForeground(tema.colorPrimario);
         JLabel lblSistema = new JLabel("Sistema de gestión");
         lblSistema.setFont(new Font("Arial", Font.PLAIN, 11));
         lblSistema.setForeground(new Color(107, 114, 128));
@@ -156,7 +159,7 @@ public class VLogin extends JFrame {
         // Botón ingresar
         btnIngresar = new JButton("Ingresar al sistema");
         btnIngresar.setFont(new Font("Arial", Font.BOLD, 14));
-        btnIngresar.setBackground(new Color(15, 30, 56));
+        btnIngresar.setBackground(tema.colorPrimario);
         btnIngresar.setForeground(Color.WHITE);
         btnIngresar.setFocusPainted(false);
         btnIngresar.setBorderPainted(false);
@@ -164,10 +167,10 @@ public class VLogin extends JFrame {
         btnIngresar.setPreferredSize(new Dimension(0, 44));
         btnIngresar.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                btnIngresar.setBackground(new Color(30, 58, 95));
+                btnIngresar.setBackground(tema.colorPrimarioHover);
             }
             public void mouseExited(java.awt.event.MouseEvent e) {
-                btnIngresar.setBackground(new Color(15, 30, 56));
+                btnIngresar.setBackground(tema.colorPrimario);
             }
         });
         gbc.gridy = 6;
@@ -191,8 +194,44 @@ public class VLogin extends JFrame {
         gbc.insets = new Insets(8, 0, 0, 0);
         card.add(lblNota, gbc);
 
-        panelExterior.add(card);
+        centro.add(card);
+        panelExterior.add(centro, BorderLayout.CENTER);
+        panelExterior.add(crearSelectorDeTemas(), BorderLayout.SOUTH);
+
         add(panelExterior);
+
+        // Enter activa el botón de ingresar, sin importar en qué campo esté el foco
+        getRootPane().setDefaultButton(btnIngresar);
+    }
+
+    /** Franja inferior con 5 círculos de color para elegir el tema del sistema. */
+    private JPanel crearSelectorDeTemas() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 14));
+        panel.setOpaque(false);
+
+        JLabel lbl = new JLabel("Tema:  ");
+        lbl.setForeground(Color.WHITE);
+        lbl.setFont(new Font("Arial", Font.PLAIN, 12));
+        panel.add(lbl);
+
+        for (Tema opcion : Tema.values()) {
+            JButton swatch = new JButton();
+            swatch.setToolTipText(opcion.getNombre());
+            swatch.setPreferredSize(new Dimension(24, 24));
+            swatch.setBackground(opcion.colorPrimario);
+            swatch.setBorder(BorderFactory.createLineBorder(
+                    opcion == tema ? Color.WHITE : new Color(255, 255, 255, 80),
+                    opcion == tema ? 3 : 1));
+            swatch.setFocusPainted(false);
+            swatch.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            swatch.addActionListener(e -> {
+                GestorTemas.getInstancia().setTema(opcion);
+                dispose();
+                new VLogin().setVisible(true); // recarga la pantalla con el nuevo tema aplicado
+            });
+            panel.add(swatch);
+        }
+        return panel;
     }
 
     public String  getUsername()    { return txtUsername.getText().trim(); }
@@ -208,5 +247,11 @@ public class VLogin extends JFrame {
         txtUsername.setText("");
         txtPassword.setText("");
         lblError.setVisible(false);
+    }
+
+    /** Solo borra la contraseña (por seguridad) y le devuelve el foco, sin tocar el usuario ni ocultar el error. */
+    public void limpiarSoloContrasena() {
+        txtPassword.setText("");
+        txtPassword.requestFocusInWindow();
     }
 }
