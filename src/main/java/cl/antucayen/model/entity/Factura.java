@@ -8,6 +8,7 @@ public class Factura {
     private LocalDate fechaEmision;
     private String    estado;
     private String    rutaArchivoDigital;
+    private int       valorTotal;
     private int       idProveedor;
     private int       idUsuario;
     private String    nombreProveedor; // se carga con JOIN
@@ -15,13 +16,14 @@ public class Factura {
     public Factura() {}
 
     public Factura(int idFactura, String numeroFactura, LocalDate fechaEmision,
-                   String estado, String rutaArchivoDigital,
+                   String estado, String rutaArchivoDigital, int valorTotal,
                    int idProveedor, int idUsuario, String nombreProveedor) {
         this.idFactura          = idFactura;
         this.numeroFactura      = numeroFactura;
         this.fechaEmision       = fechaEmision;
         this.estado             = estado;
         this.rutaArchivoDigital = rutaArchivoDigital;
+        this.valorTotal         = valorTotal;
         this.idProveedor        = idProveedor;
         this.idUsuario          = idUsuario;
         this.nombreProveedor    = nombreProveedor;
@@ -32,6 +34,7 @@ public class Factura {
     public LocalDate getFechaEmision()       { return fechaEmision; }
     public String    getEstado()             { return estado; }
     public String    getRutaArchivoDigital() { return rutaArchivoDigital; }
+    public int       getValorTotal()         { return valorTotal; }
     public int       getIdProveedor()        { return idProveedor; }
     public int       getIdUsuario()          { return idUsuario; }
     public String    getNombreProveedor()    { return nombreProveedor; }
@@ -41,6 +44,7 @@ public class Factura {
     public void setFechaEmision(LocalDate fechaEmision)        { this.fechaEmision = fechaEmision; }
     public void setEstado(String estado)                       { this.estado = estado; }
     public void setRutaArchivoDigital(String ruta)             { this.rutaArchivoDigital = ruta; }
+    public void setValorTotal(int valorTotal)                  { this.valorTotal = valorTotal; }
     public void setIdProveedor(int idProveedor)                { this.idProveedor = idProveedor; }
     public void setIdUsuario(int idUsuario)                    { this.idUsuario = idUsuario; }
     public void setNombreProveedor(String nombreProveedor)     { this.nombreProveedor = nombreProveedor; }
