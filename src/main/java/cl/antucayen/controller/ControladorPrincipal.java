@@ -47,11 +47,7 @@ public class ControladorPrincipal {
             vista.setContenido(panel, "Facturas");
         });
 
-        vista.getBtnProcesarFactura().addActionListener(e -> {
-            VFacturas panel = new VFacturas();
-            new ControladorFactura(panel);
-            vista.setContenido(panel, "Procesar Factura");
-        });
+        vista.getBtnProcesarFactura().addActionListener(e -> abrirProcesarFactura());
 
         vista.getBtnImportarInventario().addActionListener(e -> {
             VAjusteInventario panel = new VAjusteInventario();
@@ -72,6 +68,11 @@ public class ControladorPrincipal {
         });
 
         vista.getBtnCerrarSesion().addActionListener(e -> cerrarSesion());
+    }
+
+    /** Abre directamente el formulario de "Procesar Factura" (ingreso manual). */
+    private void abrirProcesarFactura() {
+        new ControladorFactura().abrirNuevaFactura();
     }
 
     private void mostrarDashboard() {
