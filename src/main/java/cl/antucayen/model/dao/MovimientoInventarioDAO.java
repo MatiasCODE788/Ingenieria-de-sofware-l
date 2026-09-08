@@ -16,20 +16,22 @@ public class MovimientoInventarioDAO {
     public void insertar(MovimientoInventario m) throws SQLException {
         String sql = """
             INSERT INTO movimiento_inventario
-            (sku, id_usuario, id_factura, tipo_movimiento,
+            (sku, id_usuario, id_factura, id_venta, tipo_movimiento,
              stock_anterior, cantidad_aplicada, stock_resultante, modalidad_ajuste)
-            VALUES (?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?)
             """;
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
             ps.setString(1, m.getSku());
             ps.setInt   (2, m.getIdUsuario());
             if (m.getIdFactura() != null) ps.setInt(3, m.getIdFactura());
             else ps.setNull(3, Types.INTEGER);
-            ps.setString(4, m.getTipoMovimiento());
-            ps.setInt   (5, m.getStockAnterior());
-            ps.setInt   (6, m.getCantidadAplicada());
-            ps.setInt   (7, m.getStockResultante());
-            ps.setString(8, m.getModalidadAjuste());
+            if (m.getIdVenta() != null) ps.setInt(4, m.getIdVenta());
+            else ps.setNull(4, Types.INTEGER);
+            ps.setString(5, m.getTipoMovimiento());
+            ps.setInt   (6, m.getStockAnterior());
+            ps.setInt   (7, m.getCantidadAplicada());
+            ps.setInt   (8, m.getStockResultante());
+            ps.setString(9, m.getModalidadAjuste());
             ps.executeUpdate();
         }
     }
@@ -83,6 +85,7 @@ public class MovimientoInventarioDAO {
                 rs.getString("sku"),
                 rs.getInt   ("id_usuario"),
                 rs.getObject("id_factura") != null ? rs.getInt("id_factura") : null,
+                rs.getObject("id_venta") != null ? rs.getInt("id_venta") : null,
                 rs.getString("tipo_movimiento"),
                 ts != null ? ts.toLocalDateTime() : null,
                 rs.getInt   ("stock_anterior"),

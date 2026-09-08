@@ -12,30 +12,32 @@ public class VFormularioFactura extends JDialog {
     private JTextField        txtNumero;
     private JTextField        txtFecha; // formato yyyy-MM-dd
     private JComboBox<ProveedorItem> cmbProveedor;
-    private JComboBox<String> cmbModalidadIngreso;
-    private JTextField        txtRutaArchivo;
+    private JLabel             lblRutProveedor;
+    private JTextField        txtValorTotal;
     private JTable            tblItems;
     private DefaultTableModel modeloItems;
-    private JButton           btnAgregarItem;
-    private JButton           btnQuitarItem;
+    private JButton           btnAgregarProducto;
+    private JButton           btnQuitarProducto;
     private JButton           btnGuardar;
     private JButton           btnCancelar;
     private JLabel            lblError;
 
+    private List<Proveedor> proveedores;
+
     public VFormularioFactura(JFrame parent) {
-        super(parent, "Nueva Factura", true);
+        super(parent, "Procesar Factura", true);
         initComponents();
     }
 
     private void initComponents() {
-        setSize(640, 560);
+        setSize(680, 600);
         setLocationRelativeTo(getParent());
         setResizable(false);
         setLayout(new BorderLayout());
 
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 14));
         header.setBackground(new Color(17, 24, 39));
-        JLabel lblTitulo = new JLabel("📄  Nueva Factura");
+        JLabel lblTitulo = new JLabel("📄  Procesar Factura");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 15));
         lblTitulo.setForeground(Color.WHITE);
         header.add(lblTitulo);
@@ -48,29 +50,36 @@ public class VFormularioFactura extends JDialog {
         gbc.insets = new Insets(4, 0, 4, 8);
         gbc.weightx = 0.5;
 
-        gbc.gridx = 0; gbc.gridy = 0; form.add(crearLabel("Número de factura *"), gbc);
-        gbc.gridx = 1;               form.add(crearLabel("Fecha de emisión * (aaaa-mm-dd)"), gbc);
-        txtNumero = crearCampo();
-        txtFecha  = crearCampo();
-        gbc.gridx = 0; gbc.gridy = 1; form.add(txtNumero, gbc);
-        gbc.gridx = 1;               form.add(txtFecha, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2; form.add(crearLabel("Proveedor *"), gbc);
-        gbc.gridx = 1;               form.add(crearLabel("Modalidad de ingreso de ítems"), gbc);
+        // Fila 1: Proveedor (nombre) + RUT (se muestra solo, según el proveedor elegido)
+        gbc.gridx = 0; gbc.gridy = 0; form.add(crearLabel("Proveedor (nombre) *"), gbc);
+        gbc.gridx = 1;               form.add(crearLabel("RUT proveedor"), gbc);
         cmbProveedor = new JComboBox<>();
         cmbProveedor.setPreferredSize(new Dimension(0, 32));
-        cmbModalidadIngreso = new JComboBox<>(new String[]{
-                "Manual", "Archivo Excel/CSV (módulo de importación)"});
-        cmbModalidadIngreso.setPreferredSize(new Dimension(0, 32));
-        cmbModalidadIngreso.addActionListener(e -> actualizarModoIngreso());
-        gbc.gridx = 0; gbc.gridy = 3; form.add(cmbProveedor, gbc);
-        gbc.gridx = 1;               form.add(cmbModalidadIngreso, gbc);
+        cmbProveedor.addActionListener(e -> actualizarRutProveedor());
+        lblRutProveedor = new JLabel("—");
+        lblRutProveedor.setFont(new Font("Arial", Font.PLAIN, 13));
+        lblRutProveedor.setForeground(new Color(17, 24, 39));
+        lblRutProveedor.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(226, 232, 240)),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        gbc.gridx = 0; gbc.gridy = 1; form.add(cmbProveedor, gbc);
+        gbc.gridx = 1;               form.add(lblRutProveedor, gbc);
 
+        // Fila 2: Número de factura + Valor total
+        gbc.gridx = 0; gbc.gridy = 2; form.add(crearLabel("N° de factura *"), gbc);
+        gbc.gridx = 1;               form.add(crearLabel("Valor total de la factura *"), gbc);
+        txtNumero     = crearCampo();
+        txtValorTotal = crearCampo();
+        txtValorTotal.setToolTipText("Monto total, solo números (ej: 45000)");
+        gbc.gridx = 0; gbc.gridy = 3; form.add(txtNumero, gbc);
+        gbc.gridx = 1;               form.add(txtValorTotal, gbc);
+
+        // Fila 3: Fecha de emisión
         gbc.gridwidth = 2; gbc.gridx = 0; gbc.gridy = 4;
-        form.add(crearLabel("Ruta de archivo digital adjunto (opcional)"), gbc);
-        txtRutaArchivo = crearCampo();
+        form.add(crearLabel("Fecha de emisión * (aaaa-mm-dd)"), gbc);
+        txtFecha = crearCampo();
         gbc.gridy = 5;
-        form.add(txtRutaArchivo, gbc);
+        form.add(txtFecha, gbc);
 
         gbc.gridy = 6;
         lblError = new JLabel("");
@@ -79,34 +88,34 @@ public class VFormularioFactura extends JDialog {
         lblError.setVisible(false);
         form.add(lblError, gbc);
 
-        // Ítems
+        // Productos
         JPanel panelItems = new JPanel(new BorderLayout(0, 6));
         panelItems.setBackground(Color.WHITE);
         panelItems.setBorder(BorderFactory.createEmptyBorder(0, 24, 8, 24));
 
         JPanel topItems = new JPanel(new BorderLayout());
         topItems.setBackground(Color.WHITE);
-        JLabel lblItems = new JLabel("Ítems de la factura (ingreso manual)");
+        JLabel lblItems = new JLabel("Productos de la factura");
         lblItems.setFont(new Font("Arial", Font.BOLD, 13));
         lblItems.setForeground(new Color(17, 24, 39));
 
         JPanel botonesItems = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         botonesItems.setBackground(Color.WHITE);
-        btnAgregarItem = VBuscadorProductos.crearBoton("+ Agregar",  new Color(5, 150, 105));
-        btnQuitarItem  = VBuscadorProductos.crearBoton("🗑 Quitar",  new Color(220, 38, 38));
-        btnAgregarItem.setPreferredSize(new Dimension(100, 28));
-        btnQuitarItem.setPreferredSize(new Dimension(90, 28));
-        botonesItems.add(btnAgregarItem);
-        botonesItems.add(btnQuitarItem);
+        btnAgregarProducto = VBuscadorProductos.crearBoton("+ Agregar producto", new Color(5, 150, 105));
+        btnQuitarProducto  = VBuscadorProductos.crearBoton("🗑 Quitar", new Color(220, 38, 38));
+        btnAgregarProducto.setPreferredSize(new Dimension(150, 28));
+        btnQuitarProducto.setPreferredSize(new Dimension(90, 28));
+        botonesItems.add(btnAgregarProducto);
+        botonesItems.add(btnQuitarProducto);
 
         topItems.add(lblItems,     BorderLayout.WEST);
         topItems.add(botonesItems, BorderLayout.EAST);
 
-        String[] colsItems = {"Código proveedor", "SKU (si ya se conoce)", "Cantidad", "Precio unitario compra"};
+        String[] colsItems = {"Descripción", "Cantidad"};
         modeloItems = new DefaultTableModel(colsItems, 0);
         tblItems = VBuscadorProductos.crearTabla(modeloItems);
         JScrollPane scrollItems = new JScrollPane(tblItems);
-        scrollItems.setPreferredSize(new Dimension(0, 150));
+        scrollItems.setPreferredSize(new Dimension(0, 220));
 
         panelItems.add(topItems,    BorderLayout.NORTH);
         panelItems.add(scrollItems, BorderLayout.CENTER);
@@ -127,7 +136,7 @@ public class VFormularioFactura extends JDialog {
         btnCancelar.setFocusPainted(false);
         btnCancelar.addActionListener(e -> dispose());
 
-        btnGuardar = new JButton("Registrar factura");
+        btnGuardar = new JButton("Guardar factura");
         btnGuardar.setFont(new Font("Arial", Font.BOLD, 12));
         btnGuardar.setBackground(new Color(5, 150, 105));
         btnGuardar.setForeground(Color.WHITE);
@@ -142,22 +151,18 @@ public class VFormularioFactura extends JDialog {
         add(centro, BorderLayout.CENTER);
         add(botones, BorderLayout.SOUTH);
 
-        btnAgregarItem.addActionListener(e -> modeloItems.addRow(new Object[]{"", "", "", ""}));
-        btnQuitarItem.addActionListener(e -> {
+        // Cada clic en "+ Agregar producto" agrega una fila vacía y editable
+        // para que el usuario complete Descripción y Cantidad.
+        btnAgregarProducto.addActionListener(e -> modeloItems.addRow(new Object[]{"", ""}));
+        btnQuitarProducto.addActionListener(e -> {
             int fila = tblItems.getSelectedRow();
             if (fila >= 0) modeloItems.removeRow(fila);
         });
     }
 
-    private void actualizarModoIngreso() {
-        boolean manual = cmbModalidadIngreso.getSelectedIndex() == 0;
-        btnAgregarItem.setEnabled(manual);
-        btnQuitarItem.setEnabled(manual);
-        tblItems.setEnabled(manual);
-        if (!manual)
-            mostrarError("La carga por archivo se realiza desde el módulo de Importación de Inventario.");
-        else
-            limpiarError();
+    private void actualizarRutProveedor() {
+        ProveedorItem item = (ProveedorItem) cmbProveedor.getSelectedItem();
+        lblRutProveedor.setText(item != null ? item.rut : "—");
     }
 
     private JLabel crearLabel(String t) {
@@ -179,15 +184,16 @@ public class VFormularioFactura extends JDialog {
     }
 
     public void cargarProveedores(List<Proveedor> proveedores) {
+        this.proveedores = proveedores;
         cmbProveedor.removeAllItems();
         for (Proveedor p : proveedores)
-            cmbProveedor.addItem(new ProveedorItem(p.getIdProveedor(), p.getNombre()));
+            cmbProveedor.addItem(new ProveedorItem(p.getIdProveedor(), p.getNombre(), p.getRut()));
+        actualizarRutProveedor();
     }
 
     public String getNumero()          { return txtNumero.getText().trim(); }
     public String getFechaTexto()      { return txtFecha.getText().trim(); }
-    public String getRutaArchivo()     { return txtRutaArchivo.getText().trim(); }
-    public boolean esIngresoManual()   { return cmbModalidadIngreso.getSelectedIndex() == 0; }
+    public String getValorTotalTexto() { return txtValorTotal.getText().trim(); }
 
     public int getIdProveedorSeleccionado() {
         ProveedorItem item = (ProveedorItem) cmbProveedor.getSelectedItem();
@@ -204,7 +210,8 @@ public class VFormularioFactura extends JDialog {
     private static class ProveedorItem {
         final int id;
         final String nombre;
-        ProveedorItem(int id, String nombre) { this.id = id; this.nombre = nombre; }
+        final String rut;
+        ProveedorItem(int id, String nombre, String rut) { this.id = id; this.nombre = nombre; this.rut = rut; }
         @Override public String toString() { return nombre; }
     }
 }

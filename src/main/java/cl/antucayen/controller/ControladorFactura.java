@@ -33,6 +33,12 @@ public class ControladorFactura {
         iniciarEventos();
     }
 
+    /** Constructor "standalone": se usa desde el menú "Procesar Factura" para
+     *  abrir directamente el formulario de ingreso manual, sin lista de fondo. */
+    public ControladorFactura() {
+        this.vista = null;
+    }
+
     private void iniciarEventos() {
         vista.getBtnBuscar().addActionListener(e -> buscar());
         vista.getBtnLimpiar().addActionListener(e -> {
@@ -57,6 +63,7 @@ public class ControladorFactura {
     }
 
     private void cargarTodas() {
+        if (vista == null) return; // no hay lista de fondo (uso standalone desde el menú)
         try {
             vista.limpiarTabla();
             for (Factura f : servicio.listarTodas())
@@ -101,7 +108,7 @@ public class ControladorFactura {
         return LocalDate.parse(texto.trim());
     }
 
-    private void abrirNuevaFactura() {
+    public void abrirNuevaFactura() {
         try {
             VFormularioFactura form = new VFormularioFactura(null);
             form.cargarProveedores(servicioProveedor.listarTodos());
@@ -113,18 +120,15 @@ public class ControladorFactura {
     }
 
     private void guardarFactura(VFormularioFactura form) {
-        if (!form.esIngresoManual()) {
-            form.mostrarError("Selecciona modalidad 'Manual' para registrar ítems aquí.");
-            return;
-        }
         try {
             LocalDate fecha = LocalDate.parse(form.getFechaTexto().trim());
+            int valorTotal  = Integer.parseInt(form.getValorTotalTexto());
 
             Factura f = new Factura();
             f.setNumeroFactura(form.getNumero());
             f.setFechaEmision(fecha);
             f.setIdProveedor(form.getIdProveedorSeleccionado());
-            f.setRutaArchivoDigital(form.getRutaArchivo());
+            f.setValorTotal(valorTotal);
 
             List<ItemFactura> items = leerItemsDelFormulario(form);
 
@@ -135,7 +139,7 @@ public class ControladorFactura {
         } catch (DateTimeParseException ex) {
             form.mostrarError("Fecha inválida, usa el formato aaaa-mm-dd");
         } catch (NumberFormatException ex) {
-            form.mostrarError("Cantidad o precio inválido en algún ítem");
+            form.mostrarError("Valor total o cantidad inválida en algún producto");
         } catch (IllegalArgumentException | IllegalStateException ex) {
             form.mostrarError(ex.getMessage());
         } catch (SQLException ex) {
@@ -147,17 +151,14 @@ public class ControladorFactura {
         DefaultTableModel modelo = form.getModeloItems();
         List<ItemFactura> items = new ArrayList<>();
         for (int i = 0; i < modelo.getRowCount(); i++) {
-            String codigoProveedor = String.valueOf(modelo.getValueAt(i, 0)).trim();
-            String sku      = String.valueOf(modelo.getValueAt(i, 1)).trim();
-            int cantidad    = Integer.parseInt(String.valueOf(modelo.getValueAt(i, 2)).trim());
-            int precio      = Integer.parseInt(String.valueOf(modelo.getValueAt(i, 3)).trim());
+            String descripcion = String.valueOf(modelo.getValueAt(i, 0)).trim();
+            int cantidad       = Integer.parseInt(String.valueOf(modelo.getValueAt(i, 1)).trim());
 
             ItemFactura item = new ItemFactura();
-            item.setCodigoInternoProveedor(codigoProveedor.isBlank() ? null : codigoProveedor);
-            item.setSku(sku.isBlank() ? null : sku);
+            item.setDescripcion(descripcion.isBlank() ? null : descripcion);
             item.setCantidadFacturada(cantidad);
-            item.setPrecioUnitarioCompra(precio);
-            item.setEstadoItem(sku.isBlank() ? "Observado" : "Válido");
+            item.setPrecioUnitarioCompra(0); // no se ingresa por producto en este formulario
+            item.setEstadoItem("Observado");  // sin SKU asignado aún, requiere equivalencia manual
             items.add(item);
         }
         return items;

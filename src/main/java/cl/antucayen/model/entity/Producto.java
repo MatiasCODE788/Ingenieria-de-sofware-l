@@ -5,17 +5,19 @@ public class Producto {
     private String nombre;
     private String codigoBarras;
     private String unidadMedida;
+    private int    precioVenta;
     private int    stockActual;
     private String estado;
 
     public Producto() {}
 
     public Producto(String sku, String nombre, String codigoBarras,
-                    String unidadMedida, int stockActual, String estado) {
+                    String unidadMedida, int precioVenta, int stockActual, String estado) {
         this.sku          = sku;
         this.nombre       = nombre;
         this.codigoBarras = codigoBarras;
         this.unidadMedida = unidadMedida;
+        this.precioVenta  = precioVenta;
         this.stockActual  = stockActual;
         this.estado       = estado;
     }
@@ -24,6 +26,7 @@ public class Producto {
     public String getNombre()        { return nombre; }
     public String getCodigoBarras()  { return codigoBarras; }
     public String getUnidadMedida()  { return unidadMedida; }
+    public int    getPrecioVenta()   { return precioVenta; }
     public int    getStockActual()   { return stockActual; }
     public String getEstado()        { return estado; }
 
@@ -31,6 +34,7 @@ public class Producto {
     public void setNombre(String nombre)            { this.nombre = nombre; }
     public void setCodigoBarras(String codigoBarras){ this.codigoBarras = codigoBarras; }
     public void setUnidadMedida(String unidadMedida){ this.unidadMedida = unidadMedida; }
+    public void setPrecioVenta(int precioVenta)     { this.precioVenta = precioVenta; }
     public void setStockActual(int stockActual)     { this.stockActual = stockActual; }
     public void setEstado(String estado)            { this.estado = estado; }
 

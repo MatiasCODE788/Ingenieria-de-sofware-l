@@ -15,20 +15,22 @@ public class ItemFacturaDAO {
 
     public void insertar(ItemFactura item) throws SQLException {
         String sql = """
-            INSERT INTO item_factura (id_factura, codigo_interno_proveedor, sku,
+            INSERT INTO item_factura (id_factura, codigo_interno_proveedor, descripcion, sku,
             cantidad_facturada, precio_unitario_compra, estado_item)
-            VALUES (?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?)
             """;
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
             ps.setInt(1, item.getIdFactura());
             if (item.getCodigoInternoProveedor() != null)
                 ps.setString(2, item.getCodigoInternoProveedor());
             else ps.setNull(2, Types.VARCHAR);
-            if (item.getSku() != null) ps.setString(3, item.getSku());
+            if (item.getDescripcion() != null) ps.setString(3, item.getDescripcion());
             else ps.setNull(3, Types.VARCHAR);
-            ps.setInt   (4, item.getCantidadFacturada());
-            ps.setInt   (5, item.getPrecioUnitarioCompra());
-            ps.setString(6, item.getEstadoItem());
+            if (item.getSku() != null) ps.setString(4, item.getSku());
+            else ps.setNull(4, Types.VARCHAR);
+            ps.setInt   (5, item.getCantidadFacturada());
+            ps.setInt   (6, item.getPrecioUnitarioCompra());
+            ps.setString(7, item.getEstadoItem());
             ps.executeUpdate();
         }
     }
@@ -70,6 +72,7 @@ public class ItemFacturaDAO {
                 rs.getInt   ("id_item"),
                 rs.getInt   ("id_factura"),
                 rs.getString("codigo_interno_proveedor"),
+                rs.getString("descripcion"),
                 rs.getString("sku"),
                 rs.getInt   ("cantidad_facturada"),
                 rs.getInt   ("precio_unitario_compra"),

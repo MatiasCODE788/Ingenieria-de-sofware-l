@@ -7,6 +7,7 @@ public class MovimientoInventario {
     private String        sku;
     private int           idUsuario;
     private Integer       idFactura;
+    private Integer       idVenta;
     private String        tipoMovimiento;
     private LocalDateTime fechaHora;
     private int           stockAnterior;
@@ -18,7 +19,7 @@ public class MovimientoInventario {
     public MovimientoInventario() {}
 
     public MovimientoInventario(int idMovimiento, String sku, int idUsuario,
-                                Integer idFactura, String tipoMovimiento,
+                                Integer idFactura, Integer idVenta, String tipoMovimiento,
                                 LocalDateTime fechaHora, int stockAnterior,
                                 int cantidadAplicada, int stockResultante,
                                 String modalidadAjuste, String nombreProducto) {
@@ -26,6 +27,7 @@ public class MovimientoInventario {
         this.sku              = sku;
         this.idUsuario        = idUsuario;
         this.idFactura        = idFactura;
+        this.idVenta          = idVenta;
         this.tipoMovimiento   = tipoMovimiento;
         this.fechaHora        = fechaHora;
         this.stockAnterior    = stockAnterior;
@@ -39,6 +41,7 @@ public class MovimientoInventario {
     public String        getSku()              { return sku; }
     public int           getIdUsuario()        { return idUsuario; }
     public Integer       getIdFactura()        { return idFactura; }
+    public Integer       getIdVenta()          { return idVenta; }
     public String        getTipoMovimiento()   { return tipoMovimiento; }
     public LocalDateTime getFechaHora()        { return fechaHora; }
     public int           getStockAnterior()    { return stockAnterior; }
@@ -51,6 +54,7 @@ public class MovimientoInventario {
     public void setSku(String sku)                         { this.sku = sku; }
     public void setIdUsuario(int idUsuario)                { this.idUsuario = idUsuario; }
     public void setIdFactura(Integer idFactura)            { this.idFactura = idFactura; }
+    public void setIdVenta(Integer idVenta)                { this.idVenta = idVenta; }
     public void setTipoMovimiento(String tipoMovimiento)   { this.tipoMovimiento = tipoMovimiento; }
     public void setFechaHora(LocalDateTime fechaHora)      { this.fechaHora = fechaHora; }
     public void setStockAnterior(int stockAnterior)        { this.stockAnterior = stockAnterior; }
