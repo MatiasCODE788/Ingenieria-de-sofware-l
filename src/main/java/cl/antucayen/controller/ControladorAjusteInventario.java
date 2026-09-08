@@ -1,26 +1,38 @@
 package cl.antucayen.controller;
 
 import cl.antucayen.model.dao.ProductoDAO;
+import cl.antucayen.model.entity.ErrorImportacion;
 import cl.antucayen.model.entity.Producto;
+import cl.antucayen.model.service.ServicioImportacionInventario;
+import cl.antucayen.model.service.ServicioImportacionInventario.FilaCruda;
+import cl.antucayen.model.service.ServicioImportacionInventario.ResultadoLectura;
 import cl.antucayen.model.service.ServicioInventario;
 import cl.antucayen.view.VAjusteInventario;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ControladorAjusteInventario {
 
     private final VAjusteInventario vista;
-    private final ServicioInventario servicio    = new ServicioInventario();
-    private final ProductoDAO        productoDAO = new ProductoDAO();
+    private final ServicioInventario servicio = new ServicioInventario();
+    private final ServicioImportacionInventario servicioImportacion = new ServicioImportacionInventario();
+    private final ProductoDAO productoDAO = new ProductoDAO();
 
-    // items cargados: [sku, cantidad, nombreProducto, stockActual, stockProyectado, estado]
-    private List<Object[]> itemsCargados = new ArrayList<>();
+    /** Ítem cargado en el preview, con toda la información necesaria para aplicar o resolver duplicados. */
+    private static class ItemPreview {
+        String  sku, nombre, estado;
+        int     stockActual, cantidad, stockProyectado, numeroFila;
+        boolean esError;
+    }
+
+    private List<ItemPreview> itemsCargados = new ArrayList<>();
 
     public ControladorAjusteInventario(VAjusteInventario vista) {
         this.vista = vista;
@@ -31,9 +43,12 @@ public class ControladorAjusteInventario {
         vista.getBtnSeleccionar().addActionListener(e -> seleccionarArchivo());
         vista.getBtnCargar().addActionListener(e -> cargarPreview());
         vista.getBtnConfirmar().addActionListener(e -> confirmarAjuste());
+        vista.getBtnConsolidarDuplicados().addActionListener(e -> resolverDuplicados(true));
+        vista.getBtnExcluirDuplicados().addActionListener(e -> resolverDuplicados(false));
         vista.getBtnVolver().addActionListener(e -> {
             vista.mostrarPaso1();
             vista.limpiarPreview();
+            vista.getPanelErroresEstructura().limpiar();
             itemsCargados.clear();
         });
     }
@@ -50,6 +65,7 @@ public class ControladorAjusteInventario {
             }
             vista.setNombreArchivo(archivo.getAbsolutePath());
             vista.limpiarError();
+            vista.getPanelErroresEstructura().limpiar();
         }
     }
 
@@ -62,152 +78,187 @@ public class ControladorAjusteInventario {
 
         itemsCargados.clear();
         vista.limpiarPreview();
-        List<String> errores = new ArrayList<>();
+        vista.getPanelErroresEstructura().limpiar();
 
+        ResultadoLectura resultado;
         try {
-            List<String[]> filas;
-            if (ruta.endsWith(".xlsx") || ruta.endsWith(".xls")) {
-                filas = leerExcel(ruta);
-            } else if (ruta.endsWith(".csv")) {
-                filas = leerCSV(ruta);
-            } else {
-                vista.mostrarError("Formato no soportado. Usa .xlsx o .csv");
-                return;
-            }
-
-            String modalidad = vista.getModalidad();
-            for (String[] fila : filas) {
-                String sku      = fila[0].trim();
-                String cantStr  = fila[1].trim();
-                int    cantidad;
-
-                try {
-                    cantidad = Integer.parseInt(cantStr);
-                } catch (NumberFormatException ex) {
-                    errores.add("SKU " + sku + ": cantidad inválida (" + cantStr + ")");
-                    continue;
-                }
-
-                if (cantidad == 0) {
-                    errores.add("SKU " + sku + ": cantidad no puede ser cero");
-                    itemsCargados.add(new Object[]{
-                            sku, "", 0, cantidad, 0, "❌ Cantidad cero no permitida"
-                    });
-                    vista.agregarFilaPreview(new Object[]{
-                            sku, "", 0, cantidad, 0, "❌ Cantidad cero no permitida"
-                    });
-                    continue;
-                }
-                if (cantidad < 0 && !vista.getModalidad().contains("Restar")) {
-                    itemsCargados.add(new Object[]{
-                            sku, "", 0, cantidad, 0, "❌ Cantidad negativa no permitida"
-                    });
-                    vista.agregarFilaPreview(new Object[]{
-                            sku, "", 0, cantidad, 0, "❌ Cantidad negativa no permitida"
-                    });
-                    continue;
-                }
-
-                try {
-                    Producto p = productoDAO.buscarPorSku(sku);
-                    if (p == null) {
-                        itemsCargados.add(new Object[]{
-                                sku, "", 0, cantidad, 0, "❌ SKU no encontrado"
-                        });
-                        continue;
-                    }
-
-                    int stockActual = p.getStockActual();
-                    int stockProyectado;
-                    if (modalidad.contains("Sumar")) {
-                        stockProyectado = stockActual + cantidad;
-                    } else if (modalidad.contains("Restar")) {
-                        stockProyectado = stockActual - cantidad;
-                    } else {
-                        stockProyectado = cantidad;
-                    }
-
-                    String estado = stockProyectado < 0 ? "⚠ Stock negativo" : "✅ OK";
-                    itemsCargados.add(new Object[]{
-                            sku, p.getNombre(), stockActual, cantidad, stockProyectado, estado
-                    });
-
-                    vista.agregarFilaPreview(new Object[]{
-                            sku, p.getNombre(), stockActual, cantidad, stockProyectado, estado
-                    });
-                } catch (SQLException ex) {
-                    errores.add("SKU " + sku + ": error BD - " + ex.getMessage());
-                }
-            }
-
-            if (!errores.isEmpty()) {
-                vista.mostrarError("⚠ " + errores.size() + " error(es) encontrados");
-            } else {
-                vista.limpiarError();
-            }
-            vista.mostrarPaso2();
-
+            resultado = servicioImportacion.leerYValidar(ruta);
         } catch (IOException ex) {
             vista.mostrarError("Error al leer el archivo: " + ex.getMessage());
+            return;
         }
-    }
 
-    private List<String[]> leerExcel(String ruta) throws IOException {
-        List<String[]> filas = new ArrayList<>();
-        try (FileInputStream fis = new FileInputStream(ruta);
-             Workbook wb = new XSSFWorkbook(fis)) {
-            Sheet sheet = wb.getSheetAt(0);
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null) continue;
-                Cell cSku = row.getCell(0);
-                Cell cCant = row.getCell(1);
-                if (cSku == null || cCant == null) continue;
-                String sku  = cSku.getStringCellValue().trim();
-                String cant = cCant.getCellType() == CellType.NUMERIC
-                        ? String.valueOf((int) cCant.getNumericCellValue())
-                        : cCant.getStringCellValue().trim();
-                if (!sku.isEmpty()) filas.add(new String[]{sku, cant});
+        // Validación de ESTRUCTURA primero: si falla, no se toca el inventario ni se avanza de paso.
+        if (!resultado.estructuraValida()) {
+            vista.mostrarError("Archivo con estructura inválida, revisa el detalle abajo");
+            vista.getPanelErroresEstructura().cargarErrores(resultado.erroresEstructura());
+            return;
+        }
+
+        boolean correccionAutorizada = vista.isCorreccionAutorizada();
+        String modalidad = vista.getModalidad();
+        List<ErrorImportacion> erroresFila = new ArrayList<>();
+
+        for (FilaCruda fila : resultado.filas()) {
+            ItemPreview item = new ItemPreview();
+            item.numeroFila = fila.numeroFila();
+            item.sku = fila.sku();
+
+            int cantidad;
+            try {
+                cantidad = Integer.parseInt(fila.cantidadTexto());
+            } catch (NumberFormatException ex) {
+                item.estado = "❌ Cantidad no numérica";
+                item.esError = true;
+                itemsCargados.add(item);
+                erroresFila.add(new ErrorImportacion(fila.numeroFila(), fila.sku(),
+                        "Cantidad no numérica: '" + fila.cantidadTexto() + "'"));
+                continue;
             }
-        }
-        return filas;
-    }
+            item.cantidad = cantidad;
 
-    private List<String[]> leerCSV(String ruta) throws IOException {
-        List<String[]> filas = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(ruta))) {
-            String linea;
-            boolean primera = true;
-            while ((linea = br.readLine()) != null) {
-                if (primera) { primera = false; continue; } // saltar encabezado
-                String[] cols = linea.split("[,;]");
-                if (cols.length >= 2) {
-                    filas.add(new String[]{cols[0].trim(), cols[1].trim()});
+            if (cantidad == 0) {
+                item.estado = "❌ Cantidad cero no permitida";
+                item.esError = true;
+                itemsCargados.add(item);
+                erroresFila.add(new ErrorImportacion(fila.numeroFila(), fila.sku(), "Cantidad no puede ser cero"));
+                continue;
+            }
+            if (cantidad < 0 && !correccionAutorizada) {
+                item.estado = "❌ Negativo (requiere Corrección autorizada)";
+                item.esError = true;
+                itemsCargados.add(item);
+                erroresFila.add(new ErrorImportacion(fila.numeroFila(), fila.sku(),
+                        "Cantidad negativa sin autorización de Administrador"));
+                continue;
+            }
+
+            try {
+                Producto p = productoDAO.buscarPorSku(fila.sku());
+                if (p == null) {
+                    item.estado = "❌ SKU no encontrado";
+                    item.esError = true;
+                    itemsCargados.add(item);
+                    erroresFila.add(new ErrorImportacion(fila.numeroFila(), fila.sku(), "SKU no encontrado"));
+                    continue;
                 }
+
+                item.nombre = p.getNombre();
+                item.stockActual = p.getStockActual();
+                if (modalidad.contains("Sumar")) {
+                    item.stockProyectado = item.stockActual + cantidad;
+                } else if (modalidad.contains("Restar")) {
+                    item.stockProyectado = item.stockActual - cantidad;
+                } else {
+                    item.stockProyectado = cantidad;
+                }
+                item.estado = item.stockProyectado < 0 ? "⚠ Stock negativo" : "✅ OK";
+                itemsCargados.add(item);
+            } catch (SQLException ex) {
+                erroresFila.add(new ErrorImportacion(fila.numeroFila(), fila.sku(), "Error de BD: " + ex.getMessage()));
             }
         }
-        return filas;
+
+        marcarDuplicados();
+        refrescarTabla();
+
+        if (!erroresFila.isEmpty()) {
+            vista.mostrarError(erroresFila.size() + " error(es) de fila encontrados");
+        } else {
+            vista.limpiarError();
+        }
+        vista.getPanelErroresEstructura().cargarErrores(erroresFila);
+        vista.mostrarPaso2();
+    }
+
+    /** Marca visualmente (🔁) los ítems cuyo SKU se repite más de una vez en el archivo. */
+    private void marcarDuplicados() {
+        Map<String, List<ItemPreview>> porSku = new LinkedHashMap<>();
+        for (ItemPreview it : itemsCargados) {
+            if (it.esError) continue; // los ítems con error ya se muestran con su propio motivo
+            porSku.computeIfAbsent(it.sku.toUpperCase(), k -> new ArrayList<>()).add(it);
+        }
+        int grupos = 0;
+        for (List<ItemPreview> lista : porSku.values()) {
+            if (lista.size() > 1) {
+                grupos++;
+                for (ItemPreview it : lista) it.estado = "🔁 Duplicado (fila " + it.numeroFila + ")";
+            }
+        }
+        vista.mostrarAvisoDuplicados(grupos);
+    }
+
+    /**
+     * Resuelve los grupos de SKU duplicado: si consolidar=true, suma las
+     * cantidades de cada grupo en un solo ítem; si es false, excluye todos
+     * los ítems del grupo duplicado del ajuste.
+     */
+    private void resolverDuplicados(boolean consolidar) {
+        Map<String, List<ItemPreview>> porSku = new LinkedHashMap<>();
+        for (ItemPreview it : itemsCargados) {
+            if (it.estado != null && it.estado.startsWith("🔁"))
+                porSku.computeIfAbsent(it.sku.toUpperCase(), k -> new ArrayList<>()).add(it);
+        }
+
+        List<ItemPreview> nuevaLista = new ArrayList<>();
+        for (ItemPreview it : itemsCargados) {
+            boolean esDuplicado = it.estado != null && it.estado.startsWith("🔁");
+            if (!esDuplicado) {
+                nuevaLista.add(it);
+            }
+        }
+
+        if (consolidar) {
+            for (List<ItemPreview> grupo : porSku.values()) {
+                ItemPreview base = grupo.get(0);
+                int total = grupo.stream().mapToInt(i -> i.cantidad).sum();
+                base.cantidad = total;
+                String modalidad = vista.getModalidad();
+                if (modalidad.contains("Sumar")) base.stockProyectado = base.stockActual + total;
+                else if (modalidad.contains("Restar")) base.stockProyectado = base.stockActual - total;
+                else base.stockProyectado = total;
+                base.estado = base.stockProyectado < 0 ? "⚠ Stock negativo" : "✅ OK (consolidado)";
+                nuevaLista.add(base);
+            }
+        }
+        // si no consolida (excluir), simplemente no se vuelven a agregar
+
+        itemsCargados = nuevaLista;
+        vista.mostrarAvisoDuplicados(0);
+        refrescarTabla();
+    }
+
+    private void refrescarTabla() {
+        vista.limpiarPreview();
+        for (ItemPreview it : itemsCargados) {
+            vista.agregarFilaPreview(new Object[]{
+                    it.sku, it.nombre == null ? "" : it.nombre, it.stockActual,
+                    it.cantidad, it.stockProyectado, it.estado
+            });
+        }
     }
 
     private void confirmarAjuste() {
-        long errores = itemsCargados.stream()
-                .filter(i -> i[5].toString().startsWith("❌") || i[5].toString().startsWith("⚠"))
-                .count();
-        if (errores > 0) {
+        long errores = itemsCargados.stream().filter(i -> i.esError).count();
+        long advertencias = itemsCargados.stream()
+                .filter(i -> i.estado != null && i.estado.startsWith("⚠")).count();
+        if (errores > 0 || advertencias > 0) {
             int confirm = JOptionPane.showConfirmDialog(null,
-                    "Hay " + errores + " ítem(s) con error. ¿Continuar solo con los válidos?",
+                    "Hay " + (errores + advertencias) + " ítem(s) con error o advertencia. ¿Continuar solo con los válidos?",
                     "Confirmar", JOptionPane.YES_NO_OPTION);
             if (confirm != JOptionPane.YES_OPTION) return;
         }
 
         String modalidad = vista.getModalidad();
+        boolean correccionAutorizada = vista.isCorreccionAutorizada();
         try {
+            int idAjuste = servicio.crearCabeceraAjuste(modalidad);
             int aplicados = 0;
-            for (Object[] item : itemsCargados) {
-                if (item[5].toString().startsWith("✅")) {
-                    String sku      = (String) item[0];
-                    int    cantidad = (int)    item[3];
-                    servicio.ajustarStock(sku, cantidad, modalidad);
+            for (ItemPreview item : itemsCargados) {
+                if (item.estado != null && (item.estado.startsWith("✅"))) {
+                    servicio.ajustarStock(item.sku, item.cantidad, modalidad, correccionAutorizada);
+                    servicio.registrarItemAjuste(idAjuste, item.sku, item.cantidad,
+                            item.stockActual, item.stockProyectado);
                     aplicados++;
                 }
             }
@@ -215,8 +266,9 @@ public class ControladorAjusteInventario {
                     "Ajuste aplicado correctamente a " + aplicados + " producto(s).");
             vista.mostrarPaso1();
             vista.limpiarPreview();
+            vista.getPanelErroresEstructura().limpiar();
             itemsCargados.clear();
-        } catch (SQLException ex) {
+        } catch (SQLException | IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(null, "Error al aplicar ajuste: " + ex.getMessage());
         }
     }

@@ -18,8 +18,44 @@ public class ServicioInventario {
     private final MovimientoInventarioDAO movDAO         = new MovimientoInventarioDAO();
     private final AjusteInventarioDAO    ajusteDAO       = new AjusteInventarioDAO();
 
-    public void ajustarStock(String sku, int cantidad,
-                             String modalidad) throws SQLException {
+    /**
+     * Ingresa stock por la compra registrada en una factura ya validada
+     * (ítem con SKU resuelto). Genera el movimiento tipo 'Ingreso por compra'
+     * vinculado a la factura, para trazabilidad permanente.
+     */
+    public void registrarIngresoPorCompra(String sku, int cantidad, int idFactura) throws SQLException {
+        if (cantidad <= 0)
+            throw new IllegalArgumentException("La cantidad a ingresar debe ser mayor que cero");
+
+        Producto p = productoDAO.buscarPorSku(sku);
+        if (p == null) throw new IllegalArgumentException("SKU no encontrado: " + sku);
+
+        int stockAnterior   = p.getStockActual();
+        int stockResultante = stockAnterior + cantidad;
+        productoDAO.actualizarStock(sku, stockResultante);
+
+        MovimientoInventario mov = new MovimientoInventario();
+        mov.setSku(sku);
+        mov.setIdUsuario(SesionActual.getUsuario().getIdUsuario());
+        mov.setIdFactura(idFactura);
+        mov.setTipoMovimiento("Ingreso por compra");
+        mov.setStockAnterior(stockAnterior);
+        mov.setCantidadAplicada(cantidad);
+        mov.setStockResultante(stockResultante);
+        movDAO.insertar(mov);
+    }
+
+    /**
+     * Ajusta el stock de un producto. Si la cantidad resultante en el
+     * archivo es negativa, solo se permite cuando el llamador indica que
+     * fue autorizada explícitamente por un Administrador (correcciónAutorizada).
+     */
+    public void ajustarStock(String sku, int cantidad, String modalidad,
+                             boolean correccionAutorizada) throws SQLException {
+        if (cantidad < 0 && !correccionAutorizada)
+            throw new IllegalArgumentException(
+                    "Cantidad negativa no permitida sin Corrección autorizada (Administrador)");
+
         Producto p = productoDAO.buscarPorSku(sku);
         if (p == null) throw new IllegalArgumentException("SKU no encontrado: " + sku);
 
@@ -42,12 +78,19 @@ public class ServicioInventario {
         MovimientoInventario mov = new MovimientoInventario();
         mov.setSku(sku);
         mov.setIdUsuario(SesionActual.getUsuario().getIdUsuario());
-        mov.setTipoMovimiento(cantidad >= 0 ? "Ajuste positivo" : "Ajuste negativo");
+        // El tipo de movimiento se determina por el efecto real sobre el stock,
+        // no por el signo de la cantidad ingresada (evita etiquetar mal un "Restar").
+        mov.setTipoMovimiento(stockResultante >= stockAnterior ? "Ajuste positivo" : "Ajuste negativo");
         mov.setStockAnterior(stockAnterior);
         mov.setCantidadAplicada(cantidad);
         mov.setStockResultante(stockResultante);
         mov.setModalidadAjuste(modalidad);
         movDAO.insertar(mov);
+    }
+
+    /** Sobrecarga de compatibilidad: sin corrección autorizada (rechaza negativos). */
+    public void ajustarStock(String sku, int cantidad, String modalidad) throws SQLException {
+        ajustarStock(sku, cantidad, modalidad, false);
     }
 
     public int crearCabeceraAjuste(String modalidad) throws SQLException {

@@ -40,7 +40,8 @@ public class DBConexion {
     public Connection getConexion() throws SQLException {
         if (conexion == null || conexion.isClosed()) {
             String url = "jdbc:mariadb://" + host + ":" + port + "/" + nombre
-                    + "?useUnicode=true&characterEncoding=UTF-8";
+                    + "?useUnicode=true&characterEncoding=UTF-8"
+                    + "&allowPublicKeyRetrieval=true&useSsl=false";
             conexion = DriverManager.getConnection(url, usuario, contrasena);
         }
         return conexion;
