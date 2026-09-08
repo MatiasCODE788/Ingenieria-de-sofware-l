@@ -54,6 +54,30 @@ CREATE TABLE proveedor (
     CONSTRAINT uq_nombre_proveedor UNIQUE (nombre)
 ) ENGINE=InnoDB;
 
+CREATE TABLE auditoria_proveedor (
+    id_auditoria INT AUTO_INCREMENT,
+    id_proveedor INT NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    campo_modificado VARCHAR(50) NOT NULL,
+    valor_anterior VARCHAR(255),
+    valor_nuevo VARCHAR(255),
+    CONSTRAINT pk_auditoria_proveedor PRIMARY KEY (id_auditoria),
+    CONSTRAINT fk_auditoria_proveedor
+        FOREIGN KEY (id_proveedor)
+        REFERENCES proveedor(id_proveedor)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_auditoria_usuario
+        FOREIGN KEY (id_usuario)
+        REFERENCES usuario(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_auditoria_proveedor_fecha
+ON auditoria_proveedor(id_proveedor, fecha_hora);
+
 CREATE TABLE equivalencia (
     id_proveedor INT NOT NULL,
     codigo_interno_proveedor VARCHAR(50) NOT NULL,
@@ -154,12 +178,81 @@ CREATE TABLE movimiento_inventario (
         FOREIGN KEY (id_factura)
         REFERENCES factura(id_factura)
         ON UPDATE CASCADE
-        ON DELETE SET NULL -- Corregido de RESTRICT a SET NULL según la documentación
+        ON DELETE SET NULL 
 ) ENGINE=InnoDB;
 
 CREATE INDEX idx_mov_fecha 
 ON movimiento_inventario(fecha_hora);
 
+CREATE TABLE ajuste_inventario (
+    id_ajuste INT AUTO_INCREMENT,
+    fecha_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    modalidad_ajuste VARCHAR(30) NOT NULL,
+    estado_ajuste VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+    id_usuario INT NOT NULL,
+    CONSTRAINT pk_ajuste_inventario PRIMARY KEY (id_ajuste),
+    CONSTRAINT chk_modalidad_ajuste
+        CHECK (modalidad_ajuste IN ('Reemplazar stock actual', 'Sumar al stock actual', 'Restar al stock actual')),
+    CONSTRAINT chk_estado_ajuste
+        CHECK (estado_ajuste IN ('Pendiente', 'Aplicado', 'Revertido')),
+    CONSTRAINT fk_ajuste_usuario
+        FOREIGN KEY (id_usuario)
+        REFERENCES usuario(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+ 
+CREATE INDEX idx_ajuste_fecha
+ON ajuste_inventario(fecha_hora);
+ 
+CREATE TABLE item_ajuste (
+    id_item_ajuste INT AUTO_INCREMENT,
+    id_ajuste INT NOT NULL,
+    sku VARCHAR(30) NOT NULL,
+    cantidad_aplicada INT NOT NULL,
+    stock_anterior INT NOT NULL,
+    stock_resultante INT NOT NULL,
+    CONSTRAINT pk_item_ajuste PRIMARY KEY (id_item_ajuste),
+    CONSTRAINT chk_item_ajuste_cantidad CHECK (cantidad_aplicada <> 0),
+    CONSTRAINT chk_item_ajuste_stock_ant CHECK (stock_anterior >= 0),
+    CONSTRAINT chk_item_ajuste_stock_res CHECK (stock_resultante >= 0),
+    CONSTRAINT fk_item_ajuste_cabecera
+        FOREIGN KEY (id_ajuste)
+        REFERENCES ajuste_inventario(id_ajuste)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_item_ajuste_producto
+        FOREIGN KEY (sku)
+        REFERENCES producto(sku)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+ 
+CREATE TABLE log_archivo (
+    id_log INT AUTO_INCREMENT,
+    id_factura INT NULL,
+    id_usuario INT NOT NULL,
+    fecha_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    nombre_archivo VARCHAR(255) NOT NULL,
+    tipo_operacion VARCHAR(30) NOT NULL,
+    ruta_archivo VARCHAR(255) NOT NULL,
+    CONSTRAINT pk_log_archivo PRIMARY KEY (id_log),
+    CONSTRAINT chk_tipo_operacion
+        CHECK (tipo_operacion IN ('Carga', 'Reemplazo', 'Eliminación', 'Descarga')),
+    CONSTRAINT fk_log_factura
+        FOREIGN KEY (id_factura)
+        REFERENCES factura(id_factura)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_log_usuario
+        FOREIGN KEY (id_usuario)
+        REFERENCES usuario(id_usuario)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
+ 
+CREATE INDEX idx_log_fecha
+ON log_archivo(fecha_hora);
 -- ========================================================
 -- INSERTS (DML)
 -- ========================================================
@@ -170,10 +263,12 @@ VALUES
 ('Bodeguero'),
 ('Consulta');
 
+-- Contraseñas en texto plano de referencia: guido_admin/admin123, matias_bodega/bodega123
+-- El hash se genera con SHA2(<password>,256) para calzar con UsuarioDAO.autenticar()
 INSERT INTO usuario (username, password_hash, estado_activo, id_perfil)
 VALUES
-('guido_admin', '$2b$12$EixZaYVK1fsbw1ZfiDX3YO9WwF6fTz3eT3KzP9.68kH.e1N2145Wy', 1, 1),
-('matias_bodega', '$2b$12$Kjsdhfiuwyh438fnywe783yfhnw78eyfhnw78eyfhnw78eyfhnw78', 1, 2);
+('guido_admin', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 1, 1),
+('matias_bodega', '3e2388e8ceddc313076daab3e4eb98a3feb2c0da2464e9c632eff130483208eb', 1, 2);
 
 INSERT INTO producto (sku, nombre, codigo_barras, unidad_medida, stock_actual, estado)
 VALUES
@@ -209,3 +304,17 @@ INSERT INTO movimiento_inventario
 VALUES
 ('ABR-0001', 1, NULL, 'Ajuste positivo', 0, 120, 120, 'Reemplazar stock actual'),
 ('BEB-0001', 1, NULL, 'Ajuste positivo', 0, 85, 85, 'Reemplazar stock actual');
+
+INSERT INTO ajuste_inventario (modalidad_ajuste, estado_ajuste, id_usuario)
+VALUES
+('Reemplazar stock actual', 'Aplicado', 1);
+ 
+INSERT INTO item_ajuste (id_ajuste, sku, cantidad_aplicada, stock_anterior, stock_resultante)
+VALUES
+(1, 'ABR-0001', 120, 0, 120),
+(1, 'BEB-0001', 85, 0, 85);
+ 
+INSERT INTO log_archivo (id_factura, id_usuario, nombre_archivo, tipo_operacion, ruta_archivo)
+VALUES
+(1, 2, 'FAC-00336.pdf', 'Carga', '/facturas/2026/FAC-00336.pdf');
+

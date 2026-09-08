@@ -10,7 +10,6 @@ public class Main {
     public static void main(String[] args) {
 
         // Escalado para pantallas HiDPI (universal)
-        System.setProperty("sun.java2d.uiScale", "2.0");
         System.setProperty("awt.useSystemAAFontSettings", "on");
         System.setProperty("swing.aatext", "true");
 

@@ -80,16 +80,17 @@ public class ControladorProducto {
 
     private void guardarNuevo(VFormularioProducto form) {
         try {
+            int precio = Integer.parseInt(form.getPrecioVenta());
             Producto p = new Producto(
                     form.getSku(), form.getNombre(), form.getCodigoBarras(),
-                    form.getUnidad(), Integer.parseInt(form.getStock()), "Activo"
+                    form.getUnidad(), precio, Integer.parseInt(form.getStock()), "Activo"
             );
             servicio.registrar(p);
             form.dispose();
             cargarTodos();
             javax.swing.JOptionPane.showMessageDialog(null, "Producto registrado correctamente");
         } catch (NumberFormatException ex) {
-            form.mostrarError("El stock debe ser un número entero");
+            form.mostrarError("El stock y el precio deben ser números enteros");
         } catch (IllegalArgumentException | IllegalStateException ex) {
             form.mostrarError(ex.getMessage());
         } catch (SQLException ex) {
@@ -106,9 +107,11 @@ public class ControladorProducto {
             if (p == null) return;
             VFormularioProducto form = new VFormularioProducto(null, true);
             form.setDatos(p.getSku(), p.getNombre(), p.getCodigoBarras(),
-                    p.getUnidadMedida(), p.getStockActual(), p.getEstado());
+                    p.getUnidadMedida(), p.getPrecioVenta(), p.getStockActual(), p.getEstado());
             form.getBtnGuardar().addActionListener(e -> guardarEdicion(form, p));
             form.getBtnInactivar().addActionListener(e -> inactivar(form, sku));
+            if (form.getBtnEliminar() != null)
+                form.getBtnEliminar().addActionListener(e -> eliminar(form, sku));
             form.setVisible(true);
         } catch (SQLException ex) {
             mostrarError("Error al cargar producto: " + ex.getMessage());
@@ -120,11 +123,14 @@ public class ControladorProducto {
             original.setNombre(form.getNombre());
             original.setCodigoBarras(form.getCodigoBarras());
             original.setUnidadMedida(form.getUnidad());
+            original.setPrecioVenta(Integer.parseInt(form.getPrecioVenta()));
             original.setEstado(form.getEstado());
             servicio.modificar(original);
             form.dispose();
             cargarTodos();
             javax.swing.JOptionPane.showMessageDialog(null, "Producto actualizado correctamente");
+        } catch (NumberFormatException ex) {
+            form.mostrarError("El precio de venta debe ser un número entero");
         } catch (IllegalArgumentException ex) {
             form.mostrarError(ex.getMessage());
         } catch (SQLException ex) {
@@ -143,6 +149,25 @@ public class ControladorProducto {
                 cargarTodos();
             } catch (SQLException ex) {
                 mostrarError("Error al inactivar: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void eliminar(VFormularioProducto form, String sku) {
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(
+                null, "¿ELIMINAR definitivamente el producto " + sku + "?\nEsta acción no se puede deshacer.",
+                "Confirmar eliminación", javax.swing.JOptionPane.YES_NO_OPTION,
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            try {
+                servicio.eliminarProducto(sku);
+                form.dispose();
+                cargarTodos();
+                javax.swing.JOptionPane.showMessageDialog(null, "Producto eliminado correctamente");
+            } catch (SecurityException | IllegalStateException | IllegalArgumentException ex) {
+                javax.swing.JOptionPane.showMessageDialog(null, ex.getMessage());
+            } catch (SQLException ex) {
+                mostrarError("Error al eliminar: " + ex.getMessage());
             }
         }
     }
