@@ -16,16 +16,17 @@ public class FacturaDAO {
     public int insertar(Factura f) throws SQLException {
         String sql = """
             INSERT INTO factura (numero_factura, fecha_emision, estado,
-            ruta_archivo_digital, id_proveedor, id_usuario)
-            VALUES (?,?,?,?,?,?)
+            ruta_archivo_digital, valor_total, id_proveedor, id_usuario)
+            VALUES (?,?,?,?,?,?,?)
             """;
         try (PreparedStatement ps = getConexion().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, f.getNumeroFactura());
             ps.setDate  (2, Date.valueOf(f.getFechaEmision()));
             ps.setString(3, f.getEstado());
             ps.setString(4, f.getRutaArchivoDigital());
-            ps.setInt   (5, f.getIdProveedor());
-            ps.setInt   (6, f.getIdUsuario());
+            ps.setInt   (5, f.getValorTotal());
+            ps.setInt   (6, f.getIdProveedor());
+            ps.setInt   (7, f.getIdUsuario());
             ps.executeUpdate();
             ResultSet rs = ps.getGeneratedKeys();
             if (rs.next()) return rs.getInt(1);
@@ -138,6 +139,7 @@ public class FacturaDAO {
                 rs.getDate  ("fecha_emision").toLocalDate(),
                 rs.getString("estado"),
                 rs.getString("ruta_archivo_digital"),
+                rs.getInt   ("valor_total"),
                 rs.getInt   ("id_proveedor"),
                 rs.getInt   ("id_usuario"),
                 rs.getString("nombre_proveedor")

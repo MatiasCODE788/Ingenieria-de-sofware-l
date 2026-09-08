@@ -30,9 +30,13 @@ public class ControladorLogin {
             vista.mostrarError(ex.getMessage());
         } catch (SecurityException ex) {
             vista.mostrarError("Usuario o contraseña incorrectos");
-            vista.limpiarCampos();
+            // no llames limpiarCampos() aquí, o el mensaje se oculta al instante
         } catch (SQLException ex) {
+            ex.printStackTrace();
             vista.mostrarError("Error de conexión: " + ex.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            vista.mostrarError("Error inesperado: " + ex.getMessage());
         }
     }
 }
