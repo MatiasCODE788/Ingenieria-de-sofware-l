@@ -261,7 +261,7 @@ INSERT INTO perfil (nombre_perfil)
 VALUES 
 ('Administrador'),
 ('Bodeguero'),
-('Consulta');
+('Cajero');
 
 -- Contraseñas en texto plano de referencia: guido_admin/admin123, matias_bodega/bodega123
 -- El hash se genera con SHA2(<password>,256) para calzar con UsuarioDAO.autenticar()
