@@ -1,0 +1,3 @@
+Explicación DS‑14. Se recupera la equivalencia existente por su clave compuesta (id_proveedor, codigo_interno_proveedor) (1‑6). El usuario edita solo el campo sku (7), y antes de persistir el cambio modificar_equivalencia() valida que el nuevo SKU exista en producto (9‑10) — evita dejar una equivalencia apuntando a un producto inexistente. Luego ejecuta UPDATE equivalencia SET sku=%s WHERE id_proveedor=%s AND codigo_interno_proveedor=%s (11‑12) y confirma (13‑14).
+
+Flujo alternativo: si el paso 10 retorna que el SKU no existe, se detiene el flujo y se muestra "El SKU indicado no existe en el catálogo" en lugar de continuar al UPDATE.
