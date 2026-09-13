@@ -257,12 +257,12 @@ public class ControladorVenta {
 
         try {
             int idVenta = servicio.registrar(pagos, items);
-            JOptionPane.showMessageDialog(null, "✅ Venta #" + idVenta + " registrada correctamente");
+            JOptionPane.showMessageDialog(null, "Venta #" + idVenta + " registrada correctamente");
             vista.limpiarCarrito();
             vista.limpiarPagos();
             actualizarEstadoPago();
             cargarVentasDelDia();
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | SecurityException ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, "Error al registrar la venta: " + ex.getMessage());
@@ -292,7 +292,8 @@ public class ControladorVenta {
                 });
                 if ("Pagada".equals(v.getEstado())) totalDia += v.getMontoTotal();
             }
-            vista.setResumenDia(ventas.size() + " venta(s) — total $" + formatear(totalDia));
+            String alcance = SesionActual.esAdministrador() ? "Ventas del día" : "Mis ventas del día";
+            vista.setResumenDia(alcance + ": " + ventas.size() + " venta(s) — total $" + formatear(totalDia));
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, "Error al cargar ventas del día: " + ex.getMessage());
         }

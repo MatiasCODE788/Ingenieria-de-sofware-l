@@ -38,9 +38,24 @@ public class VentaDAO{
         }
     }
 
+    public Venta buscarPorIdParaActualizar(int idVenta) throws SQLException {
+        String sql = """
+            SELECT v.*, COALESCE(NULLIF(u.nombre_completo,''), u.username) AS nombre_usuario
+            FROM venta v JOIN usuario u ON v.id_usuario = u.id_usuario
+            WHERE v.id_venta=?
+            FOR UPDATE
+            """;
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setInt(1, idVenta);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return mapear(rs);
+        }
+        return null;
+    }
+
     public Venta buscarPorId(int idVenta) throws SQLException {
         String sql = """
-            SELECT v.*, u.username AS nombre_usuario
+            SELECT v.*, COALESCE(NULLIF(u.nombre_completo,''), u.username) AS nombre_usuario
             FROM venta v JOIN usuario u ON v.id_usuario = u.id_usuario
             WHERE v.id_venta=?
             """;
@@ -54,12 +69,29 @@ public class VentaDAO{
 
     public List<Venta> listarDelDia() throws SQLException {
         String sql = """
-            SELECT v.*, u.username AS nombre_usuario
+            SELECT v.*, COALESCE(NULLIF(u.nombre_completo,''), u.username) AS nombre_usuario
             FROM venta v JOIN usuario u ON v.id_usuario = u.id_usuario
             WHERE DATE(v.fecha_hora) = CURDATE()
             ORDER BY v.fecha_hora DESC
             """;
         return ejecutarLista(sql);
+    }
+
+    public List<Venta> listarDelDiaPorUsuario(int idUsuario) throws SQLException {
+        String sql = """
+            SELECT v.*, COALESCE(NULLIF(u.nombre_completo,''), u.username) AS nombre_usuario
+            FROM venta v JOIN usuario u ON v.id_usuario = u.id_usuario
+            WHERE DATE(v.fecha_hora) = CURDATE() AND v.id_usuario = ?
+            ORDER BY v.fecha_hora DESC
+            """;
+        List<Venta> lista = new ArrayList<>();
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setInt(1, idUsuario);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapear(rs));
+            }
+        }
+        return lista;
     }
 
     /** Total vendido HOY, agrupado por medio de pago real (según pago_venta; soporta pagos divididos). */

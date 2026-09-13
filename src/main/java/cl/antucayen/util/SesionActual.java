@@ -1,10 +1,13 @@
 package cl.antucayen.util;
 
 import cl.antucayen.model.entity.Usuario;
+import cl.antucayen.security.RolSistema;
 
-public class SesionActual {
+public final class SesionActual {
 
     private static Usuario usuarioActual;
+
+    private SesionActual() {}
 
     public static void iniciar(Usuario usuario) { usuarioActual = usuario; }
     public static void cerrar()                 { usuarioActual = null; }
@@ -15,15 +18,23 @@ public class SesionActual {
         return usuarioActual != null ? usuarioActual.getNombrePerfil() : "";
     }
 
+    public static RolSistema getRol() {
+        return RolSistema.desdeNombre(getPerfil());
+    }
+
     public static boolean esAdministrador() {
-        return "Administrador".equalsIgnoreCase(getPerfil());
+        return RolSistema.ADMINISTRADOR.coincide(getPerfil());
     }
 
     public static boolean esBodeguero() {
-        return "Bodeguero".equalsIgnoreCase(getPerfil());
+        return RolSistema.BODEGUERO.coincide(getPerfil());
     }
 
-    public static boolean esConsulta() {
-        return "Consulta".equalsIgnoreCase(getPerfil());
+    public static boolean esCajero() {
+        return RolSistema.CAJERO.coincide(getPerfil());
+    }
+
+    public static boolean esRolSoportado() {
+        return getRol() != null;
     }
 }

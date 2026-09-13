@@ -1,5 +1,6 @@
 package cl.antucayen.model.dao;
 
+import cl.antucayen.model.dto.ProductoVendido;
 import cl.antucayen.model.entity.ItemVenta;
 import cl.antucayen.util.DBConexion;
 
@@ -40,9 +41,6 @@ public class ItemVentaDAO {
         }
         return lista;
     }
-
-    /** Registro simple para el ranking de productos más vendidos del dashboard. */
-    public record ProductoVendido(String sku, String nombre, int cantidadTotal, int montoTotal) {}
 
     /** Top N productos más vendidos en el mes actual (solo ventas Pagadas). */
     public List<ProductoVendido> productosMasVendidosDelMes(int limite) throws SQLException {

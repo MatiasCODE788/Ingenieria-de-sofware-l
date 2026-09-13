@@ -12,14 +12,20 @@ public class AjusteInventarioDAO {
     }
 
     public int insertar(AjusteInventario a) throws SQLException {
-        String sql = "INSERT INTO ajuste_inventario (modalidad_ajuste, estado_ajuste, id_usuario) VALUES (?,?,?)";
+        String sql = """
+                INSERT INTO ajuste_inventario
+                (modalidad_ajuste, estado_ajuste, id_usuario, nombre_usuario)
+                VALUES (?,?,?,?)
+                """;
         try (PreparedStatement ps = getConexion().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, a.getModalidadAjuste());
             ps.setString(2, a.getEstadoAjuste());
-            ps.setInt   (3, a.getIdUsuario());
+            ps.setInt(3, a.getIdUsuario());
+            ps.setString(4, a.getNombreUsuario());
             ps.executeUpdate();
-            ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) return rs.getInt(1);
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) return rs.getInt(1);
+            }
         }
         return -1;
     }
@@ -28,20 +34,24 @@ public class AjusteInventarioDAO {
         String sql = "UPDATE ajuste_inventario SET estado_ajuste=? WHERE id_ajuste=?";
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
             ps.setString(1, estado);
-            ps.setInt   (2, idAjuste);
+            ps.setInt(2, idAjuste);
             ps.executeUpdate();
         }
     }
 
     public void insertarItem(int idAjuste, String sku, int cantidad,
                              int stockAnterior, int stockResultante) throws SQLException {
-        String sql = "INSERT INTO item_ajuste (id_ajuste, sku, cantidad_aplicada, stock_anterior, stock_resultante) VALUES (?,?,?,?,?)";
+        String sql = """
+                INSERT INTO item_ajuste
+                (id_ajuste, sku, cantidad_aplicada, stock_anterior, stock_resultante)
+                VALUES (?,?,?,?,?)
+                """;
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setInt   (1, idAjuste);
+            ps.setInt(1, idAjuste);
             ps.setString(2, sku);
-            ps.setInt   (3, cantidad);
-            ps.setInt   (4, stockAnterior);
-            ps.setInt   (5, stockResultante);
+            ps.setInt(3, cantidad);
+            ps.setInt(4, stockAnterior);
+            ps.setInt(5, stockResultante);
             ps.executeUpdate();
         }
     }

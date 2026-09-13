@@ -15,6 +15,14 @@ public class ControladorLogin {
     public ControladorLogin(VLogin vista) {
         this.vista = vista;
         vista.getBtnIngresar().addActionListener(e -> iniciarSesion());
+        vista.setOnTemaCambiado(this::recargarLoginConTemaActual);
+    }
+
+    private void recargarLoginConTemaActual() {
+        vista.dispose();
+        VLogin nuevaVista = new VLogin();
+        new ControladorLogin(nuevaVista);
+        nuevaVista.setVisible(true);
     }
 
     private void iniciarSesion() {
@@ -23,7 +31,7 @@ public class ControladorLogin {
         try {
             Usuario u = servicio.autenticar(username, password);
             vista.dispose();
-            VPrincipal principal = new VPrincipal(u.getUsername(), u.getNombrePerfil());
+            VPrincipal principal = new VPrincipal(u.getNombreCompleto(), u.getNombrePerfil());
             new ControladorPrincipal(principal);
             principal.setVisible(true);
         } catch (IllegalArgumentException ex) {

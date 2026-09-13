@@ -7,7 +7,7 @@ public class ItemVenta {
     private int    cantidad;
     private int    precioUnitarioVenta;
     private int    subtotal;
-    private String nombreProducto; // se carga con JOIN, solo lectura
+    private String nombreProducto; // campo derivado de JOIN; no se persiste desde esta entidad
 
     public ItemVenta() {}
 

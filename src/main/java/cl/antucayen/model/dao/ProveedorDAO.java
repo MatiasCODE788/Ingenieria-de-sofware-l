@@ -56,6 +56,35 @@ public class ProveedorDAO {
         return lista;
     }
 
+    public boolean existeRut(String rut) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM proveedor WHERE rut=?";
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setString(1, rut);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    public boolean existeNombreEnOtroProveedor(String nombre, int idProveedor) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM proveedor WHERE nombre=? AND id_proveedor<>?";
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            ps.setInt(2, idProveedor);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    public boolean existeRutEnOtroProveedor(String rut, int idProveedor) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM proveedor WHERE rut=? AND id_proveedor<>?";
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setString(1, rut);
+            ps.setInt(2, idProveedor);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
     public boolean existeNombre(String nombre) throws SQLException {
         String sql = "SELECT COUNT(*) FROM proveedor WHERE nombre=?";
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {

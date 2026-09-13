@@ -1,92 +1,111 @@
 package cl.antucayen.controller;
 
+import cl.antucayen.security.Autorizacion;
 import cl.antucayen.util.SesionActual;
 import cl.antucayen.view.*;
+
+import javax.swing.JOptionPane;
 
 public class ControladorPrincipal {
 
     private final VPrincipal vista;
 
     // Se cachea para que el carrito y los pagos en curso no se pierdan al cambiar de módulo y volver.
-    private VVentas         panelVentas;
+    private VVentas panelVentas;
     private ControladorVenta controladorVenta;
 
     public ControladorPrincipal(VPrincipal vista) {
         this.vista = vista;
         iniciarEventos();
-        // Mostrar dashboard al inicio
-        mostrarDashboard();
+        if (SesionActual.esAdministrador()) {
+            mostrarDashboard();
+        } else if (SesionActual.esBodeguero()) {
+            mostrarProductos();
+        } else if (SesionActual.esCajero()) {
+            mostrarVentas();
+        } else {
+            throw new SecurityException("Perfil de usuario no autorizado");
+        }
     }
 
     private void iniciarEventos() {
-        vista.getBtnDashboard().addActionListener(e -> mostrarDashboard());
+        vista.getBtnDashboard().addActionListener(e -> ejecutarSeguro(this::mostrarDashboard));
+        vista.getBtnVentas().addActionListener(e -> ejecutarSeguro(this::mostrarVentas));
 
-        vista.getBtnVentas().addActionListener(e -> mostrarVentas());
+        vista.getBtnProductos().addActionListener(e -> ejecutarSeguro(this::mostrarProductos));
 
-        vista.getBtnProductos().addActionListener(e -> {
-            VBuscadorProductos panel = new VBuscadorProductos();
-            new ControladorProducto(panel);
-            vista.setContenido(panel, "Productos");
-        });
-
-        vista.getBtnProveedores().addActionListener(e -> {
+        vista.getBtnProveedores().addActionListener(e -> ejecutarSeguro(() -> {
+            Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
             VBuscadorProveedores panel = new VBuscadorProveedores();
             new ControladorProveedor(panel);
             vista.setContenido(panel, "Proveedores");
-        });
+        }));
 
-        vista.getBtnEquivalencias().addActionListener(e -> {
+        vista.getBtnEquivalencias().addActionListener(e -> ejecutarSeguro(() -> {
+            Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
             VConsultaEquivalencias panel = new VConsultaEquivalencias();
             new ControladorProveedor(panel);
             vista.setContenido(panel, "Consulta de Equivalencias");
-        });
+        }));
 
-        vista.getBtnFacturas().addActionListener(e -> {
+        vista.getBtnFacturas().addActionListener(e -> ejecutarSeguro(() -> {
+            Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
             VFacturas panel = new VFacturas();
             new ControladorFactura(panel);
             vista.setContenido(panel, "Facturas");
-        });
+        }));
 
-        vista.getBtnProcesarFactura().addActionListener(e -> abrirProcesarFactura());
+        vista.getBtnProcesarFactura().addActionListener(e -> ejecutarSeguro(this::abrirProcesarFactura));
 
-        vista.getBtnImportarInventario().addActionListener(e -> {
+        vista.getBtnImportarInventario().addActionListener(e -> ejecutarSeguro(() -> {
+            Autorizacion.verificarAjustesInventario();
             VAjusteInventario panel = new VAjusteInventario();
             new ControladorAjusteInventario(panel);
             vista.setContenido(panel, "Importar Inventario");
-        });
+        }));
 
-        vista.getBtnHistorial().addActionListener(e -> {
+        vista.getBtnHistorial().addActionListener(e -> ejecutarSeguro(() -> {
+            Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
             VHistorial panel = new VHistorial();
             new ControladorHistorial(panel);
             vista.setContenido(panel, "Historial de Movimientos");
-        });
+        }));
 
-        vista.getBtnUsuarios().addActionListener(e -> {
+        vista.getBtnUsuarios().addActionListener(e -> ejecutarSeguro(() -> {
+            Autorizacion.verificarAdministrador("Solo el Administrador puede gestionar usuarios");
             VGestionUsuarios panel = new VGestionUsuarios();
             new ControladorUsuario(panel);
             vista.setContenido(panel, "Usuarios y Permisos");
-        });
+        }));
 
         vista.getBtnCerrarSesion().addActionListener(e -> cerrarSesion());
     }
 
-    /** Abre directamente el formulario de "Procesar Factura" (ingreso manual). */
     private void abrirProcesarFactura() {
+        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
         new ControladorFactura().abrirNuevaFactura();
     }
 
     private void mostrarDashboard() {
+        Autorizacion.verificarAdministrador("Solo el Administrador puede acceder al Dashboard global");
         VDashboard panel = new VDashboard();
         new ControladorDashboard(panel);
         vista.setContenido(panel, "Dashboard");
     }
 
+    private void mostrarProductos() {
+        Autorizacion.verificarConsultaStock();
+        VBuscadorProductos panel = new VBuscadorProductos();
+        new ControladorProducto(panel);
+        vista.setContenido(panel, "Productos / Stock");
+    }
+
     /**
-     * Muestra el Punto de Venta reutilizando siempre el mismo panel/controlador:
-     * así el carrito y los montos de pago ingresados no se pierden si el
-     * usuario navega a otro módulo (ej. a consultar Productos) y vuelve.
+     * Muestra el Punto de Venta reutilizando siempre el mismo panel/controlador.
+     * Sólo Administrador y Cajero pueden operar caja.
      */
     private void mostrarVentas() {
+        Autorizacion.verificarPuntoVenta();
         if (panelVentas == null) {
             panelVentas = new VVentas();
             controladorVenta = new ControladorVenta(panelVentas);
@@ -96,11 +115,19 @@ public class ControladorPrincipal {
         vista.setContenido(panelVentas, "Punto de Venta");
     }
 
+    private void ejecutarSeguro(Runnable accion) {
+        try {
+            accion.run();
+        } catch (SecurityException ex) {
+            JOptionPane.showMessageDialog(vista, ex.getMessage(), "Acceso denegado", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
     private void cerrarSesion() {
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(
+        int confirm = JOptionPane.showConfirmDialog(
                 vista, "¿Estás seguro que deseas cerrar sesión?",
-                "Cerrar sesión", javax.swing.JOptionPane.YES_NO_OPTION);
-        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+                "Cerrar sesión", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
             SesionActual.cerrar();
             vista.dispose();
             VLogin login = new VLogin();

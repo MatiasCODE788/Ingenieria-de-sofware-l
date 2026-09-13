@@ -1,8 +1,10 @@
 package cl.antucayen.view;
 
+import cl.antucayen.model.entity.ErrorImportacion;
 import cl.antucayen.model.entity.Factura;
 import cl.antucayen.model.entity.ItemFactura;
 import cl.antucayen.model.service.ServicioProcesamientoFactura.ResumenProcesamiento;
+import cl.antucayen.view.components.ComponentesSwing;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -11,20 +13,18 @@ import java.util.List;
 
 public class VProcesamientoFactura extends JDialog {
 
-    private JLabel  lblNumero;
-    private JLabel  lblProveedor;
-    private JTable  tblObservados;
+    private JLabel lblNumero;
+    private JLabel lblProveedor;
+    private JTable tblObservados;
     private DefaultTableModel modeloObservados;
     private JButton btnCorregir;
     private JButton btnReprocesar;
     private JButton btnCerrar;
-
     private JLabel lblLeidos;
     private JLabel lblValidos;
     private JLabel lblObservadosCount;
     private JLabel lblNoProcesados;
-
-    // Mapeo fila de la tabla -> idItem real, para saber cuál corregir
+    private VReporteErrores panelErrores;
     private List<Integer> idsPorFila;
 
     public VProcesamientoFactura(JFrame parent) {
@@ -33,14 +33,14 @@ public class VProcesamientoFactura extends JDialog {
     }
 
     private void initComponents() {
-        setSize(680, 560);
+        setSize(820, 720);
         setLocationRelativeTo(getParent());
         setResizable(false);
         setLayout(new BorderLayout());
 
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 14));
         header.setBackground(new Color(17, 24, 39));
-        JLabel lblTitulo = new JLabel("⚙️  Procesamiento de Factura");
+        JLabel lblTitulo = new JLabel("Procesamiento de Factura");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 15));
         lblTitulo.setForeground(Color.WHITE);
         header.add(lblTitulo);
@@ -54,29 +54,27 @@ public class VProcesamientoFactura extends JDialog {
         gbc.weightx = 0.5;
 
         gbc.gridx = 0; gbc.gridy = 0; cabecera.add(crearTitulo("Factura"), gbc);
-        gbc.gridx = 1;               cabecera.add(crearTitulo("Proveedor"), gbc);
-        lblNumero    = crearValor();
+        gbc.gridx = 1; cabecera.add(crearTitulo("Proveedor"), gbc);
+        lblNumero = crearValor();
         lblProveedor = crearValor();
         gbc.gridx = 0; gbc.gridy = 1; cabecera.add(lblNumero, gbc);
-        gbc.gridx = 1;               cabecera.add(lblProveedor, gbc);
+        gbc.gridx = 1; cabecera.add(lblProveedor, gbc);
 
-        // Resumen
         JPanel panelResumen = new JPanel(new GridLayout(1, 4, 8, 0));
         panelResumen.setBackground(Color.WHITE);
         panelResumen.setBorder(BorderFactory.createEmptyBorder(10, 24, 6, 24));
-        lblLeidos          = crearTarjetaResumen("Leídos", new Color(71, 85, 105));
-        lblValidos         = crearTarjetaResumen("Válidos", new Color(5, 150, 105));
-        lblObservadosCount = crearTarjetaResumen("Observados", new Color(217, 119, 6));
-        lblNoProcesados    = crearTarjetaResumen("No procesados", new Color(220, 38, 38));
+        lblLeidos = crearTarjetaResumen(new Color(71, 85, 105));
+        lblValidos = crearTarjetaResumen(new Color(5, 150, 105));
+        lblObservadosCount = crearTarjetaResumen(new Color(217, 119, 6));
+        lblNoProcesados = crearTarjetaResumen(new Color(220, 38, 38));
         panelResumen.add(envolverTarjeta(lblLeidos, "Leídos"));
         panelResumen.add(envolverTarjeta(lblValidos, "Válidos"));
         panelResumen.add(envolverTarjeta(lblObservadosCount, "Observados"));
         panelResumen.add(envolverTarjeta(lblNoProcesados, "No procesados"));
 
-        // Ítems observados
         JPanel panelObs = new JPanel(new BorderLayout(0, 6));
         panelObs.setBackground(Color.WHITE);
-        panelObs.setBorder(BorderFactory.createEmptyBorder(10, 24, 8, 24));
+        panelObs.setBorder(BorderFactory.createEmptyBorder(8, 24, 8, 24));
 
         JLabel lblObs = new JLabel("Ítems Observados (requieren corrección manual)");
         lblObs.setFont(new Font("Arial", Font.BOLD, 13));
@@ -84,23 +82,29 @@ public class VProcesamientoFactura extends JDialog {
 
         String[] cols = {"Código proveedor", "Cantidad", "Precio unitario", "Estado"};
         modeloObservados = new DefaultTableModel(cols, 0) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblObservados = VBuscadorProductos.crearTabla(modeloObservados);
+        tblObservados = ComponentesSwing.crearTabla(modeloObservados);
         JScrollPane scrollObs = new JScrollPane(tblObservados);
-        scrollObs.setPreferredSize(new Dimension(0, 180));
+        scrollObs.setPreferredSize(new Dimension(0, 155));
+        panelObs.add(lblObs, BorderLayout.NORTH);
+        panelObs.add(scrollObs, BorderLayout.CENTER);
 
-        panelObs.add(lblObs,      BorderLayout.NORTH);
-        panelObs.add(scrollObs,   BorderLayout.CENTER);
+        panelErrores = new VReporteErrores();
+        panelErrores.setBorder(BorderFactory.createEmptyBorder(4, 24, 8, 24));
 
-        JPanel centro = new JPanel(new BorderLayout());
-        centro.setBackground(Color.WHITE);
-        centro.add(cabecera,      BorderLayout.NORTH);
-        JPanel medio = new JPanel(new BorderLayout());
-        medio.setBackground(Color.WHITE);
-        medio.add(panelResumen, BorderLayout.NORTH);
-        medio.add(panelObs,     BorderLayout.CENTER);
-        centro.add(medio, BorderLayout.CENTER);
+        JPanel contenido = new JPanel();
+        contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
+        contenido.setBackground(Color.WHITE);
+        cabecera.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelResumen.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelObs.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelErrores.setAlignmentX(Component.LEFT_ALIGNMENT);
+        contenido.add(cabecera);
+        contenido.add(panelResumen);
+        contenido.add(panelObs);
+        contenido.add(panelErrores);
 
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 14));
         botones.setBackground(new Color(248, 250, 252));
@@ -120,7 +124,7 @@ public class VProcesamientoFactura extends JDialog {
         btnCorregir.setFocusPainted(false);
         btnCorregir.setBorderPainted(false);
 
-        btnReprocesar = new JButton("🔄 Reprocesar");
+        btnReprocesar = new JButton("Reprocesar");
         btnReprocesar.setFont(new Font("Arial", Font.BOLD, 12));
         btnReprocesar.setBackground(new Color(5, 150, 105));
         btnReprocesar.setForeground(Color.WHITE);
@@ -132,7 +136,9 @@ public class VProcesamientoFactura extends JDialog {
         botones.add(btnReprocesar);
 
         add(header, BorderLayout.NORTH);
-        add(centro, BorderLayout.CENTER);
+        add(new JScrollPane(contenido,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
         add(botones, BorderLayout.SOUTH);
     }
 
@@ -150,7 +156,7 @@ public class VProcesamientoFactura extends JDialog {
         return l;
     }
 
-    private JLabel crearTarjetaResumen(String texto, Color color) {
+    private JLabel crearTarjetaResumen(Color color) {
         JLabel l = new JLabel("0", SwingConstants.CENTER);
         l.setFont(new Font("Arial", Font.BOLD, 22));
         l.setForeground(color);
@@ -165,7 +171,7 @@ public class VProcesamientoFactura extends JDialog {
         lbl.setFont(new Font("Arial", Font.PLAIN, 11));
         lbl.setForeground(new Color(107, 114, 128));
         p.add(numero, BorderLayout.CENTER);
-        p.add(lbl,    BorderLayout.SOUTH);
+        p.add(lbl, BorderLayout.SOUTH);
         return p;
     }
 
@@ -194,7 +200,12 @@ public class VProcesamientoFactura extends JDialog {
         }
     }
 
-    /** @return idItem seleccionado en la tabla de observados, o -1 si no hay selección */
+    public void cargarErrores(List<ErrorImportacion> errores) {
+        panelErrores.cargarErrores(errores);
+        revalidate();
+        repaint();
+    }
+
     public int getIdItemSeleccionado() {
         int fila = tblObservados.getSelectedRow();
         if (fila < 0 || idsPorFila == null || fila >= idsPorFila.size()) return -1;
@@ -203,7 +214,19 @@ public class VProcesamientoFactura extends JDialog {
 
     public void habilitarCorreccion(boolean habilitar) {
         btnCorregir.setEnabled(habilitar);
-        btnCorregir.setToolTipText(habilitar ? null : "Solo un Administrador puede corregir equivalencias");
+        btnCorregir.setToolTipText(habilitar
+                ? null : "Solo un Administrador puede corregir equivalencias");
+    }
+
+    public void configurarFacturaProcesada(boolean procesada, boolean esAdministrador) {
+        btnReprocesar.setText(procesada ? "Reprocesar factura (Admin)" : "Reprocesar");
+        btnReprocesar.setToolTipText(procesada && !esAdministrador
+                ? "Factura ya procesada anteriormente; solo un Administrador puede autorizar el reproceso"
+                : null);
+        // Para Bodeguero se mantiene habilitado: al intentar reprocesar debe
+        // recibir explícitamente el mensaje de UR-53.
+        btnReprocesar.setEnabled(true);
+        btnCorregir.setEnabled(!procesada && esAdministrador);
     }
 
     public String pedirSkuCorreccion(String codigoProveedor) {
@@ -212,7 +235,7 @@ public class VProcesamientoFactura extends JDialog {
                 "Corregir equivalencia", JOptionPane.PLAIN_MESSAGE);
     }
 
-    public JButton getBtnCorregir()   { return btnCorregir; }
+    public JButton getBtnCorregir() { return btnCorregir; }
     public JButton getBtnReprocesar() { return btnReprocesar; }
-    public JButton getBtnCerrar()     { return btnCerrar; }
+    public JButton getBtnCerrar() { return btnCerrar; }
 }

@@ -60,18 +60,15 @@ public class ProductoDAO {
         }
     }
 
-    /**
-     * Elimina físicamente el producto. Solo debe usarse cuando NO tiene
-     * historial (ni movimientos, ni ítems de factura/venta) — si los tiene,
-     * la FK rechaza el DELETE y se propaga la SQLException para que el
-     * servicio lo traduzca en un mensaje amigable sugiriendo inactivar.
-     */
-    public void eliminarFisico(String sku) throws SQLException {
-        String sql = "DELETE FROM producto WHERE sku=?";
+    /** Lee y bloquea el producto hasta finalizar la transacción actual. */
+    public Producto buscarPorSkuParaActualizar(String sku) throws SQLException {
+        String sql = "SELECT * FROM producto WHERE sku=? FOR UPDATE";
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
             ps.setString(1, sku);
-            ps.executeUpdate();
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return mapear(rs);
         }
+        return null;
     }
 
     public Producto buscarPorSku(String sku) throws SQLException {
@@ -126,18 +123,6 @@ public class ProductoDAO {
         return lista;
     }
 
-    /** Productos activos cuyo stock actual es menor o igual al umbral indicado. */
-    public List<Producto> listarStockBajo(int umbral) throws SQLException {
-        String sql = "SELECT * FROM producto WHERE estado='Activo' AND stock_actual <= ? ORDER BY stock_actual ASC";
-        List<Producto> lista = new ArrayList<>();
-        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setInt(1, umbral);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) lista.add(mapear(rs));
-        }
-        return lista;
-    }
-
     /** Cantidad de productos activos en stock bajo (para la tarjeta del dashboard). */
     public int contarStockBajo(int umbral) throws SQLException {
         String sql = "SELECT COUNT(*) FROM producto WHERE estado='Activo' AND stock_actual <= ?";
@@ -167,6 +152,16 @@ public class ProductoDAO {
             if (rs.next()) return rs.getInt(1) > 0;
         }
         return false;
+    }
+
+    public boolean existeCodigoBarrasEnOtroProducto(String codigoBarras, String skuActual) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM producto WHERE codigo_barras=? AND sku<>?";
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setString(1, codigoBarras);
+            ps.setString(2, skuActual);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
     }
 
     private Producto mapear(ResultSet rs) throws SQLException {

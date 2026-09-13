@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.ComponentesSwing;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -61,10 +63,10 @@ public class VVentas extends JPanel {
                 BorderFactory.createEmptyBorder(6, 12, 6, 12)));
         txtBusqueda.setToolTipText("Escanea o escribe SKU, código de barras o nombre del producto");
 
-        btnAgregar = VBuscadorProductos.crearBoton("+ Agregar", new Color(5, 150, 105));
+        btnAgregar = ComponentesSwing.crearBoton("+ Agregar", new Color(5, 150, 105));
         btnAgregar.setPreferredSize(new Dimension(130, 40));
 
-        JLabel lblTitulo = new JLabel("🛒  Punto de Venta");
+        JLabel lblTitulo = new JLabel("Punto de Venta");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 18));
         lblTitulo.setForeground(new Color(17, 24, 39));
 
@@ -110,7 +112,7 @@ public class VVentas extends JPanel {
 
         JPanel izqCobro = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
         izqCobro.setBackground(Color.WHITE);
-        btnLimpiarCarrito = VBuscadorProductos.crearBoton("🗑 Vaciar carrito", new Color(107, 114, 128));
+        btnLimpiarCarrito = ComponentesSwing.crearBoton("Vaciar carrito", new Color(107, 114, 128));
         izqCobro.add(btnLimpiarCarrito);
 
         JPanel derTotal = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 6));
@@ -155,10 +157,10 @@ public class VVentas extends JPanel {
         JLabel lblAyudaChips = new JLabel("Pago único: ");
         lblAyudaChips.setFont(new Font("Arial", Font.PLAIN, 12));
         lblAyudaChips.setForeground(new Color(107, 114, 128));
-        btnChipEfectivo = VBuscadorProductos.crearBoton("Efectivo", new Color(5, 150, 105));
-        btnChipDebito   = VBuscadorProductos.crearBoton("Débito",   new Color(37, 99, 235));
-        btnChipCredito  = VBuscadorProductos.crearBoton("Crédito",  new Color(147, 51, 234));
-        btnLimpiarPagos = VBuscadorProductos.crearBoton("Limpiar", new Color(156, 163, 175));
+        btnChipEfectivo = ComponentesSwing.crearBoton("Efectivo", new Color(5, 150, 105));
+        btnChipDebito   = ComponentesSwing.crearBoton("Débito",   new Color(37, 99, 235));
+        btnChipCredito  = ComponentesSwing.crearBoton("Crédito",  new Color(147, 51, 234));
+        btnLimpiarPagos = ComponentesSwing.crearBoton("Limpiar", new Color(156, 163, 175));
         filaChips.add(lblAyudaChips);
         filaChips.add(btnChipEfectivo);
         filaChips.add(btnChipDebito);
@@ -183,7 +185,7 @@ public class VVentas extends JPanel {
         filaEstado.setBackground(new Color(249, 250, 251));
         filaEstado.add(lblRestante, BorderLayout.WEST);
 
-        btnCobrar = new JButton("💳  Cobrar");
+        btnCobrar = new JButton("Cobrar");
         btnCobrar.setFont(new Font("Arial", Font.BOLD, 15));
         btnCobrar.setBackground(new Color(5, 150, 105));
         btnCobrar.setForeground(Color.WHITE);
@@ -237,7 +239,7 @@ public class VVentas extends JPanel {
 
         JPanel topVentas = new JPanel(new BorderLayout());
         topVentas.setBackground(Color.WHITE);
-        JLabel lbl = new JLabel("📋  Ventas de hoy");
+        JLabel lbl = new JLabel("Ventas de hoy");
         lbl.setFont(new Font("Arial", Font.BOLD, 14));
         lbl.setForeground(new Color(17, 24, 39));
         lblResumenDia = new JLabel("");
@@ -246,14 +248,14 @@ public class VVentas extends JPanel {
         topVentas.add(lbl, BorderLayout.WEST);
         topVentas.add(lblResumenDia, BorderLayout.EAST);
 
-        String[] cols = {"ID", "Hora", "Vendedor", "Medio de pago", "Total", "Estado"};
+        String[] cols = {"ID", "Hora", "Usuario", "Medio de pago", "Total", "Estado"};
         modeloVentasDia = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblVentasDia = VBuscadorProductos.crearTabla(modeloVentasDia);
+        tblVentasDia = ComponentesSwing.crearTabla(modeloVentasDia);
         JScrollPane scroll = new JScrollPane(tblVentasDia);
 
-        JLabel ayuda = new JLabel("  💡 Doble clic en una venta 'Pagada' para anularla (solo Administrador)");
+        JLabel ayuda = new JLabel("  Doble clic en una venta 'Pagada' para anularla (solo Administrador)");
         ayuda.setFont(new Font("Arial", Font.ITALIC, 11));
         ayuda.setForeground(new Color(107, 114, 128));
 

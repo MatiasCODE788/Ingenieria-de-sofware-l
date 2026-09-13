@@ -1,59 +1,59 @@
-# Base de datos — Minimarket Antucayen
+# Base de datos Antucayen — versión definitiva
 
-## Estructura
+La aplicación utiliza MariaDB y valida al iniciar sesión que el esquema instalado corresponda al contrato `20260913`.
 
-```
-database/
-├── schema/
-│   └── 01_schema_base.sql        # Script base: crea toda la BD + datos de prueba (Incremento 1 + 2 ya fusionados)
-├── migrations/
-│   ├── 001_ventas.sql                    # Incremento 2: módulo de ventas
-│   ├── 002_pago_venta_dividido.sql       # Incremento 2: pagos divididos (requiere 001 aplicado antes)
-│   └── _ya_incorporadas_en_base/         # Migraciones antiguas que quedaron
-│                                          # incluidas dentro de 01_schema_base.sql
-│                                          # (se guardan solo como historial, no se ejecutan)
-└── design/
-    ├── *.mwb        # Modelos de MySQL Workbench
-    └── *.drawio     # Diagramas (despliegue, componentes, navegación)
+## Instalación nueva
+
+> **Advertencia:** `00_instalacion_completa.sql` elimina y vuelve a crear la base `minimarket`.
+
+Desde CMD de Windows:
+
+```cmd
+mariadb -u root -p < database\00_instalacion_completa.sql
 ```
 
-## Cómo levantar la base de datos desde cero (equipo nuevo)
+Desde PowerShell:
 
-1. Instalar/tener corriendo MariaDB.
-2. Ejecutar en orden:
-   ```
-   mysql -u root -p < database/schema/01_schema_base.sql
-   mysql -u root -p minimarket < database/migrations/001_ventas.sql
-   mysql -u root -p minimarket < database/migrations/002_pago_venta_dividido.sql
-   ```
-3. Crear el usuario de conexión de la app (si no existe):
-   ```sql
-   CREATE USER 'antucayen_app'@'%' IDENTIFIED BY 'Antucayen2026';
-   GRANT ALL PRIVILEGES ON minimarket.* TO 'antucayen_app'@'%';
-   FLUSH PRIVILEGES;
-   ```
-4. Copiar `src/main/resources/config.properties.example` como
-   `src/main/resources/config.properties` en ese equipo (este último NO se sube a git).
+```powershell
+Get-Content .\database\00_instalacion_completa.sql | mariadb -u root -p
+```
 
-## Credenciales de acceso a la aplicación (login dentro del sistema)
+No ejecutes migraciones después del instalador completo.
 
-Estas vienen precargadas por `01_schema_base.sql`:
+## Actualización de una instalación existente
 
-| Usuario         | Contraseña   | Perfil         |
-|-----------------|--------------|----------------|
-| guido_admin     | admin123     | Administrador  |
-| matias_bodega   | bodega123    | Bodeguero      |
+Primero realiza un respaldo. Luego ejecuta una sola vez:
 
-> Importante: el sistema valida con `SHA2(password, 256)` (ver `UsuarioDAO.autenticar`).
-> Si alguna vez agregas un usuario manualmente por SQL, el hash debe generarse igual:
-> `SHA2('la_contraseña', 256)` — nunca bcrypt ni otro algoritmo, o el login fallará
-> igual que pasaba antes con el seed viejo.
+```cmd
+mariadb -u root -p minimarket < database\migrations\001_actualizacion_v5_definitiva.sql
+```
 
-## Nota sobre `config.properties` y migrar de dispositivo
+La migración converge las columnas que requiere el código actual, incorpora el módulo de ventas, la relación producto-proveedor, los vínculos auditables de movimientos y normaliza el catálogo RBAC a los tres roles soportados.
 
-`config.properties` (el archivo real, con la contraseña de conexión) está en `.gitignore`
-a propósito — no debe subirse a git por seguridad. Lo que SÍ viaja con el repo es
-`config.properties.example`. Al migrar de dispositivo, solo copia ese `.example`
-a `config.properties` y listo: mientras crees el mismo usuario de MariaDB
-(`antucayen_app` / `Antucayen2026`) en el equipo nuevo, la conexión funcionará igual
-en cualquier dispositivo.
+## Usuario JDBC de la aplicación
+
+El usuario del sistema (`guido_admin`, `cajero_demo`, etc.) **no es** el usuario con que Java se conecta a MariaDB. Para una instalación local crea una cuenta JDBC con permisos sólo sobre `minimarket`:
+
+```sql
+CREATE USER IF NOT EXISTS 'antucayen_app'@'localhost' IDENTIFIED BY 'TU_PASSWORD_SEGURA';
+GRANT SELECT, INSERT, UPDATE, DELETE ON minimarket.* TO 'antucayen_app'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Luego copia `src/main/resources/config.properties.example` como `config.properties` y reemplaza la contraseña. Si el servidor identifica las conexiones TCP locales como `127.0.0.1`, crea/autoriza la cuenta para ese host o ajusta `db.host` a `localhost` según tu configuración de MariaDB.
+
+Alternativamente usa las variables de entorno `ANTUCAYEN_DB_*`; tienen prioridad sobre el archivo de propiedades.
+
+## Roles vigentes
+
+- **Administrador:** configuración, usuarios, Dashboard global, productos, proveedores, equivalencias, facturas, ajustes directos de inventario y supervisión del Punto de Venta.
+- **Bodeguero:** productos, proveedores, registro/procesamiento de facturas y consulta operacional. Puede registrar equivalencias iniciales; modificar/eliminar equivalencias existentes queda reservado al Administrador.
+- **Cajero:** Punto de Venta, cobros y consulta de productos/stock. No accede a edición de precios/productos, ajustes directos, proveedores, facturas de compra, reportes globales ni gestión de usuarios.
+
+## Usuarios de demostración
+
+- `guido_admin` / `admin123`
+- `matias_bodega` / `bodega123`
+- `cajero_demo` / `cajero123`
+
+Cambia estas contraseñas en un despliegue real.

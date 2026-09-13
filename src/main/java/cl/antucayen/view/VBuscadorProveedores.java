@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.ComponentesSwing;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -26,8 +28,8 @@ public class VBuscadorProveedores extends JPanel {
         txtBusqueda.setFont(new Font("Arial", Font.PLAIN, 13));
         txtBusqueda.setPreferredSize(new Dimension(280, 32));
 
-        btnBuscar = VBuscadorProductos.crearBoton("🔍 Buscar",       new Color(37, 99, 235));
-        btnNuevo  = VBuscadorProductos.crearBoton("+ Nuevo proveedor", new Color(5, 150, 105));
+        btnBuscar = ComponentesSwing.crearBoton("Buscar",       new Color(37, 99, 235));
+        btnNuevo  = ComponentesSwing.crearBoton("+ Nuevo proveedor", new Color(5, 150, 105));
 
         barraTop.add(new JLabel("Buscar:"));
         barraTop.add(txtBusqueda);
@@ -39,7 +41,7 @@ public class VBuscadorProveedores extends JPanel {
         modeloTabla = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblProveedores = VBuscadorProductos.crearTabla(modeloTabla);
+        tblProveedores = ComponentesSwing.crearTabla(modeloTabla);
         tblProveedores.getColumnModel().getColumn(0).setPreferredWidth(50);
         tblProveedores.getColumnModel().getColumn(1).setPreferredWidth(100);
         tblProveedores.getColumnModel().getColumn(2).setPreferredWidth(220);
@@ -47,7 +49,7 @@ public class VBuscadorProveedores extends JPanel {
         tblProveedores.getColumnModel().getColumn(4).setPreferredWidth(180);
 
         JScrollPane scroll = new JScrollPane(tblProveedores);
-        JLabel lblAyuda = new JLabel("  💡 Doble clic para editar");
+        JLabel lblAyuda = new JLabel("  Doble clic para editar");
         lblAyuda.setFont(new Font("Arial", Font.ITALIC, 12));
         lblAyuda.setForeground(new Color(107, 114, 128));
 

@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.ComponentesSwing;
+
 import cl.antucayen.model.entity.Proveedor;
 
 import javax.swing.*;
@@ -18,6 +20,7 @@ public class VFacturas extends JPanel {
     private JButton           btnLimpiar;
     private JButton           btnNueva;
     private JTable            tblFacturas;
+    private JLabel            lblAyuda;
     private DefaultTableModel modeloTabla;
 
     public VFacturas() { initComponents(); }
@@ -34,16 +37,16 @@ public class VFacturas extends JPanel {
         cmbFiltroProveedor = new JComboBox<>();
         cmbFiltroProveedor.setPreferredSize(new Dimension(160, 32));
         txtFiltroDesde = crearCampoFiltro(100);
-        txtFiltroDesde.setToolTipText("aaaa-mm-dd");
+        txtFiltroDesde.setToolTipText("dd-mm-aaaa");
         txtFiltroHasta = crearCampoFiltro(100);
-        txtFiltroHasta.setToolTipText("aaaa-mm-dd");
+        txtFiltroHasta.setToolTipText("dd-mm-aaaa");
         cmbFiltroEstado = new JComboBox<>(new String[]{"Todos", "Pendiente", "Procesada", "Observada"});
         cmbFiltroEstado.setFont(new Font("Arial", Font.PLAIN, 13));
         cmbFiltroEstado.setPreferredSize(new Dimension(120, 32));
 
-        btnBuscar  = VBuscadorProductos.crearBoton("🔍 Buscar",     new Color(37, 99, 235));
-        btnLimpiar = VBuscadorProductos.crearBoton("✕ Limpiar",    new Color(107, 114, 128));
-        btnNueva   = VBuscadorProductos.crearBoton("+ Nueva factura", new Color(5, 150, 105));
+        btnBuscar  = ComponentesSwing.crearBoton("Buscar",     new Color(37, 99, 235));
+        btnLimpiar = ComponentesSwing.crearBoton("Limpiar",    new Color(107, 114, 128));
+        btnNueva   = ComponentesSwing.crearBoton("+ Nueva factura", new Color(5, 150, 105));
         btnBuscar.setPreferredSize(new Dimension(90, 32));
         btnLimpiar.setPreferredSize(new Dimension(90, 32));
 
@@ -66,7 +69,7 @@ public class VFacturas extends JPanel {
         modeloTabla = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblFacturas = VBuscadorProductos.crearTabla(modeloTabla);
+        tblFacturas = ComponentesSwing.crearTabla(modeloTabla);
         tblFacturas.getColumnModel().getColumn(0).setPreferredWidth(50);
         tblFacturas.getColumnModel().getColumn(1).setPreferredWidth(120);
         tblFacturas.getColumnModel().getColumn(2).setPreferredWidth(100);
@@ -74,7 +77,7 @@ public class VFacturas extends JPanel {
         tblFacturas.getColumnModel().getColumn(4).setPreferredWidth(100);
 
         JScrollPane scroll = new JScrollPane(tblFacturas);
-        JLabel lblAyuda = new JLabel("  💡 Doble clic sobre una factura para ver su detalle y procesarla");
+        lblAyuda = new JLabel("  Doble clic sobre una factura para ver su detalle y procesarla");
         lblAyuda.setFont(new Font("Arial", Font.ITALIC, 12));
         lblAyuda.setForeground(new Color(107, 114, 128));
 
@@ -113,6 +116,13 @@ public class VFacturas extends JPanel {
         txtFiltroHasta.setText("");
         cmbFiltroEstado.setSelectedIndex(0);
         cmbFiltroProveedor.setSelectedIndex(0);
+    }
+
+    public void setModoSoloLectura(boolean soloLectura) {
+        btnNueva.setVisible(!soloLectura);
+        lblAyuda.setText(soloLectura
+                ? "  Doble clic sobre una factura para ver su detalle"
+                : "  Doble clic sobre una factura para ver su detalle y procesarla");
     }
 
     public JButton getBtnBuscar()     { return btnBuscar; }
