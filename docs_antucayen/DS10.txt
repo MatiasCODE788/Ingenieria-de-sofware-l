@@ -1,0 +1,2 @@
+Explicación DS‑10. El Administrador selecciona un proveedor (1); C_Proveedor recupera sus datos vía C_MYSQL con SELECT * FROM proveedor WHERE id_proveedor=%s (3‑5) y la vista precarga el formulario (6). Tras editar los campos (7), modificar_proveedor() ejecuta UPDATE proveedor SET nombre=%s, telefono=%s, correo_electronico=%s WHERE id_proveedor=%s (9), confirma la transacción (10‑11) y la vista muestra el mensaje de éxito (12).
+

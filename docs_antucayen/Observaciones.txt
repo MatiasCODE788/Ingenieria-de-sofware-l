@@ -1,0 +1,4 @@
+Observación de esquema: el RF‑10 exige "registrando fecha, hora y usuario de la modificación", pero la tabla proveedor del script Minimarket_scriptFinal.sql solo tiene (id_proveedor, rut, nombre, telefono, correo_electronico) — no hay columnas de auditoría. Antes de implementar este UR conviene agregar fecha_modificacion e id_usuario_modificacion a proveedor, o registrar el cambio en una tabla de auditoría nueva.
+Auditoría de proveedor (DS‑10): falta extender la tabla proveedor con columnas de fecha/usuario de modificación para cumplir literalmente RF‑10, o documentar que esa trazabilidad vive en otra tabla.
+Nombres reales de clases:C_Proveedor/C_Equivalencia siguiendo el patrón C_gestionar_producto de DS‑01. 
+nombres Spring Boot del diagrama de componentes (ProveedorController, ProveedorService, EquivalenciaRepository)
