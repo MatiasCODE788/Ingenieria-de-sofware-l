@@ -43,6 +43,22 @@ public class FacturaDAO {
         }
     }
 
+    public Factura buscarPorIdParaActualizar(int idFactura) throws SQLException {
+        String sql = """
+            SELECT f.*, p.nombre AS nombre_proveedor
+            FROM factura f
+            JOIN proveedor p ON f.id_proveedor = p.id_proveedor
+            WHERE f.id_factura=?
+            FOR UPDATE
+            """;
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setInt(1, idFactura);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return mapear(rs);
+        }
+        return null;
+    }
+
     public Factura buscarPorId(int idFactura) throws SQLException {
         String sql = """
             SELECT f.*, p.nombre AS nombre_proveedor
@@ -63,7 +79,7 @@ public class FacturaDAO {
             SELECT f.*, p.nombre AS nombre_proveedor
             FROM factura f
             JOIN proveedor p ON f.id_proveedor = p.id_proveedor
-            ORDER BY f.fecha_emision DESC
+            ORDER BY f.id_factura DESC
             """;
         List<Factura> lista = new ArrayList<>();
         try (PreparedStatement ps = getConexion().prepareStatement(sql);
@@ -79,7 +95,7 @@ public class FacturaDAO {
             FROM factura f
             JOIN proveedor p ON f.id_proveedor = p.id_proveedor
             WHERE f.estado=?
-            ORDER BY f.fecha_emision DESC
+            ORDER BY f.id_factura DESC
             """;
         List<Factura> lista = new ArrayList<>();
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
@@ -117,7 +133,7 @@ public class FacturaDAO {
         if (idProveedor != null && idProveedor > 0)    sqlBuilder.append(" AND f.id_proveedor = ?");
         if (desde != null)                             sqlBuilder.append(" AND f.fecha_emision >= ?");
         if (hasta != null)                             sqlBuilder.append(" AND f.fecha_emision <= ?");
-        sqlBuilder.append(" ORDER BY f.fecha_emision DESC");
+        sqlBuilder.append(" ORDER BY f.id_factura DESC");
 
         List<Factura> lista = new ArrayList<>();
         try (PreparedStatement ps = getConexion().prepareStatement(sqlBuilder.toString())) {

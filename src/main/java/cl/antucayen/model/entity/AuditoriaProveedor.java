@@ -10,7 +10,7 @@ public class AuditoriaProveedor {
     private String         campoModificado;
     private String         valorAnterior;
     private String         valorNuevo;
-    private String         nombreUsuario; // se carga con JOIN, solo lectura
+    private String         nombreUsuario; // campo derivado de JOIN; no se persiste desde esta entidad
 
     public AuditoriaProveedor() {}
 

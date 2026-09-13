@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.ComponentesSwing;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -52,19 +54,19 @@ public class VHistorial extends JPanel {
         txtHasta.setPreferredSize(new Dimension(100, 30));
         filtros.add(txtHasta);
 
-        btnFiltrar = VBuscadorProductos.crearBoton("🔍 Filtrar", new Color(37, 99, 235));
-        btnLimpiar = VBuscadorProductos.crearBoton("✖ Limpiar",  new Color(107, 114, 128));
+        btnFiltrar = ComponentesSwing.crearBoton("Filtrar", new Color(37, 99, 235));
+        btnLimpiar = ComponentesSwing.crearBoton("Limpiar",  new Color(107, 114, 128));
         btnFiltrar.setPreferredSize(new Dimension(100, 30));
         btnLimpiar.setPreferredSize(new Dimension(100, 30));
         filtros.add(btnFiltrar);
         filtros.add(btnLimpiar);
 
         String[] cols = {"Tipo", "Fecha/Hora", "SKU", "Producto",
-                "Stock anterior", "Cantidad", "Stock resultante", "Usuario"};
+                "Stock anterior", "Cantidad", "Stock resultante", "ID Usuario", "Usuario"};
         modeloTabla = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblMovimientos = VBuscadorProductos.crearTabla(modeloTabla);
+        tblMovimientos = ComponentesSwing.crearTabla(modeloTabla);
         tblMovimientos.getColumnModel().getColumn(0).setPreferredWidth(120);
         tblMovimientos.getColumnModel().getColumn(1).setPreferredWidth(140);
         tblMovimientos.getColumnModel().getColumn(2).setPreferredWidth(80);
@@ -72,7 +74,8 @@ public class VHistorial extends JPanel {
         tblMovimientos.getColumnModel().getColumn(4).setPreferredWidth(90);
         tblMovimientos.getColumnModel().getColumn(5).setPreferredWidth(80);
         tblMovimientos.getColumnModel().getColumn(6).setPreferredWidth(100);
-        tblMovimientos.getColumnModel().getColumn(7).setPreferredWidth(90);
+        tblMovimientos.getColumnModel().getColumn(7).setPreferredWidth(75);
+        tblMovimientos.getColumnModel().getColumn(8).setPreferredWidth(170);
 
         JScrollPane scroll = new JScrollPane(tblMovimientos);
         add(filtros, BorderLayout.NORTH);

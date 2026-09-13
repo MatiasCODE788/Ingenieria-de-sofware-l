@@ -1,5 +1,6 @@
 package cl.antucayen.view;
 
+import cl.antucayen.security.RolSistema;
 import cl.antucayen.util.GestorTemas;
 import cl.antucayen.util.Tema;
 
@@ -23,6 +24,11 @@ public class VPrincipal extends JFrame {
     private JButton btnHistorial;
     private JButton btnUsuarios;
     private JButton btnCerrarSesion;
+
+    private JLabel seccionFacturacion;
+    private JLabel seccionInventarioMasivo;
+    private JLabel seccionAnalisis;
+    private JLabel seccionAdministracion;
 
     private String perfil;
     private String username;
@@ -57,7 +63,7 @@ public class VPrincipal extends JFrame {
         JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 16));
         brand.setBackground(tema.sidebarFondo);
         brand.setMaximumSize(new Dimension(220, 64));
-        JLabel iconoBrand = new JLabel("🏪");
+        JLabel iconoBrand = new JLabel("");
         iconoBrand.setFont(new Font("Arial", Font.PLAIN, 24));
         JPanel brandTexto = new JPanel();
         brandTexto.setBackground(tema.sidebarFondo);
@@ -78,37 +84,40 @@ public class VPrincipal extends JFrame {
 
         // Secciones del menú
         menuPanel.add(crearSeccion("PRINCIPAL"));
-        btnDashboard = crearBotonMenu("📊  Dashboard");
+        btnDashboard = crearBotonMenu("Dashboard");
         menuPanel.add(btnDashboard);
 
-        menuPanel.add(crearSeccion("VENTAS"));
-        btnVentas = crearBotonMenu("🛒  Punto de Venta");
+        btnVentas = crearBotonMenu("Punto de Venta");
         menuPanel.add(btnVentas);
 
         menuPanel.add(crearSeccion("INVENTARIO"));
-        btnProductos  = crearBotonMenu("📦  Productos");
-        btnProveedores = crearBotonMenu("🏭  Proveedores");
-        btnEquivalencias = crearBotonMenu("🔗  Equivalencias");
+        btnProductos  = crearBotonMenu("Productos");
+        btnProveedores = crearBotonMenu("Proveedores");
+        btnEquivalencias = crearBotonMenu("Equivalencias");
         menuPanel.add(btnProductos);
         menuPanel.add(btnProveedores);
         menuPanel.add(btnEquivalencias);
 
-        menuPanel.add(crearSeccion("FACTURACIÓN"));
-        btnFacturas        = crearBotonMenu("📄  Facturas");
-        btnProcesarFactura = crearBotonMenu("⚙️  Procesar factura");
+        seccionFacturacion = crearSeccion("FACTURACIÓN");
+        menuPanel.add(seccionFacturacion);
+        btnFacturas        = crearBotonMenu("Facturas");
+        btnProcesarFactura = crearBotonMenu("Procesar factura");
         menuPanel.add(btnFacturas);
         menuPanel.add(btnProcesarFactura);
 
-        menuPanel.add(crearSeccion("INVENTARIO MASIVO"));
-        btnImportarInventario = crearBotonMenu("📂  Importar inventario");
+        seccionInventarioMasivo = crearSeccion("INVENTARIO MASIVO");
+        menuPanel.add(seccionInventarioMasivo);
+        btnImportarInventario = crearBotonMenu("Importar inventario");
         menuPanel.add(btnImportarInventario);
 
-        menuPanel.add(crearSeccion("ANÁLISIS"));
-        btnHistorial = crearBotonMenu("🕒  Historial");
+        seccionAnalisis = crearSeccion("ANÁLISIS");
+        menuPanel.add(seccionAnalisis);
+        btnHistorial = crearBotonMenu("Historial");
         menuPanel.add(btnHistorial);
 
-        menuPanel.add(crearSeccion("ADMINISTRACIÓN"));
-        btnUsuarios = crearBotonMenu("👥  Usuarios y permisos");
+        seccionAdministracion = crearSeccion("ADMINISTRACIÓN");
+        menuPanel.add(seccionAdministracion);
+        btnUsuarios = crearBotonMenu("Usuarios y permisos");
         menuPanel.add(btnUsuarios);
 
         menuPanel.add(Box.createVerticalGlue());
@@ -136,7 +145,7 @@ public class VPrincipal extends JFrame {
         btnCerrarSesion.setMaximumSize(new Dimension(200, 30));
         btnCerrarSesion.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton btnTema = new JButton("🎨 Cambiar tema");
+        JButton btnTema = new JButton("Cambiar tema");
         btnTema.setFont(new Font("Arial", Font.PLAIN, 11));
         btnTema.setForeground(tema.sidebarTextoInactivo);
         btnTema.setBackground(tema.sidebarHoverFondo);
@@ -177,7 +186,7 @@ public class VPrincipal extends JFrame {
 
         // Mensaje de bienvenida
         JLabel lblBienvenida = new JLabel(
-                "<html><center><br><br><span style='font-size:20px'>👋 Bienvenido, " + username + "</span>"
+                "<html><center><br><br><span style='font-size:20px'>Bienvenido, " + username + "</span>"
                         + "<br><br><span style='color:#6B7280'>Selecciona una opción del menú lateral</span></center></html>",
                 SwingConstants.CENTER
         );
@@ -233,13 +242,27 @@ public class VPrincipal extends JFrame {
     }
 
     private void configurarMenuSegunPerfil() {
-        boolean esAdmin    = "Administrador".equalsIgnoreCase(perfil);
-        boolean esBodeguero = "Bodeguero".equalsIgnoreCase(perfil);
+        boolean esAdmin = RolSistema.ADMINISTRADOR.coincide(perfil);
+        boolean esBodeguero = RolSistema.BODEGUERO.coincide(perfil);
+        boolean esCajero = RolSistema.CAJERO.coincide(perfil);
+        boolean perfilSoportado = esAdmin || esBodeguero || esCajero;
 
+        // Lista blanca RBAC: un perfil desconocido no recibe permisos por defecto.
+        btnDashboard.setVisible(esAdmin);
+        btnVentas.setVisible(esAdmin || esCajero);
+        btnProductos.setVisible(perfilSoportado);
+        btnProveedores.setVisible(esAdmin || esBodeguero);
+        btnEquivalencias.setVisible(esAdmin || esBodeguero);
         btnFacturas.setVisible(esAdmin || esBodeguero);
         btnProcesarFactura.setVisible(esAdmin || esBodeguero);
-        btnImportarInventario.setVisible(esAdmin || esBodeguero);
+        btnImportarInventario.setVisible(esAdmin);
+        btnHistorial.setVisible(esAdmin || esBodeguero);
         btnUsuarios.setVisible(esAdmin);
+
+        seccionFacturacion.setVisible(esAdmin || esBodeguero);
+        seccionInventarioMasivo.setVisible(esAdmin);
+        seccionAnalisis.setVisible(esAdmin || esBodeguero);
+        seccionAdministracion.setVisible(esAdmin);
     }
 
     /** Diálogo simple para elegir uno de los 5 temas; al confirmar, reabre la pantalla con el tema aplicado. */

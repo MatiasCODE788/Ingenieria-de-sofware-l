@@ -4,7 +4,7 @@ public class Equivalencia {
     private int    idProveedor;
     private String codigoInternoProveedor;
     private String sku;
-    private String nombreProveedor; // se carga con JOIN, solo lectura
+    private String nombreProveedor; // campo derivado de JOIN; no se persiste desde esta entidad
 
     public Equivalencia() {}
 

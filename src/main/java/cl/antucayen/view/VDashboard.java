@@ -1,6 +1,6 @@
 package cl.antucayen.view;
 
-import cl.antucayen.model.dao.ItemVentaDAO;
+import cl.antucayen.model.dto.ProductoVendido;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -17,7 +17,7 @@ public class VDashboard extends JPanel {
     private static final Color TEXTO_FUERTE = new Color(17, 24, 39);
 
     private static final NumberFormat CLP =
-            NumberFormat.getCurrencyInstance(Locale.of("es", "CL"));
+            NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CL"));
 
     // Tarjetas "clásicas"
     private JLabel lblProductosActivos;
@@ -78,10 +78,10 @@ public class VDashboard extends JPanel {
         filaVentas.add(crearTarjetaVentasHoy());
 
         lblVentasMes = new JLabel("—");
-        filaVentas.add(crearTarjeta("VENTAS DEL MES", lblVentasMes, new Color(147, 51, 234), "\uD83D\uDCC8"));
+        filaVentas.add(crearTarjeta("VENTAS DEL MES", lblVentasMes, new Color(147, 51, 234), ""));
 
         lblStockBajo = new JLabel("—");
-        cardStockBajo = crearTarjeta("STOCK BAJO", lblStockBajo, new Color(220, 38, 38), "\u26A0\uFE0F");
+        cardStockBajo = crearTarjeta("STOCK BAJO", lblStockBajo, new Color(220, 38, 38), "");
         filaVentas.add(cardStockBajo);
 
         // Fila 2: tarjetas clásicas (Productos activos / Facturas pendientes / Movimientos hoy)
@@ -94,11 +94,11 @@ public class VDashboard extends JPanel {
         lblMovimientosHoy     = new JLabel("—");
 
         filaClasica.add(crearTarjeta("PRODUCTOS ACTIVOS",  lblProductosActivos,
-                new Color(37, 99, 235),  "\uD83D\uDCE6"));
+                new Color(37, 99, 235),  ""));
         filaClasica.add(crearTarjeta("FACTURAS PENDIENTES", lblFacturasPendientes,
-                new Color(217, 119, 6),  "\uD83D\uDCC4"));
+                new Color(217, 119, 6),  ""));
         filaClasica.add(crearTarjeta("MOVIMIENTOS HOY",    lblMovimientosHoy,
-                new Color(5, 150, 105),  "\uD83D\uDCCB"));
+                new Color(5, 150, 105),  ""));
 
         // Fila 3: Top 5 productos más vendidos del mes
         JPanel panelTop5 = crearPanelTop5();
@@ -160,7 +160,7 @@ public class VDashboard extends JPanel {
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 11));
         lblTitulo.setForeground(TEXTO_SUAVE);
 
-        JLabel lblIcono = new JLabel("\uD83D\uDCB0");
+        JLabel lblIcono = new JLabel("");
         lblIcono.setFont(new Font("Arial", Font.PLAIN, 28));
         lblIcono.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -272,10 +272,10 @@ public class VDashboard extends JPanel {
         }
     }
 
-    public void setTopProductos(List<ItemVentaDAO.ProductoVendido> productos) {
+    public void setTopProductos(List<ProductoVendido> productos) {
         modeloTop5.setRowCount(0);
         int puesto = 1;
-        for (ItemVentaDAO.ProductoVendido p : productos) {
+        for (ProductoVendido p : productos) {
             modeloTop5.addRow(new Object[]{
                     puesto++,
                     p.sku(),

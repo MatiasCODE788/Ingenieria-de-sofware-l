@@ -12,6 +12,7 @@ public class VLogin extends JFrame {
     private JPasswordField txtPassword;
     private JButton        btnIngresar;
     private JLabel         lblError;
+    private Runnable        onTemaCambiado;
 
     private Tema tema = GestorTemas.getInstancia().getTema();
 
@@ -78,7 +79,7 @@ public class VLogin extends JFrame {
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Arial", Font.PLAIN, 18));
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString("🏪", (getWidth() - fm.stringWidth("🏪")) / 2,
+                g2.drawString("A", (getWidth() - fm.stringWidth("A")) / 2,
                         (getHeight() + fm.getAscent()) / 2 - 2);
             }
         };
@@ -226,8 +227,9 @@ public class VLogin extends JFrame {
             swatch.setCursor(new Cursor(Cursor.HAND_CURSOR));
             swatch.addActionListener(e -> {
                 GestorTemas.getInstancia().setTema(opcion);
-                dispose();
-                new VLogin().setVisible(true); // recarga la pantalla con el nuevo tema aplicado
+                if (onTemaCambiado != null) {
+                    onTemaCambiado.run();
+                }
             });
             panel.add(swatch);
         }
@@ -238,8 +240,12 @@ public class VLogin extends JFrame {
     public String  getPassword()    { return new String(txtPassword.getPassword()); }
     public JButton getBtnIngresar() { return btnIngresar; }
 
+    public void setOnTemaCambiado(Runnable onTemaCambiado) {
+        this.onTemaCambiado = onTemaCambiado;
+    }
+
     public void mostrarError(String msg) {
-        lblError.setText("⚠ " + msg);
+        lblError.setText(msg);
         lblError.setVisible(true);
     }
 

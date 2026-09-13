@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.ComponentesSwing;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -28,8 +30,8 @@ public class VConsultaEquivalencias extends JPanel {
         txtCodigo    = crearCampoFiltro(130);
         txtSku       = crearCampoFiltro(130);
 
-        btnBuscar  = VBuscadorProductos.crearBoton("🔍 Buscar",  new Color(37, 99, 235));
-        btnLimpiar = VBuscadorProductos.crearBoton("✕ Limpiar", new Color(107, 114, 128));
+        btnBuscar  = ComponentesSwing.crearBoton("Buscar",  new Color(37, 99, 235));
+        btnLimpiar = ComponentesSwing.crearBoton("Limpiar", new Color(107, 114, 128));
 
         barraTop.add(new JLabel("Proveedor:"));
         barraTop.add(txtProveedor);
@@ -45,13 +47,13 @@ public class VConsultaEquivalencias extends JPanel {
         modeloTabla = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblResultados = VBuscadorProductos.crearTabla(modeloTabla);
+        tblResultados = ComponentesSwing.crearTabla(modeloTabla);
         tblResultados.getColumnModel().getColumn(0).setPreferredWidth(220);
         tblResultados.getColumnModel().getColumn(1).setPreferredWidth(160);
         tblResultados.getColumnModel().getColumn(2).setPreferredWidth(160);
 
         JScrollPane scroll = new JScrollPane(tblResultados);
-        JLabel lblAyuda = new JLabel("  💡 Los tres filtros son opcionales y se combinan entre sí");
+        JLabel lblAyuda = new JLabel("  Los tres filtros son opcionales y se combinan entre sí");
         lblAyuda.setFont(new Font("Arial", Font.ITALIC, 12));
         lblAyuda.setForeground(new Color(107, 114, 128));
 

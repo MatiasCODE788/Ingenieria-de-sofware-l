@@ -5,9 +5,11 @@ import cl.antucayen.model.entity.Proveedor;
 import cl.antucayen.model.exception.EquivalenciaDuplicadaException;
 import cl.antucayen.model.service.ServicioEquivalencia;
 import cl.antucayen.model.service.ServicioProveedor;
+import cl.antucayen.security.Autorizacion;
 import cl.antucayen.view.VBuscadorProveedores;
 import cl.antucayen.view.VConsultaEquivalencias;
 import cl.antucayen.view.VFormularioProveedor;
+import cl.antucayen.util.SesionActual;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -23,13 +25,16 @@ public class ControladorProveedor {
 
     /** Modo "gestión de proveedores": buscador + alta/edición con equivalencias. */
     public ControladorProveedor(VBuscadorProveedores vista) {
+        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
         this.vistaBuscador = vista;
+        vista.getBtnNuevo().setEnabled(!SesionActual.esCajero());
         cargarTodos();
         iniciarEventosBuscador();
     }
 
     /** Modo "consulta de equivalencias": filtro combinado proveedor/código/SKU. */
     public ControladorProveedor(VConsultaEquivalencias vista) {
+        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
         this.vistaConsultaEquiv = vista;
         iniciarEventosConsulta();
         buscarEquivalencias(); // carga inicial sin filtros
@@ -79,6 +84,7 @@ public class ControladorProveedor {
     }
 
     private void abrirNuevo() {
+        if (SesionActual.esCajero()) return;
         VFormularioProveedor form = new VFormularioProveedor(null, false);
         form.getBtnGuardar().addActionListener(e -> guardarNuevo(form));
         form.getBtnAgregarEquiv().addActionListener(e ->
@@ -95,7 +101,7 @@ public class ControladorProveedor {
             form.dispose();
             cargarTodos();
             javax.swing.JOptionPane.showMessageDialog(null, "Proveedor registrado correctamente");
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
             form.mostrarError(ex.getMessage());
         } catch (SQLException ex) {
             form.mostrarError("Error al guardar: " + ex.getMessage());
@@ -103,6 +109,7 @@ public class ControladorProveedor {
     }
 
     private void abrirEdicion() {
+        if (SesionActual.esCajero()) return;
         int fila = vistaBuscador.getTblProveedores().getSelectedRow();
         if (fila < 0) return;
         int idProveedor = (int) vistaBuscador.getModeloTabla().getValueAt(fila, 0);
@@ -111,6 +118,9 @@ public class ControladorProveedor {
             if (p == null) return;
             VFormularioProveedor form = new VFormularioProveedor(null, true);
             form.setDatos(p.getRut(), p.getNombre(), p.getTelefono(), p.getCorreoElectronico());
+            form.configurarPermisosEquivalencias(
+                    SesionActual.esAdministrador() || SesionActual.esBodeguero(),
+                    SesionActual.esAdministrador());
 
             for (Equivalencia eq : servicioEquivalencia.listarPorProveedor(idProveedor))
                 form.agregarEquivalencia(eq.getCodigoInternoProveedor(), eq.getSku());
@@ -127,6 +137,7 @@ public class ControladorProveedor {
 
     private void guardarEdicion(VFormularioProveedor form, Proveedor original) {
         try {
+            original.setRut(form.getRut());
             original.setNombre(form.getNombre());
             original.setTelefono(form.getTelefono());
             original.setCorreoElectronico(form.getCorreo());
@@ -134,7 +145,7 @@ public class ControladorProveedor {
             form.dispose();
             cargarTodos();
             javax.swing.JOptionPane.showMessageDialog(null, "Proveedor actualizado correctamente");
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
             form.mostrarError(ex.getMessage());
         } catch (SQLException ex) {
             form.mostrarError("Error: " + ex.getMessage());
@@ -150,7 +161,7 @@ public class ControladorProveedor {
             Equivalencia eq = new Equivalencia(idProveedor, datos[0], datos[1]);
             servicioEquivalencia.registrar(eq);
             form.agregarEquivalencia(datos[0], datos[1]);
-        } catch (EquivalenciaDuplicadaException | IllegalArgumentException ex) {
+        } catch (EquivalenciaDuplicadaException | IllegalArgumentException | SecurityException ex) {
             javax.swing.JOptionPane.showMessageDialog(null, ex.getMessage());
         } catch (SQLException ex) {
             mostrarError(ex);
@@ -171,16 +182,13 @@ public class ControladorProveedor {
         if (datos == null) return;
 
         try {
-            // Si cambió el código, se trata como eliminar+crear (la PK es el código);
-            // si solo cambió el SKU, se actualiza en el mismo registro.
             if (!datos[0].equalsIgnoreCase(codigoActual)) {
-                servicioEquivalencia.eliminar(idProveedor, codigoActual);
-                servicioEquivalencia.registrar(new Equivalencia(idProveedor, datos[0], datos[1]));
+                servicioEquivalencia.cambiarCodigo(idProveedor, codigoActual, datos[0], datos[1]);
             } else {
                 servicioEquivalencia.modificar(idProveedor, codigoActual, datos[1]);
             }
             form.actualizarFilaEquivalencia(fila, datos[0], datos[1]);
-        } catch (EquivalenciaDuplicadaException | IllegalArgumentException ex) {
+        } catch (EquivalenciaDuplicadaException | IllegalArgumentException | SecurityException ex) {
             javax.swing.JOptionPane.showMessageDialog(null, ex.getMessage());
         } catch (SQLException ex) {
             mostrarError(ex);
@@ -197,6 +205,8 @@ public class ControladorProveedor {
         try {
             servicioEquivalencia.eliminar(idProveedor, codigo);
             form.getModeloEquiv().removeRow(fila);
+        } catch (SecurityException | IllegalArgumentException ex) {
+            javax.swing.JOptionPane.showMessageDialog(null, ex.getMessage());
         } catch (SQLException ex) {
             mostrarError(ex);
         }

@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.ComponentesSwing;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -35,7 +37,7 @@ public class VFormularioProveedor extends JDialog {
 
         JPanel header = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 14));
         header.setBackground(new Color(17, 24, 39));
-        JLabel lblTitulo = new JLabel(modoEdicion ? "✏️  Editar Proveedor" : "🏭  Nuevo Proveedor");
+        JLabel lblTitulo = new JLabel(modoEdicion ? " Editar Proveedor" : "Nuevo Proveedor");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 15));
         lblTitulo.setForeground(Color.WHITE);
         header.add(lblTitulo);
@@ -83,9 +85,9 @@ public class VFormularioProveedor extends JDialog {
 
         JPanel botonesEquiv = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         botonesEquiv.setBackground(Color.WHITE);
-        btnAgregarEquiv  = VBuscadorProductos.crearBoton("+ Agregar",  new Color(5, 150, 105));
-        btnEditarEquiv   = VBuscadorProductos.crearBoton("✎ Editar",   new Color(37, 99, 235));
-        btnEliminarEquiv = VBuscadorProductos.crearBoton("🗑 Eliminar", new Color(220, 38, 38));
+        btnAgregarEquiv  = ComponentesSwing.crearBoton("+ Agregar",  new Color(5, 150, 105));
+        btnEditarEquiv   = ComponentesSwing.crearBoton("Editar",   new Color(37, 99, 235));
+        btnEliminarEquiv = ComponentesSwing.crearBoton("Eliminar", new Color(220, 38, 38));
         btnAgregarEquiv.setPreferredSize(new Dimension(100, 28));
         btnEditarEquiv.setPreferredSize(new Dimension(90, 28));
         btnEliminarEquiv.setPreferredSize(new Dimension(100, 28));
@@ -100,7 +102,7 @@ public class VFormularioProveedor extends JDialog {
         modeloEquiv = new DefaultTableModel(colsEquiv, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        tblEquivalencias = VBuscadorProductos.crearTabla(modeloEquiv);
+        tblEquivalencias = ComponentesSwing.crearTabla(modeloEquiv);
         JScrollPane scrollEquiv = new JScrollPane(tblEquivalencias);
         scrollEquiv.setPreferredSize(new Dimension(0, 130));
 
@@ -163,6 +165,14 @@ public class VFormularioProveedor extends JDialog {
     public String getTelefono(){ return txtTelefono.getText().trim(); }
     public String getCorreo()  { return txtCorreo.getText().trim(); }
 
+    public void configurarPermisosEquivalencias(boolean puedeAgregar, boolean puedeModificar) {
+        btnAgregarEquiv.setEnabled(puedeAgregar);
+        btnEditarEquiv.setEnabled(puedeModificar);
+        btnEliminarEquiv.setEnabled(puedeModificar);
+        btnEditarEquiv.setToolTipText(puedeModificar ? null : "Solo el Administrador puede modificar equivalencias");
+        btnEliminarEquiv.setToolTipText(puedeModificar ? null : "Solo el Administrador puede eliminar equivalencias");
+    }
+
     public JButton getBtnGuardar()        { return btnGuardar; }
     public JButton getBtnCancelar()       { return btnCancelar; }
     public JButton getBtnAgregarEquiv()   { return btnAgregarEquiv; }
@@ -171,7 +181,7 @@ public class VFormularioProveedor extends JDialog {
     public JTable  getTblEquivalencias()  { return tblEquivalencias; }
     public DefaultTableModel getModeloEquiv() { return modeloEquiv; }
 
-    public void mostrarError(String msg) { lblError.setText("⚠ " + msg); lblError.setVisible(true); }
+    public void mostrarError(String msg) { lblError.setText("" + msg); lblError.setVisible(true); }
     public void limpiarError()           { lblError.setVisible(false); }
 
     public void setDatos(String rut, String nombre, String tel, String correo) {
@@ -240,7 +250,7 @@ public class VFormularioProveedor extends JDialog {
                         .anyMatch(c -> c.equalsIgnoreCase(codigoActual)
                                 && !c.equalsIgnoreCase(codigoInicial == null ? "" : codigoInicial));
                 if (duplicado) {
-                    lblDuplicado.setText("⚠ Ya existe una equivalencia con ese código para este proveedor");
+                    lblDuplicado.setText("Ya existe una equivalencia con ese código para este proveedor");
                     txtCodigo.setBorder(BorderFactory.createLineBorder(new Color(220, 38, 38), 2));
                 } else {
                     lblDuplicado.setText(" ");
