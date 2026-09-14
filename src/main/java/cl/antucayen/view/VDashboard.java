@@ -188,15 +188,12 @@ public class VDashboard extends JPanel {
         JPanel fila = new JPanel(new BorderLayout());
         fila.setBackground(Color.WHITE);
 
-        JLabel lblPunto = new JLabel("\u25CF ");
-        lblPunto.setForeground(color);
         JLabel lblNombre = new JLabel(nombre);
         lblNombre.setFont(new Font("Arial", Font.PLAIN, 12));
         lblNombre.setForeground(TEXTO_SUAVE);
 
         JPanel izquierda = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         izquierda.setBackground(Color.WHITE);
-        izquierda.add(lblPunto);
         izquierda.add(lblNombre);
 
         lblValor.setFont(new Font("Arial", Font.BOLD, 12));
@@ -228,8 +225,8 @@ public class VDashboard extends JPanel {
         };
         JTable tabla = new JTable(modeloTop5);
         tabla.setRowHeight(26);
-        tabla.setFont(new Font("Arial", Font.PLAIN, 12));
-        tabla.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        tabla.setFont(new Font("Arial", Font.PLAIN, 18));
+        tabla.getTableHeader().setFont(new Font("Arial", Font.BOLD, 18));
         tabla.setEnabled(false);
         tabla.setShowGrid(false);
         tabla.setIntercellSpacing(new Dimension(0, 0));
