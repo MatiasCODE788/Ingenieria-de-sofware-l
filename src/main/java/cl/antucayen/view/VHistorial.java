@@ -14,6 +14,7 @@ public class VHistorial extends JPanel {
     private JTextField        txtHasta;
     private JButton           btnFiltrar;
     private JButton           btnLimpiar;
+    private JButton           btnExportar;
     private JTable            tblMovimientos;
     private DefaultTableModel modeloTabla;
 
@@ -56,10 +57,13 @@ public class VHistorial extends JPanel {
 
         btnFiltrar = ComponentesSwing.crearBoton("Filtrar", new Color(37, 99, 235));
         btnLimpiar = ComponentesSwing.crearBoton("Limpiar",  new Color(107, 114, 128));
+        btnExportar = ComponentesSwing.crearBoton("Exportar CSV/Excel", new Color(5, 150, 105));
         btnFiltrar.setPreferredSize(new Dimension(100, 30));
         btnLimpiar.setPreferredSize(new Dimension(100, 30));
+        btnExportar.setPreferredSize(new Dimension(165, 30));
         filtros.add(btnFiltrar);
         filtros.add(btnLimpiar);
+        filtros.add(btnExportar);
 
         String[] cols = {"Tipo", "Fecha/Hora", "SKU", "Producto",
                 "Stock anterior", "Cantidad", "Stock resultante", "ID Usuario", "Usuario"};
@@ -95,6 +99,7 @@ public class VHistorial extends JPanel {
     public String  getHasta()          { return txtHasta.getText().trim(); }
     public JButton getBtnFiltrar()     { return btnFiltrar; }
     public JButton getBtnLimpiar()     { return btnLimpiar; }
+    public JButton getBtnExportar()    { return btnExportar; }
     public JTable  getTblMovimientos() { return tblMovimientos; }
     public DefaultTableModel getModeloTabla() { return modeloTabla; }
     public void limpiarTabla()             { modeloTabla.setRowCount(0); }
