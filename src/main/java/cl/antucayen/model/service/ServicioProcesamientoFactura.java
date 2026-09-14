@@ -24,242 +24,656 @@ public class ServicioProcesamientoFactura {
     private final FacturaDAO facturaDAO = new FacturaDAO();
     private final ServicioInventario servicioInventario = new ServicioInventario();
 
-    /** Primer análisis de equivalencias de una factura no Procesada. */
-    public ResumenProcesamiento procesarInicial(int idFactura, int idProveedor) throws SQLException {
-        Autorizacion.verificarGestionFacturas();
-        return procesarFacturaEditable(idFactura, idProveedor);
-    }
+    public ResumenProcesamiento resolverEquivalenciasAlRegistrar(
+            int idFactura,
+            int idProveedor) throws SQLException {
 
-    /** Repite el análisis de equivalencias mientras la factura no esté Procesada. */
-    public ResumenProcesamiento reprocesar(int idFactura, int idProveedor) throws SQLException {
         Autorizacion.verificarGestionFacturas();
-        return procesarFacturaEditable(idFactura, idProveedor);
-    }
 
-    /**
-     * Procesa de forma transaccional una factura Pendiente u Observada.
-     * - Si queda al menos un ítem Observado/No Procesado, la factura queda Observada y no toca stock.
-     * - Si todos los ítems quedan Válidos, genera los ingresos y pasa automáticamente a Procesada.
-     */
-    private ResumenProcesamiento procesarFacturaEditable(int idFactura,
-                                                          int idProveedor) throws SQLException {
         return DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
-            Factura factura = facturaDAO.buscarPorIdParaActualizar(idFactura);
+
+            Factura factura =
+                    facturaDAO.buscarPorIdParaActualizar(idFactura);
+
             validarFacturaEditable(factura, idProveedor);
 
-            List<ItemFactura> items = itemFacturaDAO.listarPorFactura(idFactura);
-            if (items.isEmpty()) throw new IllegalStateException("La factura no tiene ítems");
+            List<ItemFactura> items =
+                    itemFacturaDAO.listarPorFactura(idFactura);
 
-            List<ResolucionItem> resoluciones = resolverItems(items, idProveedor);
-            for (ResolucionItem resolucion : resoluciones) {
-                itemFacturaDAO.actualizarSkuYEstado(
-                        resolucion.item().getIdItem(), resolucion.sku(), resolucion.estado());
+            if (items.isEmpty()) {
+                throw new IllegalStateException(
+                        "La factura no tiene ítems"
+                );
             }
 
-            ResumenProcesamiento resumen = resumir(resoluciones);
-            if (resumen.observados() > 0 || resumen.noProcesados() > 0) {
-                facturaDAO.actualizarEstado(idFactura, "Observada");
+            List<ResolucionItem> resoluciones =
+                    resolverItems(items, idProveedor);
+
+            for (ResolucionItem resolucion : resoluciones) {
+                itemFacturaDAO.actualizarSkuYEstado(
+                        resolucion.item().getIdItem(),
+                        resolucion.sku(),
+                        resolucion.estado()
+                );
+            }
+
+            ResumenProcesamiento resumen =
+                    resumir(resoluciones);
+
+            if (resumen.observados() > 0
+                    || resumen.noProcesados() > 0) {
+
+                facturaDAO.actualizarEstado(
+                        idFactura,
+                        "Observada"
+                );
+
+            } else {
+
+                facturaDAO.actualizarEstado(
+                        idFactura,
+                        "Pendiente"
+                );
+            }
+
+            return resumen;
+        });
+    }
+
+    public ResumenProcesamiento procesarInicial(
+            int idFactura,
+            int idProveedor) throws SQLException {
+
+        Autorizacion.verificarGestionFacturas();
+
+        return procesarFacturaEditable(
+                idFactura,
+                idProveedor
+        );
+    }
+
+    public ResumenProcesamiento reprocesar(
+            int idFactura,
+            int idProveedor) throws SQLException {
+
+        Autorizacion.verificarGestionFacturas();
+
+        return procesarFacturaEditable(
+                idFactura,
+                idProveedor
+        );
+    }
+
+    private ResumenProcesamiento procesarFacturaEditable(
+            int idFactura,
+            int idProveedor) throws SQLException {
+
+        return DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
+
+            Factura factura =
+                    facturaDAO.buscarPorIdParaActualizar(idFactura);
+
+            validarFacturaEditable(
+                    factura,
+                    idProveedor
+            );
+
+            List<ItemFactura> items =
+                    itemFacturaDAO.listarPorFactura(idFactura);
+
+            if (items.isEmpty()) {
+                throw new IllegalStateException(
+                        "La factura no tiene ítems"
+                );
+            }
+
+            List<ResolucionItem> resoluciones =
+                    resolverItems(
+                            items,
+                            idProveedor
+                    );
+
+            for (ResolucionItem resolucion : resoluciones) {
+                itemFacturaDAO.actualizarSkuYEstado(
+                        resolucion.item().getIdItem(),
+                        resolucion.sku(),
+                        resolucion.estado()
+                );
+            }
+
+            ResumenProcesamiento resumen =
+                    resumir(resoluciones);
+
+            if (resumen.observados() > 0
+                    || resumen.noProcesados() > 0) {
+
+                facturaDAO.actualizarEstado(
+                        idFactura,
+                        "Observada"
+                );
+
                 return resumen;
             }
 
             for (ResolucionItem resolucion : resoluciones) {
-                ItemFactura item = resolucion.item();
+
+                ItemFactura item =
+                        resolucion.item();
+
                 servicioInventario.registrarIngresoPorCompra(
-                        resolucion.sku(), item.getCantidadFacturada(), idFactura, item.getIdItem());
+                        resolucion.sku(),
+                        item.getCantidadFacturada(),
+                        idFactura,
+                        item.getIdItem()
+                );
             }
-            facturaDAO.actualizarEstado(idFactura, "Procesada");
+
+            facturaDAO.actualizarEstado(
+                    idFactura,
+                    "Procesada"
+            );
+
             return resumen;
         });
     }
 
-    /**
-     * Reprocesamiento excepcional de una factura ya Procesada. Solo Administrador y siempre
-     * dentro de una única transacción. El proceso conserva la trazabilidad: revierte ingresos
-     * vigentes, recalcula equivalencias y aplica los nuevos ingresos sin eliminar el histórico.
-     */
-    public ResumenProcesamiento reprocesarProcesadaAutorizado(int idFactura,
-                                                               int idProveedor) throws SQLException {
+    public ResumenProcesamiento reprocesarProcesadaAutorizado(
+            int idFactura,
+            int idProveedor) throws SQLException {
+
         Autorizacion.verificarAdministrador(
-                "Solo un Administrador puede autorizar el reprocesamiento de una factura Procesada");
+                "Solo un Administrador puede autorizar el reprocesamiento de una factura Procesada"
+        );
 
         return DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
-            Factura factura = facturaDAO.buscarPorIdParaActualizar(idFactura);
-            if (factura == null) throw new IllegalArgumentException("La factura no existe");
-            if (factura.getIdProveedor() != idProveedor) {
+
+            Factura factura =
+                    facturaDAO.buscarPorIdParaActualizar(idFactura);
+
+            if (factura == null) {
                 throw new IllegalArgumentException(
-                        "El proveedor indicado no corresponde a la factura");
+                        "La factura no existe"
+                );
             }
-            if (!"Procesada".equals(factura.getEstado())) {
+
+            if (factura.getIdProveedor()
+                    != idProveedor) {
+
+                throw new IllegalArgumentException(
+                        "El proveedor indicado no corresponde a la factura"
+                );
+            }
+
+            if (!"Procesada".equals(
+                    factura.getEstado())) {
+
                 throw new IllegalStateException(
-                        "La autorización especial solo corresponde a una factura Procesada");
+                        "La autorización especial solo corresponde a una factura Procesada"
+                );
             }
 
-            List<ItemFactura> items = itemFacturaDAO.listarPorFactura(idFactura);
-            if (items.isEmpty()) throw new IllegalStateException("La factura no tiene ítems");
+            List<ItemFactura> items =
+                    itemFacturaDAO.listarPorFactura(idFactura);
 
-            List<ResolucionItem> resoluciones = resolverItems(items, idProveedor);
-            ResumenProcesamiento resumen = resumir(resoluciones);
-            if (resumen.observados() > 0 || resumen.noProcesados() > 0) {
+            if (items.isEmpty()) {
+                throw new IllegalStateException(
+                        "La factura no tiene ítems"
+                );
+            }
+
+            List<ResolucionItem> resoluciones =
+                    resolverItems(
+                            items,
+                            idProveedor
+                    );
+
+            ResumenProcesamiento resumen =
+                    resumir(resoluciones);
+
+            if (resumen.observados() > 0
+                    || resumen.noProcesados() > 0) {
+
                 throw new IllegalStateException(
                         "Reprocesamiento cancelado: existen ítems sin equivalencia o SKU válido. "
-                                + "Corrige las equivalencias y vuelve a autorizar el reprocesamiento.");
+                                + "Corrige las equivalencias y vuelve a autorizar el reprocesamiento."
+                );
             }
 
             for (ItemFactura item : items) {
-                servicioInventario.revertirIngresoPorCompraParaReproceso(
-                        idFactura, item.getIdItem());
+                servicioInventario
+                        .revertirIngresoPorCompraParaReproceso(
+                                idFactura,
+                                item.getIdItem()
+                        );
             }
 
             for (ResolucionItem resolucion : resoluciones) {
                 itemFacturaDAO.actualizarSkuYEstado(
-                        resolucion.item().getIdItem(), resolucion.sku(), resolucion.estado());
+                        resolucion.item().getIdItem(),
+                        resolucion.sku(),
+                        resolucion.estado()
+                );
             }
 
             for (ResolucionItem resolucion : resoluciones) {
-                ItemFactura item = resolucion.item();
+
+                ItemFactura item =
+                        resolucion.item();
+
                 servicioInventario.registrarIngresoPorCompra(
-                        resolucion.sku(), item.getCantidadFacturada(), idFactura, item.getIdItem());
+                        resolucion.sku(),
+                        item.getCantidadFacturada(),
+                        idFactura,
+                        item.getIdItem()
+                );
             }
-            facturaDAO.actualizarEstado(idFactura, "Procesada");
+
+            facturaDAO.actualizarEstado(
+                    idFactura,
+                    "Procesada"
+            );
+
             return resumen;
         });
     }
 
-    private void validarFacturaEditable(Factura factura, int idProveedor) {
-        if (factura == null) throw new IllegalArgumentException("La factura no existe");
-        if (factura.getIdProveedor() != idProveedor) {
-            throw new IllegalArgumentException("El proveedor indicado no corresponde a la factura");
+    private void validarFacturaEditable(
+            Factura factura,
+            int idProveedor) {
+
+        if (factura == null) {
+            throw new IllegalArgumentException(
+                    "La factura no existe"
+            );
         }
-        if ("Procesada".equals(factura.getEstado())) {
-            throw new IllegalStateException(ServicioFactura.MENSAJE_FACTURA_PROCESADA);
+
+        if (factura.getIdProveedor()
+                != idProveedor) {
+
+            throw new IllegalArgumentException(
+                    "El proveedor indicado no corresponde a la factura"
+            );
         }
-        if (!"Pendiente".equals(factura.getEstado()) && !"Observada".equals(factura.getEstado())) {
-            throw new IllegalStateException("La factura no se encuentra en un estado procesable");
+
+        if ("Procesada".equals(
+                factura.getEstado())) {
+
+            throw new IllegalStateException(
+                    ServicioFactura.MENSAJE_FACTURA_PROCESADA
+            );
+        }
+
+        if (!"Pendiente".equals(
+                factura.getEstado())
+                && !"Observada".equals(
+                factura.getEstado())) {
+
+            throw new IllegalStateException(
+                    "La factura no se encuentra en un estado procesable"
+            );
         }
     }
 
-    private List<ResolucionItem> resolverItems(List<ItemFactura> items,
-                                               int idProveedor) throws SQLException {
-        List<Equivalencia> equivalencias = equivalenciaDAO.listarPorProveedor(idProveedor);
-        List<ResolucionItem> resoluciones = new ArrayList<>();
+    private List<ResolucionItem> resolverItems(
+            List<ItemFactura> items,
+            int idProveedor) throws SQLException {
+
+        List<Equivalencia> equivalencias =
+                equivalenciaDAO.listarPorProveedor(
+                        idProveedor
+                );
+
+        List<ResolucionItem> resoluciones =
+                new ArrayList<>();
 
         for (ItemFactura item : items) {
-            String codigo = item.getCodigoInternoProveedor();
-            if (codigo == null || codigo.isBlank()) {
-                String skuActual = item.getSku();
-                if (skuActual != null && !skuActual.isBlank() && esProductoActivo(skuActual)) {
-                    resoluciones.add(new ResolucionItem(item, skuActual, "Válido"));
+
+            String codigo =
+                    item.getCodigoInternoProveedor();
+
+            if (codigo == null
+                    || codigo.isBlank()) {
+
+                String skuActual =
+                        item.getSku();
+
+                if (skuActual != null
+                        && !skuActual.isBlank()
+                        && esProductoActivo(
+                        skuActual)) {
+
+                    resoluciones.add(
+                            new ResolucionItem(
+                                    item,
+                                    skuActual,
+                                    "Válido"
+                            )
+                    );
+
                 } else {
-                    resoluciones.add(new ResolucionItem(item, null, "No Procesado"));
+
+                    resoluciones.add(
+                            new ResolucionItem(
+                                    item,
+                                    null,
+                                    "No Procesado"
+                            )
+                    );
                 }
+
                 continue;
             }
 
-            Equivalencia equivalencia = buscarEquivalencia(equivalencias, codigo);
-            if (equivalencia != null && esProductoActivo(equivalencia.getSku())) {
-                resoluciones.add(new ResolucionItem(item, equivalencia.getSku(), "Válido"));
+            Equivalencia equivalencia =
+                    buscarEquivalencia(
+                            equivalencias,
+                            codigo
+                    );
+
+            if (equivalencia != null
+                    && esProductoActivo(
+                    equivalencia.getSku())) {
+
+                resoluciones.add(
+                        new ResolucionItem(
+                                item,
+                                equivalencia.getSku(),
+                                "Válido"
+                        )
+                );
+
             } else {
-                resoluciones.add(new ResolucionItem(item, null, "Observado"));
+
+                resoluciones.add(
+                        new ResolucionItem(
+                                item,
+                                null,
+                                "Observado"
+                        )
+                );
             }
         }
+
         return resoluciones;
     }
 
-    private boolean esProductoActivo(String sku) throws SQLException {
-        Producto producto = productoDAO.buscarPorSku(sku);
-        return producto != null && "Activo".equals(producto.getEstado());
+    private boolean esProductoActivo(
+            String sku) throws SQLException {
+
+        Producto producto =
+                productoDAO.buscarPorSku(
+                        sku
+                );
+
+        return producto != null
+                && "Activo".equals(
+                producto.getEstado()
+        );
     }
 
-    private ResumenProcesamiento resumir(List<ResolucionItem> resoluciones) {
-        int validos = (int) resoluciones.stream()
-                .filter(r -> "Válido".equals(r.estado())).count();
-        int observados = (int) resoluciones.stream()
-                .filter(r -> "Observado".equals(r.estado())).count();
-        int noProcesados = (int) resoluciones.stream()
-                .filter(r -> "No Procesado".equals(r.estado())).count();
+    private ResumenProcesamiento resumir(
+            List<ResolucionItem> resoluciones) {
+
+        int validos =
+                (int) resoluciones.stream()
+                        .filter(
+                                r ->
+                                        "Válido".equals(
+                                                r.estado()
+                                        )
+                        )
+                        .count();
+
+        int observados =
+                (int) resoluciones.stream()
+                        .filter(
+                                r ->
+                                        "Observado".equals(
+                                                r.estado()
+                                        )
+                        )
+                        .count();
+
+        int noProcesados =
+                (int) resoluciones.stream()
+                        .filter(
+                                r ->
+                                        "No Procesado".equals(
+                                                r.estado()
+                                        )
+                        )
+                        .count();
+
         return new ResumenProcesamiento(
-                resoluciones.size(), validos, observados, noProcesados);
+                resoluciones.size(),
+                validos,
+                observados,
+                noProcesados
+        );
     }
 
-    private Equivalencia buscarEquivalencia(List<Equivalencia> equivalencias,
-                                             String codigoInterno) {
+    private Equivalencia buscarEquivalencia(
+            List<Equivalencia> equivalencias,
+            String codigoInterno) {
+
         return equivalencias.stream()
-                .filter(e -> e.getCodigoInternoProveedor().equalsIgnoreCase(codigoInterno))
+                .filter(
+                        e ->
+                                e.getCodigoInternoProveedor()
+                                        .equalsIgnoreCase(
+                                                codigoInterno
+                                        )
+                )
                 .findFirst()
                 .orElse(null);
     }
 
-    /** Corrige de forma atómica una equivalencia manual. Solo Administrador. */
-    public void corregirEquivalenciaManual(int idItem, int idProveedor,
-                                           String nuevoSku) throws SQLException {
+    public void corregirEquivalenciaManual(
+            int idItem,
+            int idProveedor,
+            String nuevoSku) throws SQLException {
+
         Autorizacion.verificarAdministrador(
-                "Solo un Administrador puede corregir equivalencias manualmente");
+                "Solo un Administrador puede corregir equivalencias manualmente"
+        );
+
         DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
-            ItemFactura item = itemFacturaDAO.buscarPorId(idItem);
-            if (item == null) throw new IllegalArgumentException("El ítem no existe");
 
-            Factura factura = facturaDAO.buscarPorIdParaActualizar(item.getIdFactura());
-            validarFacturaEditable(factura, idProveedor);
+            ItemFactura item =
+                    itemFacturaDAO.buscarPorId(
+                            idItem
+                    );
 
-            if (nuevoSku == null || nuevoSku.isBlank()) {
-                throw new IllegalArgumentException("Debes indicar un SKU válido");
-            }
-            if (!esProductoActivo(nuevoSku)) {
+            if (item == null) {
                 throw new IllegalArgumentException(
-                        "El SKU no existe o el producto se encuentra Inactivo: " + nuevoSku);
+                        "El ítem no existe"
+                );
             }
 
-            String codigoProveedor = item.getCodigoInternoProveedor();
-            if (codigoProveedor != null && !codigoProveedor.isBlank()) {
-                if (equivalenciaDAO.existe(idProveedor, codigoProveedor)) {
-                    equivalenciaDAO.actualizarSku(idProveedor, codigoProveedor, nuevoSku);
+            Factura factura =
+                    facturaDAO.buscarPorIdParaActualizar(
+                            item.getIdFactura()
+                    );
+
+            validarFacturaEditable(
+                    factura,
+                    idProveedor
+            );
+
+            if (nuevoSku == null
+                    || nuevoSku.isBlank()) {
+
+                throw new IllegalArgumentException(
+                        "Debes indicar un SKU válido"
+                );
+            }
+
+            if (!esProductoActivo(
+                    nuevoSku)) {
+
+                throw new IllegalArgumentException(
+                        "El SKU no existe o el producto se encuentra Inactivo: "
+                                + nuevoSku
+                );
+            }
+
+            String codigoProveedor =
+                    item.getCodigoInternoProveedor();
+
+            if (codigoProveedor != null
+                    && !codigoProveedor.isBlank()) {
+
+                if (equivalenciaDAO.existe(
+                        idProveedor,
+                        codigoProveedor)) {
+
+                    equivalenciaDAO.actualizarSku(
+                            idProveedor,
+                            codigoProveedor,
+                            nuevoSku
+                    );
+
                 } else {
+
                     equivalenciaDAO.insertar(
-                            new Equivalencia(idProveedor, codigoProveedor, nuevoSku));
+                            new Equivalencia(
+                                    idProveedor,
+                                    codigoProveedor,
+                                    nuevoSku
+                            )
+                    );
                 }
             }
-            itemFacturaDAO.actualizarSkuYEstado(idItem, nuevoSku, "Válido");
+
+            itemFacturaDAO.actualizarSkuYEstado(
+                    idItem,
+                    nuevoSku,
+                    "Válido"
+            );
+
             return null;
         });
     }
 
-    public ResumenProcesamiento obtenerResumen(int idFactura) throws SQLException {
-        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
-        List<ItemFactura> items = itemFacturaDAO.listarPorFactura(idFactura);
-        int leidos = items.size();
-        int validos = (int) items.stream()
-                .filter(i -> "Válido".equals(i.getEstadoItem())).count();
-        int observados = (int) items.stream()
-                .filter(i -> "Observado".equals(i.getEstadoItem())).count();
-        int noProcesados = (int) items.stream()
-                .filter(i -> "No Procesado".equals(i.getEstadoItem())).count();
-        return new ResumenProcesamiento(leidos, validos, observados, noProcesados);
+    public ResumenProcesamiento obtenerResumen(
+            int idFactura) throws SQLException {
+
+        Autorizacion.verificarAdministradorOBodeguero(
+                Autorizacion.ACCESO_DENEGADO
+        );
+
+        List<ItemFactura> items =
+                itemFacturaDAO.listarPorFactura(
+                        idFactura
+                );
+
+        int leidos =
+                items.size();
+
+        int validos =
+                (int) items.stream()
+                        .filter(
+                                i ->
+                                        "Válido".equals(
+                                                i.getEstadoItem()
+                                        )
+                        )
+                        .count();
+
+        int observados =
+                (int) items.stream()
+                        .filter(
+                                i ->
+                                        "Observado".equals(
+                                                i.getEstadoItem()
+                                        )
+                        )
+                        .count();
+
+        int noProcesados =
+                (int) items.stream()
+                        .filter(
+                                i ->
+                                        "No Procesado".equals(
+                                                i.getEstadoItem()
+                                        )
+                        )
+                        .count();
+
+        return new ResumenProcesamiento(
+                leidos,
+                validos,
+                observados,
+                noProcesados
+        );
     }
 
-    /** Reporte reutilizable para RF-55: cualquier ítem con error de procesamiento. */
-    public List<ErrorImportacion> obtenerErroresProcesamiento(int idFactura) throws SQLException {
-        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
-        List<ErrorImportacion> errores = new ArrayList<>();
-        for (ItemFactura item : itemFacturaDAO.listarPorFactura(idFactura)) {
-            String codigo = item.getCodigoInternoProveedor() == null
-                    ? "" : item.getCodigoInternoProveedor();
-            if ("Observado".equals(item.getEstadoItem())) {
-                errores.add(new ErrorImportacion(
-                        item.getIdItem(), "equivalencia", codigo,
-                        "Equivalencia no encontrada para el código interno del proveedor"));
-            } else if ("No Procesado".equals(item.getEstadoItem())) {
-                String referencia = !codigo.isBlank() ? codigo
-                        : (item.getSku() == null ? "" : item.getSku());
-                errores.add(new ErrorImportacion(
-                        item.getIdItem(), "SKU / equivalencia", referencia,
-                        "Ítem no procesado: no fue posible determinar un SKU válido"));
+    public List<ErrorImportacion> obtenerErroresProcesamiento(
+            int idFactura) throws SQLException {
+
+        Autorizacion.verificarAdministradorOBodeguero(
+                Autorizacion.ACCESO_DENEGADO
+        );
+
+        List<ErrorImportacion> errores =
+                new ArrayList<>();
+
+        for (ItemFactura item :
+                itemFacturaDAO.listarPorFactura(
+                        idFactura)) {
+
+            String codigo =
+                    item.getCodigoInternoProveedor()
+                            == null
+                            ? ""
+                            : item.getCodigoInternoProveedor();
+
+            if ("Observado".equals(
+                    item.getEstadoItem())) {
+
+                errores.add(
+                        new ErrorImportacion(
+                                item.getIdItem(),
+                                "equivalencia",
+                                codigo,
+                                "Equivalencia no encontrada para el código interno del proveedor"
+                        )
+                );
+
+            } else if ("No Procesado".equals(
+                    item.getEstadoItem())) {
+
+                String referencia =
+                        !codigo.isBlank()
+                                ? codigo
+                                : item.getSku() == null
+                                ? ""
+                                : item.getSku();
+
+                errores.add(
+                        new ErrorImportacion(
+                                item.getIdItem(),
+                                "SKU / equivalencia",
+                                referencia,
+                                "Ítem no procesado: no fue posible determinar un SKU válido"
+                        )
+                );
             }
         }
+
         return errores;
     }
 
-    private record ResolucionItem(ItemFactura item, String sku, String estado) {}
+    private record ResolucionItem(
+            ItemFactura item,
+            String sku,
+            String estado) {
+    }
 
-    public record ResumenProcesamiento(int leidos, int validos,
-                                       int observados, int noProcesados) {}
+    public record ResumenProcesamiento(
+            int leidos,
+            int validos,
+            int observados,
+            int noProcesados) {
+    }
 }
