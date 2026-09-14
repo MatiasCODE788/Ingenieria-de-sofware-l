@@ -1,6 +1,8 @@
 package cl.antucayen.controller;
 
 import cl.antucayen.model.entity.Producto;
+import cl.antucayen.model.service.ServicioExportacionDatos;
+import cl.antucayen.model.service.ServicioExportacionDatos.FormatoExportacion;
 import cl.antucayen.model.service.ServicioProducto;
 import cl.antucayen.model.service.ServicioProveedor;
 import cl.antucayen.security.Autorizacion;
@@ -8,15 +10,25 @@ import cl.antucayen.util.SesionActual;
 import cl.antucayen.view.VBuscadorProductos;
 import cl.antucayen.view.VFormularioProducto;
 
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class ControladorProducto {
 
+    private static final DateTimeFormatter FORMATO_NOMBRE_ARCHIVO =
+            DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+
     private final VBuscadorProductos vista;
     private final ServicioProducto servicio = new ServicioProducto();
     private final ServicioProveedor servicioProveedor = new ServicioProveedor();
+    private final ServicioExportacionDatos servicioExportacion = new ServicioExportacionDatos();
 
     public ControladorProducto(VBuscadorProductos vista) {
         Autorizacion.verificarConsultaStock();
@@ -29,6 +41,7 @@ public class ControladorProducto {
     private void iniciarEventos() {
         vista.getBtnBuscar().addActionListener(e -> buscar());
         vista.getBtnNuevo().addActionListener(e -> abrirNuevo());
+        vista.getBtnExportar().addActionListener(e -> exportar());
         vista.getTblProductos().addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -56,29 +69,93 @@ public class ControladorProducto {
     }
 
     private void buscar() {
-        String texto = vista.getTextoBusqueda();
-        String tipo = vista.getTipoBusqueda();
         try {
-            List<Producto> lista;
-            if (texto.isEmpty()) {
-                lista = servicio.listarTodos();
-            } else if ("SKU".equals(tipo)) {
-                Producto p = servicio.buscarPorSku(texto);
-                lista = p != null ? List.of(p) : List.of();
-            } else if ("Código de barras".equals(tipo)) {
-                Producto p = servicio.buscarPorCodigoBarras(texto);
-                lista = p != null ? List.of(p) : List.of();
-            } else {
-                lista = servicio.buscarPorNombre(texto);
-            }
+            List<Producto> lista = obtenerProductosConFiltrosActuales();
             cargarTabla(lista);
-            if (lista.isEmpty() && !texto.isEmpty()) {
+            if (lista.isEmpty() && !vista.getTextoBusqueda().isEmpty()) {
                 JOptionPane.showMessageDialog(vista,
-                        "No se encontraron productos para la búsqueda: " + texto);
+                        "No se encontraron productos para la búsqueda: " + vista.getTextoBusqueda());
             }
         } catch (SQLException ex) {
             mostrarError("Error al buscar: " + ex.getMessage());
         }
+    }
+
+    private List<Producto> obtenerProductosConFiltrosActuales() throws SQLException {
+        String texto = vista.getTextoBusqueda();
+        String tipo = vista.getTipoBusqueda();
+
+        if (texto.isEmpty()) {
+            return servicio.listarTodos();
+        }
+        if ("SKU".equals(tipo)) {
+            Producto p = servicio.buscarPorSku(texto);
+            return p != null ? List.of(p) : List.of();
+        }
+        if ("Código de barras".equals(tipo)) {
+            Producto p = servicio.buscarPorCodigoBarras(texto);
+            return p != null ? List.of(p) : List.of();
+        }
+        return servicio.buscarPorNombre(texto);
+    }
+
+    private void exportar() {
+        try {
+            List<Producto> productos = obtenerProductosConFiltrosActuales();
+            if (productos.isEmpty()) {
+                JOptionPane.showMessageDialog(vista,
+                        "No hay productos para exportar con los filtros actuales.");
+                return;
+            }
+
+            FormatoExportacion formato = seleccionarFormato();
+            if (formato == null) return;
+
+            Path destino = seleccionarDestino(
+                    "inventario_stock_" + LocalDateTime.now().format(FORMATO_NOMBRE_ARCHIVO),
+                    formato);
+            if (destino == null) return;
+
+            Path archivo = servicioExportacion.exportarInventario(productos, destino, formato);
+            JOptionPane.showMessageDialog(vista,
+                    "Inventario exportado correctamente:\n" + archivo.toAbsolutePath());
+        } catch (SecurityException ex) {
+            mostrarError(ex.getMessage());
+        } catch (SQLException ex) {
+            mostrarError("Error al consultar inventario para exportar: " + ex.getMessage());
+        } catch (IOException ex) {
+            mostrarError("No se pudo generar el archivo: " + ex.getMessage());
+        }
+    }
+
+    private FormatoExportacion seleccionarFormato() {
+        Object[] opciones = {"CSV", "Excel (.xlsx)", "Cancelar"};
+        int seleccion = JOptionPane.showOptionDialog(
+                vista,
+                "Selecciona el formato de exportación:",
+                "Exportar inventario",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]);
+
+        if (seleccion == 0) return FormatoExportacion.CSV;
+        if (seleccion == 1) return FormatoExportacion.EXCEL;
+        return null;
+    }
+
+    private Path seleccionarDestino(String nombreBase, FormatoExportacion formato) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Guardar exportación de inventario");
+        chooser.setSelectedFile(new java.io.File(
+                nombreBase + "." + formato.getExtension()));
+        chooser.setFileFilter(new FileNameExtensionFilter(
+                formato.getDescripcion(), formato.getExtension()));
+
+        return chooser.showSaveDialog(vista) == JFileChooser.APPROVE_OPTION
+                ? chooser.getSelectedFile().toPath()
+                : null;
     }
 
     private void abrirNuevo() {
