@@ -1,5 +1,6 @@
 package cl.antucayen;
 
+import com.formdev.flatlaf.FlatLightLaf;
 import cl.antucayen.controller.ControladorLogin;
 import cl.antucayen.view.VLogin;
 
@@ -7,6 +8,7 @@ import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
+        FlatLightLaf.setup();
         // Mantiene el antialiasing sin imponer una fuente/tamaño global fijo.
         // Cada vista conserva sus tamaños propios y el escalado HiDPI del SO.
         System.setProperty("awt.useSystemAAFontSettings", "on");
@@ -19,3 +21,4 @@ public class Main {
         });
     }
 }
+
