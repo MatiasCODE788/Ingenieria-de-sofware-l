@@ -20,7 +20,7 @@ No utiliza Spring Boot ni servidor HTTP.
 
 ## Requisitos
 
-- JDK 21.
+- JDK 25.
 - Apache Maven 3.9+.
 - MariaDB 10.6+ recomendado.
 - Cliente `mariadb` para instalar/actualizar la base de datos.
