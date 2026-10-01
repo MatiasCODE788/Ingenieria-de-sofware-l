@@ -2,8 +2,10 @@ package cl.antucayen.model.service;
 
 import cl.antucayen.model.dao.FacturaDAO;
 import cl.antucayen.model.dao.ItemFacturaDAO;
+import cl.antucayen.model.dao.ProductoDAO;
 import cl.antucayen.model.entity.Factura;
 import cl.antucayen.model.entity.ItemFactura;
+import cl.antucayen.model.entity.Producto;
 import cl.antucayen.security.Autorizacion;
 import cl.antucayen.util.DBConexion;
 import cl.antucayen.util.SesionActual;
@@ -24,6 +26,7 @@ public class ServicioFactura {
 
     private final FacturaDAO facturaDAO = new FacturaDAO();
     private final ItemFacturaDAO itemFacturaDAO = new ItemFacturaDAO();
+    private final ProductoDAO productoDAO = new ProductoDAO();
     private final ServicioInventario servicioInventario = new ServicioInventario();
 
     /** Registra de forma atómica una factura junto con todos sus ítems. */
@@ -46,6 +49,7 @@ public class ServicioFactura {
                 }
 
                 for (ItemFactura item : items) {
+                    validarSkuActivoParaNuevaFactura(item);
                     if (item.getEstadoItem() == null || item.getEstadoItem().isBlank()) {
                         item.setEstadoItem(item.getSku() != null ? "Válido" : "Observado");
                     }
@@ -71,6 +75,26 @@ public class ServicioFactura {
             }
             throw ex;
         }
+    }
+
+
+    /** RF-03: un producto inactivo no puede incorporarse a nuevas facturas. */
+    private void validarSkuActivoParaNuevaFactura(ItemFactura item) throws SQLException {
+        if (item == null) {
+            throw new IllegalArgumentException("La factura contiene un ítem nulo");
+        }
+        String sku = item.getSku();
+        if (sku == null || sku.isBlank()) return;
+
+        Producto producto = productoDAO.buscarPorSku(sku.trim());
+        if (producto == null) {
+            throw new IllegalArgumentException("El SKU no existe: " + sku);
+        }
+        if (!"Activo".equals(producto.getEstado())) {
+            throw new IllegalArgumentException(
+                    "El producto " + sku + " está Inactivo y no puede utilizarse en nuevas facturas");
+        }
+        item.setSku(producto.getSku());
     }
 
     private boolean esViolacionDuplicidad(SQLException ex) {

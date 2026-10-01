@@ -44,6 +44,7 @@ public class ControladorHistorial {
             cargarTodos();
         });
         vista.getBtnExportar().addActionListener(e -> exportar());
+        vista.getBtnRevertirAjuste().addActionListener(e -> revertirAjusteSeleccionado());
     }
 
     private void cargarTodos() {
@@ -97,6 +98,46 @@ public class ControladorHistorial {
         return sinFiltros
                 ? servicio.listarMovimientos()
                 : servicio.filtrarMovimientos(sku, tipo, desdeTs, hastaExclusivo);
+    }
+
+    private void revertirAjusteSeleccionado() {
+        int fila = vista.getTblMovimientos().getSelectedRow();
+        if (fila < 0) {
+            mostrarError("Selecciona un movimiento asociado al ajuste que deseas revertir.");
+            return;
+        }
+        Object valorId = vista.getModeloTabla().getValueAt(fila, 9);
+        if (valorId == null || valorId.toString().isBlank()) {
+            mostrarError("El movimiento seleccionado no pertenece a un ajuste de inventario.");
+            return;
+        }
+
+        int idAjuste;
+        try {
+            idAjuste = Integer.parseInt(valorId.toString());
+        } catch (NumberFormatException ex) {
+            mostrarError("El identificador del ajuste seleccionado no es válido.");
+            return;
+        }
+
+        int confirmar = JOptionPane.showConfirmDialog(vista,
+                "¿Revertir completamente el ajuste #" + idAjuste + "?\n"
+                        + "La operación restaurará el stock anterior y registrará movimientos de Reversión.",
+                "Confirmar reversión",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (confirmar != JOptionPane.YES_OPTION) return;
+
+        try {
+            servicio.revertirAjuste(idAjuste);
+            JOptionPane.showMessageDialog(vista,
+                    "Ajuste #" + idAjuste + " revertido correctamente.");
+            cargarTodos();
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
+            mostrarError(ex.getMessage());
+        } catch (SQLException ex) {
+            mostrarError("Error al revertir el ajuste: " + ex.getMessage());
+        }
     }
 
     private void exportar() {
@@ -184,7 +225,8 @@ public class ControladorHistorial {
                 movimiento.getCantidadAplicada(),
                 movimiento.getStockResultante(),
                 movimiento.getIdUsuario(),
-                usuario
+                usuario,
+                movimiento.getIdAjuste() == null ? "" : movimiento.getIdAjuste()
         };
     }
 

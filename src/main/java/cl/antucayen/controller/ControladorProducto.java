@@ -4,14 +4,17 @@ import cl.antucayen.model.entity.Producto;
 import cl.antucayen.model.service.ServicioExportacionDatos;
 import cl.antucayen.model.service.ServicioExportacionDatos.FormatoExportacion;
 import cl.antucayen.model.service.ServicioProducto;
+import cl.antucayen.model.service.ServicioInventario;
 import cl.antucayen.model.service.ServicioProveedor;
 import cl.antucayen.security.Autorizacion;
 import cl.antucayen.util.SesionActual;
 import cl.antucayen.view.VBuscadorProductos;
 import cl.antucayen.view.VFormularioProducto;
+import cl.antucayen.view.VHistorialProducto;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,6 +32,7 @@ public class ControladorProducto {
     private final ServicioProducto servicio = new ServicioProducto();
     private final ServicioProveedor servicioProveedor = new ServicioProveedor();
     private final ServicioExportacionDatos servicioExportacion = new ServicioExportacionDatos();
+    private final ServicioInventario servicioInventario = new ServicioInventario();
 
     public ControladorProducto(VBuscadorProductos vista) {
         Autorizacion.verificarConsultaStock();
@@ -42,6 +46,7 @@ public class ControladorProducto {
         vista.getBtnBuscar().addActionListener(e -> buscar());
         vista.getBtnNuevo().addActionListener(e -> abrirNuevo());
         vista.getBtnExportar().addActionListener(e -> exportar());
+        vista.getBtnHistorialProducto().addActionListener(e -> mostrarHistorialProducto());
         vista.getTblProductos().addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -99,9 +104,29 @@ public class ControladorProducto {
         return servicio.buscarPorNombre(texto);
     }
 
+    private void mostrarHistorialProducto() {
+        int fila = vista.getTblProductos().getSelectedRow();
+        if (fila < 0) {
+            JOptionPane.showMessageDialog(vista, "Selecciona un producto primero.");
+            return;
+        }
+        String sku = String.valueOf(vista.getModeloTabla().getValueAt(fila, 0));
+        try {
+            Producto producto = servicio.buscarPorSku(sku);
+            if (producto == null) throw new IllegalArgumentException("El producto ya no existe");
+            var movimientos = servicioInventario.listarUltimosMovimientos(sku);
+            java.awt.Window owner = SwingUtilities.getWindowAncestor(vista);
+            new VHistorialProducto(owner, producto, movimientos).setVisible(true);
+        } catch (SQLException | IllegalArgumentException | SecurityException ex) {
+            mostrarError("No se pudo cargar el historial del producto: " + ex.getMessage());
+        }
+    }
+
     private void exportar() {
         try {
-            List<Producto> productos = obtenerProductosConFiltrosActuales();
+            List<Producto> productos = obtenerProductosConFiltrosActuales().stream()
+                    .filter(p -> "Activo".equals(p.getEstado()))
+                    .toList();
             if (productos.isEmpty()) {
                 JOptionPane.showMessageDialog(vista,
                         "No hay productos para exportar con los filtros actuales.");

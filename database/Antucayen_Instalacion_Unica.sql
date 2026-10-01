@@ -1,6 +1,29 @@
--- Antucayen - instalación definitiva consolidada
--- Esquema requerido por la aplicación: 20260913
--- ADVERTENCIA: este archivo recrea completamente la base de datos minimarket.
+-- ============================================================================
+-- ANTUCAYEN - INSTALACION UNICA DE BASE DE DATOS
+-- Version de esquema: 20260929
+-- ============================================================================
+-- Este archivo consolida en una sola instalacion el esquema base y todas las
+-- migraciones requeridas por la version actual del proyecto, incluyendo:
+--   * RBAC definitivo: Administrador, Bodeguero y Cajero
+--   * Ventas / POS, pagos y venta En curso
+--   * Ajustes y reversion de inventario
+--   * Auditoria de importacion/exportacion (log_archivo)
+--   * Reportes y relaciones de movimientos
+--   * Nomenclatura de movimiento de venta unificada como 'Venta'
+--   * RUT de proveedor opcional
+--
+-- IMPORTANTE:
+--   Este instalador es para una instalacion limpia/final. Elimina por completo
+--   la base de datos `minimarket` si ya existe y la vuelve a crear.
+--   Si tienes datos que necesitas conservar, realiza un respaldo antes.
+--
+-- Ejecucion desde CMD de Windows:
+--   mariadb -u root -p < database\Antucayen_Instalacion_Unica.sql
+--
+-- Ejecucion desde PowerShell:
+--   Get-Content .\database\Antucayen_Instalacion_Unica.sql | mariadb -u root -p
+-- ============================================================================
+
 
 DROP DATABASE IF EXISTS minimarket;
 CREATE DATABASE minimarket
@@ -46,7 +69,7 @@ CREATE INDEX idx_producto_busqueda ON producto(codigo_barras, estado);
 
 CREATE TABLE proveedor (
     id_proveedor INT AUTO_INCREMENT PRIMARY KEY,
-    rut VARCHAR(15) NOT NULL,
+    rut VARCHAR(15) NULL,
     nombre VARCHAR(100) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
     correo_electronico VARCHAR(100) NOT NULL,
@@ -141,9 +164,9 @@ CREATE TABLE venta (
     medio_pago VARCHAR(20) NOT NULL,
     monto_total INT NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'Pagada',
-    CONSTRAINT chk_venta_medio_pago CHECK (medio_pago IN ('Efectivo','Débito','Crédito','Mixto')),
+    CONSTRAINT chk_venta_medio_pago CHECK (medio_pago IN ('Pendiente','Efectivo','Débito','Crédito','Mixto')),
     CONSTRAINT chk_venta_monto CHECK (monto_total >= 0),
-    CONSTRAINT chk_venta_estado CHECK (estado IN ('Pagada','Anulada')),
+    CONSTRAINT chk_venta_estado CHECK (estado IN ('En curso','Pagada','Anulada')),
     CONSTRAINT fk_venta_usuario FOREIGN KEY (id_usuario)
         REFERENCES usuario(id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB;
@@ -229,7 +252,7 @@ CREATE TABLE movimiento_inventario (
     modalidad_ajuste VARCHAR(40) NULL,
     vigente TINYINT(1) NOT NULL DEFAULT 1,
     CONSTRAINT chk_movimiento_tipo CHECK (
-        tipo_movimiento IN ('Ingreso por compra','Salida por venta','Ajuste positivo','Ajuste negativo','Reversión')
+        tipo_movimiento IN ('Ingreso por compra','Venta','Ajuste positivo','Ajuste negativo','Reversión')
     ),
     CONSTRAINT chk_movimiento_stock_anterior CHECK (stock_anterior >= 0),
     CONSTRAINT chk_movimiento_stock_resultante CHECK (stock_resultante >= 0),
@@ -253,6 +276,25 @@ CREATE INDEX idx_movimiento_factura ON movimiento_inventario(id_factura);
 CREATE INDEX idx_movimiento_item_factura ON movimiento_inventario(id_item_factura);
 CREATE INDEX idx_movimiento_venta ON movimiento_inventario(id_venta);
 CREATE INDEX idx_movimiento_ajuste ON movimiento_inventario(id_ajuste);
+
+
+CREATE TABLE log_archivo (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    fecha_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT NOT NULL,
+    nombre_usuario VARCHAR(120) NOT NULL,
+    nombre_archivo VARCHAR(255) NOT NULL,
+    tipo_operacion VARCHAR(20) NOT NULL,
+    formato VARCHAR(20) NOT NULL,
+    resultado VARCHAR(20) NOT NULL,
+    detalle VARCHAR(500) NULL,
+    CONSTRAINT chk_log_archivo_operacion CHECK (tipo_operacion IN ('IMPORTACION','EXPORTACION','PLANTILLA')),
+    CONSTRAINT chk_log_archivo_resultado CHECK (resultado IN ('EXITOSO','ERROR')),
+    CONSTRAINT fk_log_archivo_usuario FOREIGN KEY (id_usuario)
+        REFERENCES usuario(id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
+CREATE INDEX idx_log_archivo_fecha ON log_archivo(fecha_hora);
+CREATE INDEX idx_log_archivo_usuario ON log_archivo(id_usuario, fecha_hora);
 
 CREATE TABLE app_schema_version (
     version INT PRIMARY KEY,
@@ -295,4 +337,4 @@ INSERT INTO equivalencia (id_proveedor, codigo_interno_proveedor, sku) VALUES
 (2, 'CSP-00122', 'BEB-0001');
 
 INSERT INTO app_schema_version (version, descripcion)
-VALUES (20260913, 'Esquema definitivo consolidado Antucayen v5');
+VALUES (20260929, 'Esquema Antucayen alineado RF46/RF68/RF72 y reportes');

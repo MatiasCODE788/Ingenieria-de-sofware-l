@@ -4,12 +4,19 @@ import cl.antucayen.model.entity.Factura;
 import cl.antucayen.model.entity.ItemFactura;
 import cl.antucayen.model.service.ServicioFactura;
 import cl.antucayen.model.service.ServicioProcesamientoFactura;
+import cl.antucayen.model.service.ServicioExportacionDatos;
+import cl.antucayen.model.service.ServicioExportacionDatos.FormatoExportacion;
 import cl.antucayen.model.service.ServicioProcesamientoFactura.ResumenProcesamiento;
 import cl.antucayen.security.Autorizacion;
 import cl.antucayen.util.SesionActual;
 import cl.antucayen.view.VProcesamientoFactura;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +25,8 @@ public class ControladorProcesamientoFactura {
 
     private final ServicioProcesamientoFactura servicio = new ServicioProcesamientoFactura();
     private final ServicioFactura servicioFactura = new ServicioFactura();
+    private final ServicioExportacionDatos servicioExportacion = new ServicioExportacionDatos();
+    private static final DateTimeFormatter NOMBRE_ARCHIVO = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
     private final VProcesamientoFactura vista;
     private final int idFactura;
     private final int idProveedor;
@@ -36,6 +45,7 @@ public class ControladorProcesamientoFactura {
     private void iniciarEventos() {
         vista.getBtnCorregir().addActionListener(e -> corregirManual());
         vista.getBtnReprocesar().addActionListener(e -> reprocesar());
+        vista.getBtnExportarValidos().addActionListener(e -> exportarValidos());
     }
 
     private void cargarYProcesarInicial() {
@@ -108,6 +118,44 @@ public class ControladorProcesamientoFactura {
             JOptionPane.showMessageDialog(vista, ex.getMessage());
         } catch (SQLException ex) {
             mostrarError(ex);
+        }
+    }
+
+    private void exportarValidos() {
+        try {
+            List<ItemFactura> items = servicioFactura.obtenerItems(idFactura);
+            Object[] opciones = {"Excel (.xlsx)", "CSV", "Cancelar"};
+            int seleccion = JOptionPane.showOptionDialog(vista,
+                    "Selecciona el formato de exportación:",
+                    "Exportar ítems válidos",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null, opciones, opciones[0]);
+            if (seleccion < 0 || seleccion == 2) return;
+            FormatoExportacion formato = seleccion == 0
+                    ? FormatoExportacion.EXCEL : FormatoExportacion.CSV;
+
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Guardar ítems válidos");
+            chooser.setSelectedFile(new java.io.File(
+                    "items_validos_factura_" + idFactura + "_"
+                            + LocalDateTime.now().format(NOMBRE_ARCHIVO)
+                            + "." + formato.getExtension()));
+            chooser.setFileFilter(new FileNameExtensionFilter(
+                    formato.getDescripcion(), formato.getExtension()));
+            if (chooser.showSaveDialog(vista) != JFileChooser.APPROVE_OPTION) return;
+
+            Path archivo = servicioExportacion.exportarItemsValidosFactura(
+                    items, chooser.getSelectedFile().toPath(), formato);
+            JOptionPane.showMessageDialog(vista,
+                    "Ítems válidos exportados correctamente:\n" + archivo.toAbsolutePath());
+        } catch (IllegalArgumentException | SecurityException ex) {
+            JOptionPane.showMessageDialog(vista, ex.getMessage());
+        } catch (SQLException ex) {
+            mostrarError(ex);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(vista,
+                    "No se pudo generar el archivo: " + ex.getMessage());
         }
     }
 

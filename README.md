@@ -31,8 +31,8 @@ No utiliza Spring Boot ni servidor HTTP.
 El sistema reconoce exclusivamente:
 
 - **Administrador:** administración completa, usuarios, Dashboard global, productos, proveedores, equivalencias, facturas, inventario y supervisión de ventas.
-- **Bodeguero:** productos, proveedores, equivalencias y facturas de compra. No opera caja ni ajustes directos de inventario.
-- **Cajero:** Punto de Venta, cobros y consulta de productos/stock en tiempo real. No puede modificar productos/precios, inventario, proveedores, facturas de compra, reportes financieros globales ni usuarios.
+- **Bodeguero:** productos, proveedores, equivalencias iniciales, facturas de compra, importación/previsualización y ajustes ordinarios de inventario. No opera caja, no autoriza correcciones negativas y no revierte ajustes.
+- **Cajero:** Punto de Venta, cobros con vuelto, consulta de productos/stock, historial y reportes operacionales habilitados. No puede modificar productos/precios, inventario, proveedores, facturas de compra, equivalencias ni usuarios.
 
 Cualquier perfil ajeno a este catálogo queda bloqueado por la capa de autorización.
 
@@ -41,18 +41,17 @@ Cualquier perfil ajeno a este catálogo queda bloqueado por la capa de autorizac
 Para una instalación nueva ejecuta solamente:
 
 ```cmd
-mariadb -u root -p < database\00_instalacion_completa.sql
+mariadb -u root -p < database\Antucayen_Instalacion_Unica.sql
 ```
 
 Para actualizar una instalación existente utiliza, después de respaldar la base:
 
 ```cmd
-mariadb -u root -p minimarket < database\migrations\001_actualizacion_v5_definitiva.sql
 ```
 
 Consulta `database/README.md` para crear el usuario JDBC de la aplicación y configurar las credenciales.
 
-El programa valida al iniciar sesión el contrato de esquema `20260913`, incluidas las tablas/columnas requeridas y el catálogo RBAC.
+El programa valida al iniciar sesión el contrato de esquema `20260929`, incluidas las tablas/columnas requeridas y el catálogo RBAC.
 
 ## Configuración JDBC
 
@@ -110,8 +109,7 @@ Los hashes de demostración SHA-256 se migran automáticamente a PBKDF2-HMAC-SHA
 
 ## Fuente de verdad del esquema
 
-- Instalación nueva: `database/00_instalacion_completa.sql`.
-- Copia equivalente del baseline: `database/schema/01_schema_base.sql`.
-- Convergencia de instalaciones existentes: `database/migrations/001_actualizacion_v5_definitiva.sql`.
+- Instalación nueva: `database/Antucayen_Instalacion_Unica.sql`.
+- No se requieren migraciones SQL adicionales: el archivo ya contiene el esquema final consolidado.
 
 Los archivos `.mwb` en `database/design/legacy/` son históricos y no deben utilizarse como fuente canónica del esquema actual.

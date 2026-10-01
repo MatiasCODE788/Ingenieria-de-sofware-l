@@ -22,7 +22,8 @@ public class ServicioProveedor {
         validarCamposObligatorios(proveedor);
         if (proveedorDAO.existeNombre(proveedor.getNombre()))
             throw new IllegalStateException("Ya existe un proveedor con ese nombre");
-        if (proveedorDAO.existeRut(proveedor.getRut()))
+        if (proveedor.getRut() != null && !proveedor.getRut().isBlank()
+                && proveedorDAO.existeRut(proveedor.getRut()))
             throw new IllegalStateException("Ya existe un proveedor con ese RUT");
         proveedorDAO.insertar(proveedor);
     }
@@ -37,7 +38,8 @@ public class ServicioProveedor {
             if (anterior == null) throw new IllegalArgumentException("El proveedor no existe");
             if (proveedorDAO.existeNombreEnOtroProveedor(nuevo.getNombre(), nuevo.getIdProveedor()))
                 throw new IllegalStateException("Ya existe otro proveedor con ese nombre");
-            if (proveedorDAO.existeRutEnOtroProveedor(nuevo.getRut(), nuevo.getIdProveedor()))
+            if (nuevo.getRut() != null && !nuevo.getRut().isBlank()
+                    && proveedorDAO.existeRutEnOtroProveedor(nuevo.getRut(), nuevo.getIdProveedor()))
                 throw new IllegalStateException("Ya existe otro proveedor con ese RUT");
 
             proveedorDAO.actualizar(nuevo);
@@ -63,11 +65,9 @@ public class ServicioProveedor {
             throw new IllegalArgumentException("El teléfono es obligatorio");
         if (proveedor.getCorreoElectronico() == null || proveedor.getCorreoElectronico().isBlank())
             throw new IllegalArgumentException("El correo electrónico es obligatorio");
-        if (proveedor.getRut() == null || proveedor.getRut().isBlank())
-            throw new IllegalArgumentException("El RUT es obligatorio");
-
         proveedor.setNombre(proveedor.getNombre().trim());
-        proveedor.setRut(proveedor.getRut().trim());
+        proveedor.setRut(proveedor.getRut() == null || proveedor.getRut().isBlank()
+                ? null : proveedor.getRut().trim());
         proveedor.setTelefono(proveedor.getTelefono().trim());
         proveedor.setCorreoElectronico(proveedor.getCorreoElectronico().trim());
     }

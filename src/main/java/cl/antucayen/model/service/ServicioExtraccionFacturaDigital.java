@@ -123,6 +123,7 @@ public class ServicioExtraccionFacturaDigital {
         for (String lineaOriginal : texto.split("\\R")) {
             String linea = lineaOriginal.replace('\u00A0', ' ').trim().replaceAll("\\s+", " ");
             if (linea.length() < 3) continue;
+
             String[] tokens = linea.split(" ");
             if (tokens.length < 2) continue;
 
@@ -131,11 +132,20 @@ public class ServicioExtraccionFacturaDigital {
             if (CABECERAS.contains(codigo.toUpperCase(Locale.ROOT))) continue;
 
             int indiceCantidad = detectarIndiceCantidad(tokens);
-            if (indiceCantidad < 0) continue;
+            if (indiceCantidad < 0) {
+                // RF-20: una línea que parece corresponder a un ítem pero cuya
+                // cantidad no puede leerse no debe desaparecer silenciosamente.
+                resultado.add(new ItemExtraido(
+                        codigo, linea, 0, "No Procesado"));
+                continue;
+            }
+
             int cantidad;
             try {
                 cantidad = Integer.parseInt(limpiarEntero(tokens[indiceCantidad]));
             } catch (NumberFormatException ex) {
+                resultado.add(new ItemExtraido(
+                        codigo, linea, 0, "No Procesado"));
                 continue;
             }
 
@@ -145,9 +155,11 @@ public class ServicioExtraccionFacturaDigital {
                 if (descripcion.length() > 0) descripcion.append(' ');
                 descripcion.append(tokens[i]);
             }
-            resultado.add(new ItemExtraido(codigo,
+            resultado.add(new ItemExtraido(
+                    codigo,
                     descripcion.toString().isBlank() ? null : descripcion.toString(),
-                    cantidad, "Observado"));
+                    cantidad,
+                    "Observado"));
         }
         return resultado;
     }

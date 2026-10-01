@@ -4,6 +4,8 @@ import cl.antucayen.model.entity.PagoVenta;
 import cl.antucayen.util.DBConexion;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PagoVentaDAO {
 
@@ -20,4 +22,22 @@ public class PagoVentaDAO {
             ps.executeUpdate();
         }
     }
+    public List<PagoVenta> listarPorVenta(int idVenta) throws SQLException {
+        String sql = "SELECT id_pago, id_venta, medio_pago, monto FROM pago_venta WHERE id_venta=? ORDER BY id_pago";
+        List<PagoVenta> lista = new ArrayList<>();
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setInt(1, idVenta);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new PagoVenta(
+                            rs.getInt("id_pago"),
+                            rs.getInt("id_venta"),
+                            rs.getString("medio_pago"),
+                            rs.getInt("monto")));
+                }
+            }
+        }
+        return lista;
+    }
+
 }

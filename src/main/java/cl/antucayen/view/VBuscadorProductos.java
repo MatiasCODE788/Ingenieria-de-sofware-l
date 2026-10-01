@@ -13,6 +13,7 @@ public class VBuscadorProductos extends JPanel {
     private JButton           btnBuscar;
     private JButton           btnNuevo;
     private JButton           btnExportar;
+    private JButton           btnHistorialProducto;
     private JTable            tblProductos;
     private DefaultTableModel modeloTabla;
 
@@ -37,7 +38,9 @@ public class VBuscadorProductos extends JPanel {
         btnBuscar = ComponentesSwing.crearBoton("Buscar", new Color(37, 99, 235));
         btnNuevo  = ComponentesSwing.crearBoton("+ Nuevo producto", new Color(5, 150, 105));
         btnExportar = ComponentesSwing.crearBoton("Exportar CSV/Excel", new Color(2, 132, 199));
+        btnHistorialProducto = ComponentesSwing.crearBoton("Stock + últimos 10", new Color(124, 58, 237));
         btnExportar.setPreferredSize(new Dimension(165, 32));
+        btnHistorialProducto.setPreferredSize(new Dimension(155, 32));
 
         barraTop.add(new JLabel("Buscar:"));
         barraTop.add(txtBusqueda);
@@ -46,6 +49,7 @@ public class VBuscadorProductos extends JPanel {
         barraTop.add(Box.createHorizontalStrut(16));
         barraTop.add(btnNuevo);
         barraTop.add(btnExportar);
+        barraTop.add(btnHistorialProducto);
 
         String[] cols = {"SKU", "Nombre", "Código de barras", "Unidad", "Precio unitario", "Stock", "Estado"};
         modeloTabla = new DefaultTableModel(cols, 0) {
@@ -77,6 +81,7 @@ public class VBuscadorProductos extends JPanel {
     public JButton getBtnBuscar()     { return btnBuscar; }
     public JButton getBtnNuevo()      { return btnNuevo; }
     public JButton getBtnExportar()   { return btnExportar; }
+    public JButton getBtnHistorialProducto() { return btnHistorialProducto; }
     public JTable  getTblProductos()  { return tblProductos; }
     public DefaultTableModel getModeloTabla() { return modeloTabla; }
 

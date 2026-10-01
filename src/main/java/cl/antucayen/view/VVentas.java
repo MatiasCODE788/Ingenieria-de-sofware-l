@@ -13,6 +13,7 @@ public class VVentas extends JPanel {
     private JTable            tblCarrito;
     private DefaultTableModel modeloCarrito;
     private JLabel            lblTotal;
+    private JLabel            lblVentaEnCurso;
     private JButton           btnCobrar;
     private JButton           btnLimpiarCarrito;
 
@@ -69,10 +70,18 @@ public class VVentas extends JPanel {
         JLabel lblTitulo = new JLabel("Punto de Venta");
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 18));
         lblTitulo.setForeground(new Color(17, 24, 39));
+        lblVentaEnCurso = new JLabel("Venta en curso: iniciando...");
+        lblVentaEnCurso.setFont(new Font("Arial", Font.BOLD, 12));
+        lblVentaEnCurso.setForeground(new Color(37, 99, 235));
+
+        JPanel encabezadoVenta = new JPanel(new BorderLayout());
+        encabezadoVenta.setBackground(Color.WHITE);
+        encabezadoVenta.add(lblTitulo, BorderLayout.WEST);
+        encabezadoVenta.add(lblVentaEnCurso, BorderLayout.EAST);
 
         JPanel norte = new JPanel(new BorderLayout(0, 10));
         norte.setBackground(Color.WHITE);
-        norte.add(lblTitulo, BorderLayout.NORTH);
+        norte.add(encabezadoVenta, BorderLayout.NORTH);
 
         barraBusqueda.add(txtBusqueda, BorderLayout.CENTER);
         barraBusqueda.add(btnAgregar,  BorderLayout.EAST);
@@ -265,6 +274,17 @@ public class VVentas extends JPanel {
         return p;
     }
 
+
+    public void setVentaEnCurso(int idVenta) {
+        if (idVenta > 0) {
+            lblVentaEnCurso.setText("Venta en curso: #" + idVenta);
+            lblVentaEnCurso.setForeground(new Color(37, 99, 235));
+        } else {
+            lblVentaEnCurso.setText("Sin venta en curso");
+            lblVentaEnCurso.setForeground(new Color(185, 28, 28));
+        }
+    }
+
     public String getTextoBusqueda() { return txtBusqueda.getText().trim(); }
     public void   limpiarBusqueda()  { txtBusqueda.setText(""); txtBusqueda.requestFocus(); }
 
@@ -300,21 +320,30 @@ public class VVentas extends JPanel {
 
     public void setCobrarHabilitado(boolean habilitado) { btnCobrar.setEnabled(habilitado); }
 
-    /** Actualiza el indicador de "cuánto falta / sobra" respecto del total del carrito. */
-    public void setEstadoPago(int restante, int total) {
+    /**
+     * Actualiza en tiempo real el estado del pago. Cuando el efectivo recibido
+     * supera lo necesario, muestra el vuelto como un estado válido de cobro.
+     */
+    public void setEstadoPago(int faltante, int vuelto, int total) {
         if (total <= 0) {
             lblRestante.setText("—");
             lblRestante.setForeground(new Color(107, 114, 128));
-        } else if (restante == 0) {
-            lblRestante.setText("✓ Pago completo");
-            lblRestante.setForeground(new Color(5, 150, 105));
-        } else if (restante > 0) {
-            lblRestante.setText("Falta $" + formatearMonto(restante) + " por pagar");
+        } else if (faltante > 0) {
+            lblRestante.setText("Falta $" + formatearMonto(faltante) + " por pagar");
             lblRestante.setForeground(new Color(217, 119, 6));
+        } else if (vuelto > 0) {
+            lblRestante.setText("✓ Pago completo — Vuelto: $" + formatearMonto(vuelto));
+            lblRestante.setForeground(new Color(5, 150, 105));
         } else {
-            lblRestante.setText("Sobran $" + formatearMonto(-restante) + " en los pagos ingresados");
-            lblRestante.setForeground(new Color(220, 38, 38));
+            lblRestante.setText("✓ Pago completo — Vuelto: $0");
+            lblRestante.setForeground(new Color(5, 150, 105));
         }
+    }
+
+    /** Muestra una combinación de pagos inválida y mantiene el cobro bloqueado. */
+    public void setEstadoPagoInvalido(String mensaje) {
+        lblRestante.setText(mensaje);
+        lblRestante.setForeground(new Color(220, 38, 38));
     }
 
     private int parseMonto(String texto) {

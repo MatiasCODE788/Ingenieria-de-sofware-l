@@ -1,0 +1,10 @@
+# Copia este archivo como config.properties en esta misma carpeta.
+# También puedes omitirlo y usar las variables de entorno ANTUCAYEN_DB_*.
+
+db.host=127.0.0.1
+db.port=3306
+db.nombre=minimarket
+db.usuario=antucayen_app
+db.contrasena=CAMBIAR_ESTA_CONTRASENA
+# true solo si tu servidor MariaDB está configurado para SSL/TLS.
+db.ssl=false

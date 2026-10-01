@@ -29,6 +29,23 @@ public class VentaDAO{
         throw new SQLException("No se pudo obtener el ID de la venta generada");
     }
 
+
+    public void confirmarVenta(int idVenta, String medioPago, int montoTotal) throws SQLException {
+        String sql = """
+            UPDATE venta
+            SET medio_pago=?, monto_total=?, estado='Pagada'
+            WHERE id_venta=? AND estado='En curso'
+            """;
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setString(1, medioPago);
+            ps.setInt(2, montoTotal);
+            ps.setInt(3, idVenta);
+            if (ps.executeUpdate() != 1) {
+                throw new SQLException("No fue posible confirmar la venta en curso #" + idVenta);
+            }
+        }
+    }
+
     public void actualizarEstado(int idVenta, String estado) throws SQLException {
         String sql = "UPDATE venta SET estado=? WHERE id_venta=?";
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
@@ -71,7 +88,7 @@ public class VentaDAO{
         String sql = """
             SELECT v.*, COALESCE(NULLIF(u.nombre_completo,''), u.username) AS nombre_usuario
             FROM venta v JOIN usuario u ON v.id_usuario = u.id_usuario
-            WHERE DATE(v.fecha_hora) = CURDATE()
+            WHERE DATE(v.fecha_hora) = CURDATE() AND v.estado <> 'En curso'
             ORDER BY v.fecha_hora DESC
             """;
         return ejecutarLista(sql);
@@ -81,7 +98,7 @@ public class VentaDAO{
         String sql = """
             SELECT v.*, COALESCE(NULLIF(u.nombre_completo,''), u.username) AS nombre_usuario
             FROM venta v JOIN usuario u ON v.id_usuario = u.id_usuario
-            WHERE DATE(v.fecha_hora) = CURDATE() AND v.id_usuario = ?
+            WHERE DATE(v.fecha_hora) = CURDATE() AND v.id_usuario = ? AND v.estado <> 'En curso'
             ORDER BY v.fecha_hora DESC
             """;
         List<Venta> lista = new ArrayList<>();

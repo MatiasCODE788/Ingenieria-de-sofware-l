@@ -144,22 +144,17 @@ public class ServicioProcesamientoFactura {
             ResumenProcesamiento resumen =
                     resumir(resoluciones);
 
-            if (resumen.observados() > 0
-                    || resumen.noProcesados() > 0) {
-
-                facturaDAO.actualizarEstado(
-                        idFactura,
-                        "Observada"
-                );
-
-                return resumen;
-            }
-
+            /*
+             * RF-24 / RN-03 / RN-04: los ítems Válidos sí actualizan inventario
+             * aunque la factura todavía contenga otros ítems Observados o No
+             * Procesados. Los ítems pendientes quedan estrictamente excluidos.
+             * registrarIngresoPorCompra es idempotente por id_item_factura, por
+             * lo que un reproceso posterior no duplica ingresos ya aplicados.
+             */
             for (ResolucionItem resolucion : resoluciones) {
+                if (!"Válido".equals(resolucion.estado())) continue;
 
-                ItemFactura item =
-                        resolucion.item();
-
+                ItemFactura item = resolucion.item();
                 servicioInventario.registrarIngresoPorCompra(
                         resolucion.sku(),
                         item.getCantidadFacturada(),
@@ -168,10 +163,12 @@ public class ServicioProcesamientoFactura {
                 );
             }
 
-            facturaDAO.actualizarEstado(
-                    idFactura,
-                    "Procesada"
-            );
+            if (resumen.observados() > 0
+                    || resumen.noProcesados() > 0) {
+                facturaDAO.actualizarEstado(idFactura, "Observada");
+            } else {
+                facturaDAO.actualizarEstado(idFactura, "Procesada");
+            }
 
             return resumen;
         });
