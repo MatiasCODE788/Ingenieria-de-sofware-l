@@ -51,15 +51,15 @@ public class VFormularioProveedor extends JDialog {
         gbc.insets = new Insets(4, 0, 4, 8);
         gbc.weightx = 0.5;
 
-        gbc.gridx = 0; gbc.gridy = 0; form.add(crearLabel("RUT *"), gbc);
+        gbc.gridx = 0; gbc.gridy = 0; form.add(crearLabel("RUT (opcional)"), gbc);
         gbc.gridx = 1;               form.add(crearLabel("Nombre *"), gbc);
         txtRut    = crearCampo(); if (modoEdicion) txtRut.setEditable(false);
         txtNombre = crearCampo();
         gbc.gridx = 0; gbc.gridy = 1; form.add(txtRut, gbc);
         gbc.gridx = 1;               form.add(txtNombre, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2; form.add(crearLabel("Teléfono"), gbc);
-        gbc.gridx = 1;               form.add(crearLabel("Correo electrónico"), gbc);
+        gbc.gridx = 0; gbc.gridy = 2; form.add(crearLabel("Teléfono *"), gbc);
+        gbc.gridx = 1;               form.add(crearLabel("Correo electrónico *"), gbc);
         txtTelefono = crearCampo();
         txtCorreo   = crearCampo();
         gbc.gridx = 0; gbc.gridy = 3; form.add(txtTelefono, gbc);

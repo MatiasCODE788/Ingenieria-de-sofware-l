@@ -16,6 +16,7 @@ import cl.antucayen.util.DBConexion;
 import cl.antucayen.util.SesionActual;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,16 +32,55 @@ public class ServicioVenta {
     private final MovimientoInventarioDAO movimientoDAO = new MovimientoInventarioDAO();
 
     /**
-     * Registra de forma atómica una venta y todos sus efectos de inventario.
-     * Los productos se bloquean durante la operación para evitar vender más
-     * unidades que las disponibles ante accesos concurrentes.
+     * RF-64: crea una venta persistida en estado "En curso" asociada al usuario
+     * autenticado. No modifica stock ni registra ítems todavía.
+     */
+    public int iniciarVenta() throws SQLException {
+        Autorizacion.verificarPuntoVenta();
+        Venta venta = new Venta();
+        venta.setIdUsuario(SesionActual.getUsuario().getIdUsuario());
+        venta.setMedioPago("Pendiente");
+        venta.setMontoTotal(0);
+        venta.setEstado("En curso");
+        return ventaDAO.insertar(venta);
+    }
+
+    /**
+     * Compatibilidad para llamadas antiguas: crea una venta en curso y la
+     * confirma atómicamente en la misma operación lógica.
      */
     public int registrar(List<PagoVenta> pagos, List<ItemVenta> items) throws SQLException {
         Autorizacion.verificarPuntoVenta();
-        return DBConexion.getInstancia().ejecutarEnTransaccion(() -> registrarTransaccional(pagos, items));
+        int idVenta = iniciarVenta();
+        try {
+            return registrar(idVenta, pagos, items);
+        } catch (SQLException | RuntimeException ex) {
+            try { ventaDAO.actualizarEstado(idVenta, "Anulada"); } catch (SQLException ignored) { }
+            throw ex;
+        }
     }
 
-    private int registrarTransaccional(List<PagoVenta> pagos, List<ItemVenta> items) throws SQLException {
+    /**
+     * RF-69/RF-70: confirma de forma atómica una venta previamente iniciada y
+     * aplica todos sus efectos de inventario.
+     */
+    public int registrar(int idVentaEnCurso, List<PagoVenta> pagos, List<ItemVenta> items) throws SQLException {
+        Autorizacion.verificarPuntoVenta();
+        if (idVentaEnCurso <= 0) throw new IllegalArgumentException("No existe una venta en curso válida");
+        return DBConexion.getInstancia().ejecutarEnTransaccion(
+                () -> registrarTransaccional(idVentaEnCurso, pagos, items));
+    }
+
+    private int registrarTransaccional(int idVenta, List<PagoVenta> pagos, List<ItemVenta> items) throws SQLException {
+        Venta ventaEnCurso = ventaDAO.buscarPorIdParaActualizar(idVenta);
+        if (ventaEnCurso == null) throw new IllegalArgumentException("La venta en curso no existe");
+        if (!"En curso".equals(ventaEnCurso.getEstado())) {
+            throw new IllegalStateException("La venta #" + idVenta + " ya no se encuentra en curso");
+        }
+        if (!SesionActual.esAdministrador()
+                && ventaEnCurso.getIdUsuario() != SesionActual.getUsuario().getIdUsuario()) {
+            throw new SecurityException("El Cajero solo puede confirmar su propia venta en curso");
+        }
         if (items == null || items.isEmpty())
             throw new IllegalArgumentException("El carrito está vacío");
         if (pagos == null || pagos.isEmpty())
@@ -98,25 +138,23 @@ public class ServicioVenta {
             item.setSubtotal(subtotal);
         }
 
-        int montoPagado = 0;
-        try {
-            for (PagoVenta pago : pagos) montoPagado = Math.addExact(montoPagado, pago.getMonto());
-        } catch (ArithmeticException ex) {
-            throw new IllegalArgumentException("La suma de los pagos excede el rango permitido", ex);
-        }
-        if (montoPagado != montoTotal)
-            throw new IllegalArgumentException("La suma de los pagos ($" + montoPagado
-                    + ") no coincide con el total de la venta ($" + montoTotal + ")");
+        // RF-68: el cliente puede entregar más dinero que el total, pero el
+        // excedente debe provenir de efectivo para poder devolverlo como vuelto.
+        int vuelto = calcularVuelto(pagos, montoTotal);
 
-        String medioPagoVenta = pagos.size() == 1 ? pagos.get(0).getMedioPago() : "Mixto";
-        Venta venta = new Venta();
-        venta.setIdUsuario(SesionActual.getUsuario().getIdUsuario());
-        venta.setMedioPago(medioPagoVenta);
-        venta.setMontoTotal(montoTotal);
-        venta.setEstado("Pagada");
-        int idVenta = ventaDAO.insertar(venta);
+        // En pago_venta se persiste únicamente el monto efectivamente aplicado a
+        // la venta. Así, los reportes de recaudación no contabilizan el vuelto
+        // como ingreso. El monto recibido y el vuelto siguen siendo parte del
+        // cálculo de negocio y se muestran al Cajero antes de confirmar.
+        List<PagoVenta> pagosAplicados = ajustarPagosPorVuelto(pagos, vuelto);
+        List<String> mediosAplicados = pagosAplicados.stream()
+                .map(PagoVenta::getMedioPago)
+                .distinct()
+                .toList();
+        String medioPagoVenta = mediosAplicados.size() == 1 ? mediosAplicados.get(0) : "Mixto";
+        ventaDAO.confirmarVenta(idVenta, medioPagoVenta, montoTotal);
 
-        for (PagoVenta pago : pagos) {
+        for (PagoVenta pago : pagosAplicados) {
             pago.setIdVenta(idVenta);
             pagoVentaDAO.insertar(pago);
         }
@@ -133,9 +171,84 @@ public class ServicioVenta {
             productoDAO.actualizarStock(item.getSku(), stockResultante);
             stockEnOperacion.put(item.getSku(), stockResultante);
             registrarMovimientoVenta(item.getSku(), item.getCantidad(), stockAnterior, stockResultante,
-                    idVenta, "Salida por venta");
+                    idVenta, "Venta");
         }
         return idVenta;
+    }
+
+    /**
+     * Calcula el vuelto de una venta a partir de los montos recibidos.
+     *
+     * <p>El total pagado puede ser igual o superior al total de la venta. Si
+     * existe excedente, este debe estar completamente respaldado por efectivo;
+     * los pagos electrónicos no pueden generar vuelto.</p>
+     *
+     * @param pagos pagos ingresados por el Cajero
+     * @param montoTotal total vigente de la venta
+     * @return vuelto que debe entregarse al cliente (0 para pago exacto)
+     */
+    public int calcularVuelto(List<PagoVenta> pagos, int montoTotal) {
+        if (montoTotal < 0)
+            throw new IllegalArgumentException("El total de la venta no puede ser negativo");
+        if (pagos == null || pagos.isEmpty())
+            throw new IllegalArgumentException("Debes ingresar el monto pagado en al menos un medio de pago");
+
+        int montoPagado = 0;
+        int efectivoRecibido = 0;
+        try {
+            for (PagoVenta pago : pagos) {
+                if (pago == null || !MEDIOS_PAGO_VALIDOS.contains(pago.getMedioPago()))
+                    throw new IllegalArgumentException("Medio de pago no válido");
+                if (pago.getMonto() <= 0)
+                    throw new IllegalArgumentException("El monto de cada pago debe ser mayor a cero");
+
+                montoPagado = Math.addExact(montoPagado, pago.getMonto());
+                if ("Efectivo".equals(pago.getMedioPago())) {
+                    efectivoRecibido = Math.addExact(efectivoRecibido, pago.getMonto());
+                }
+            }
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("La suma de los pagos excede el rango permitido", ex);
+        }
+
+        if (montoPagado < montoTotal) {
+            throw new IllegalArgumentException("El monto pagado ($" + montoPagado
+                    + ") es insuficiente para el total de la venta ($" + montoTotal + ")");
+        }
+
+        int vuelto = montoPagado - montoTotal;
+        if (vuelto > efectivoRecibido) {
+            throw new IllegalArgumentException("El excedente de los pagos ($" + vuelto
+                    + ") no puede devolverse como vuelto porque no proviene completamente de efectivo");
+        }
+        return vuelto;
+    }
+
+    /**
+     * Descuenta el vuelto desde los pagos en efectivo antes de persistirlos.
+     * De esta forma SUM(pago_venta.monto) sigue representando el ingreso real
+     * de la venta, no el dinero recibido temporalmente antes de dar el vuelto.
+     */
+    private List<PagoVenta> ajustarPagosPorVuelto(List<PagoVenta> pagos, int vuelto) {
+        List<PagoVenta> pagosAplicados = new ArrayList<>();
+        int vueltoPendiente = vuelto;
+
+        for (PagoVenta pago : pagos) {
+            int montoAplicado = pago.getMonto();
+            if ("Efectivo".equals(pago.getMedioPago()) && vueltoPendiente > 0) {
+                int descuento = Math.min(montoAplicado, vueltoPendiente);
+                montoAplicado -= descuento;
+                vueltoPendiente -= descuento;
+            }
+            if (montoAplicado > 0) {
+                pagosAplicados.add(new PagoVenta(pago.getMedioPago(), montoAplicado));
+            }
+        }
+
+        if (vueltoPendiente != 0) {
+            throw new IllegalStateException("No fue posible aplicar correctamente el vuelto a los pagos en efectivo");
+        }
+        return pagosAplicados;
     }
 
     /** Anula una venta de forma atómica y devuelve el stock de todos sus ítems. */
@@ -145,6 +258,9 @@ public class ServicioVenta {
             Venta venta = ventaDAO.buscarPorIdParaActualizar(idVenta);
             if (venta == null) throw new IllegalArgumentException("La venta no existe");
             if ("Anulada".equals(venta.getEstado())) throw new IllegalStateException("La venta ya está anulada");
+            if (!"Pagada".equals(venta.getEstado())) {
+                throw new IllegalStateException("Solo se puede anular una venta confirmada y pagada");
+            }
 
             for (ItemVenta item : itemVentaDAO.listarPorVenta(idVenta)) {
                 Producto producto = productoDAO.buscarPorSkuParaActualizar(item.getSku());

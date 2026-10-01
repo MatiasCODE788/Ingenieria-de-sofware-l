@@ -28,4 +28,19 @@ class ServicioExtraccionFacturaDigitalTest {
         assertEquals(24, items.get(1).cantidad());
         assertTrue(items.stream().allMatch(i -> "Observado".equals(i.estado())));
     }
+
+    @Test
+    void conservaItemIlegibleComoNoProcesado() {
+        String texto = """
+                CODIGO DESCRIPCION CANTIDAD
+                ABC-99 Producto con cantidad ilegible XX
+                """;
+
+        var items = servicio.parsearLineas(texto);
+
+        assertEquals(1, items.size());
+        assertEquals("ABC-99", items.get(0).codigoInterno());
+        assertEquals(0, items.get(0).cantidad());
+        assertEquals("No Procesado", items.get(0).estado());
+    }
 }

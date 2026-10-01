@@ -72,7 +72,7 @@ public class ControladorProveedor {
             for (Proveedor p : servicio.listarTodos()) {
                 if (texto.isEmpty()
                         || p.getNombre().toLowerCase().contains(texto)
-                        || p.getRut().contains(texto))
+                        || (p.getRut() != null && p.getRut().toLowerCase().contains(texto)))
                     vistaBuscador.agregarFila(new Object[]{
                             p.getIdProveedor(), p.getRut(), p.getNombre(),
                             p.getTelefono(), p.getCorreoElectronico()

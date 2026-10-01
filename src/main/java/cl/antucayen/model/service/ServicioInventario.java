@@ -4,6 +4,7 @@ import cl.antucayen.model.dao.AjusteInventarioDAO;
 import cl.antucayen.model.dao.MovimientoInventarioDAO;
 import cl.antucayen.model.dao.ProductoDAO;
 import cl.antucayen.model.entity.AjusteInventario;
+import cl.antucayen.model.entity.ItemAjuste;
 import cl.antucayen.model.entity.MovimientoInventario;
 import cl.antucayen.model.entity.Producto;
 import cl.antucayen.model.entity.Usuario;
@@ -29,8 +30,6 @@ public class ServicioInventario {
     /** Ingresa stock una sola vez por ítem de factura mientras el movimiento esté vigente. */
     public void registrarIngresoPorCompra(String sku, int cantidad, int idFactura,
                                           int idItemFactura) throws SQLException {
-        // El ingreso originado por una factura forma parte del flujo de facturación
-        // permitido a Administrador y Bodeguero. No es un ajuste directo manual.
         Autorizacion.verificarGestionFacturas();
         DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
             if (cantidad <= 0) {
@@ -54,8 +53,7 @@ public class ServicioInventario {
             try {
                 stockResultante = Math.addExact(stockAnterior, cantidad);
             } catch (ArithmeticException ex) {
-                throw new IllegalArgumentException(
-                        "El ingreso excede el rango permitido de stock", ex);
+                throw new IllegalArgumentException("El ingreso excede el rango permitido de stock", ex);
             }
             productoDAO.actualizarStock(sku, stockResultante);
 
@@ -76,16 +74,14 @@ public class ServicioInventario {
 
     /**
      * Revierte de forma auditable el ingreso vigente de un ítem antes de un
-     * reprocesamiento autorizado. El ingreso original queda histórico
-     * (vigente=0) y se agrega un movimiento Reversión ligado al mismo ítem.
+     * reprocesamiento autorizado.
      */
     public void revertirIngresoPorCompraParaReproceso(int idFactura,
                                                        int idItemFactura) throws SQLException {
         Autorizacion.verificarAdministrador(
                 "Solo un Administrador puede autorizar el reprocesamiento de una factura Procesada");
         DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
-            MovimientoInventario ingreso =
-                    movimientoDAO.buscarIngresoVigentePorItemFactura(idItemFactura);
+            MovimientoInventario ingreso = movimientoDAO.buscarIngresoVigentePorItemFactura(idItemFactura);
             if (ingreso == null) {
                 throw new IllegalStateException(
                         "No existe un ingreso de inventario vigente para el ítem " + idItemFactura);
@@ -104,8 +100,7 @@ public class ServicioInventario {
             int stockAnterior = producto.getStockActual();
             int stockResultante;
             try {
-                stockResultante = Math.subtractExact(
-                        stockAnterior, ingreso.getCantidadAplicada());
+                stockResultante = Math.subtractExact(stockAnterior, ingreso.getCantidadAplicada());
             } catch (ArithmeticException ex) {
                 throw new IllegalStateException(
                         "No se pudo revertir el ingreso por desbordamiento de stock", ex);
@@ -135,14 +130,17 @@ public class ServicioInventario {
         });
     }
 
+    /**
+     * Aplica un ajuste ordinario. Administrador y Bodeguero pueden ejecutar
+     * ajustes; una cantidad negativa exige autorización explícita de Admin.
+     */
     public int aplicarAjuste(String modalidad, boolean correccionAutorizada,
                              List<SolicitudAjuste> solicitudes) throws SQLException {
         Autorizacion.verificarAjustesInventario();
         validarModalidad(modalidad);
         if (solicitudes == null || solicitudes.isEmpty()) return 0;
-        if (correccionAutorizada && !SesionActual.esAdministrador()) {
-            throw new SecurityException(
-                    "Solo un Administrador puede autorizar cantidades negativas");
+        if (correccionAutorizada) {
+            Autorizacion.verificarCorreccionNegativaInventario();
         }
 
         return DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
@@ -153,7 +151,6 @@ public class ServicioInventario {
             ajuste.setIdUsuario(usuario.getIdUsuario());
             ajuste.setNombreUsuario(nombreVisible(usuario));
             int idAjuste = ajusteDAO.insertar(ajuste);
-            if (idAjuste <= 0) throw new SQLException("No se pudo crear la cabecera del ajuste");
 
             int aplicados = 0;
             for (SolicitudAjuste solicitud : solicitudes) {
@@ -181,8 +178,7 @@ public class ServicioInventario {
                 try {
                     delta = Math.subtractExact(stockResultante, stockAnterior);
                 } catch (ArithmeticException ex) {
-                    throw new IllegalArgumentException(
-                            "El ajuste excede el rango permitido de stock", ex);
+                    throw new IllegalArgumentException("El ajuste excede el rango permitido de stock", ex);
                 }
                 if (delta == 0) continue;
 
@@ -205,8 +201,84 @@ public class ServicioInventario {
                 aplicados++;
             }
 
+            if (aplicados == 0) {
+                throw new IllegalArgumentException("El ajuste no produce cambios de stock");
+            }
             ajusteDAO.actualizarEstado(idAjuste, "Aplicado");
             return aplicados;
+        });
+    }
+
+    /**
+     * RF-46. Revierte atómicamente el efecto de un ajuste aplicado. La
+     * reversión usa el delta histórico del ajuste y no sobrescribe movimientos
+     * posteriores: stock_resultante = stock_actual - delta_original. Así se
+     * restaura el efecto previo del ajuste sin borrar ventas/compras posteriores.
+     */
+    public void revertirAjuste(int idAjuste) throws SQLException {
+        Autorizacion.verificarReversionAjuste();
+        if (idAjuste <= 0) throw new IllegalArgumentException("Debes indicar un ajuste válido");
+
+        DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
+            AjusteInventario ajuste = ajusteDAO.buscarPorIdParaActualizar(idAjuste);
+            if (ajuste == null) {
+                throw new IllegalArgumentException("No existe el ajuste #" + idAjuste);
+            }
+            if ("Revertido".equals(ajuste.getEstadoAjuste())) {
+                throw new IllegalStateException("El ajuste #" + idAjuste + " ya fue revertido");
+            }
+            if (!"Aplicado".equals(ajuste.getEstadoAjuste())) {
+                throw new IllegalStateException(
+                        "Solo se puede revertir un ajuste en estado Aplicado");
+            }
+
+            List<ItemAjuste> items = ajusteDAO.listarItems(idAjuste);
+            if (items.isEmpty()) {
+                throw new IllegalStateException("El ajuste no contiene ítems que puedan revertirse");
+            }
+
+            Usuario usuario = usuarioActual();
+            movimientoDAO.marcarNoVigentesPorAjuste(idAjuste);
+
+            for (ItemAjuste item : items) {
+                Producto producto = productoDAO.buscarPorSkuParaActualizar(item.getSku());
+                if (producto == null) {
+                    throw new IllegalStateException(
+                            "No existe el producto del ajuste: " + item.getSku());
+                }
+
+                int stockActual = producto.getStockActual();
+                int stockResultante;
+                try {
+                    stockResultante = Math.subtractExact(stockActual, item.getCantidadAplicada());
+                } catch (ArithmeticException ex) {
+                    throw new IllegalStateException(
+                            "La reversión excede el rango permitido para " + item.getSku(), ex);
+                }
+                if (stockResultante < 0) {
+                    throw new IllegalStateException(
+                            "No se puede revertir el ajuste #" + idAjuste
+                                    + " porque el SKU " + item.getSku()
+                                    + " quedaría con stock negativo (" + stockResultante + ")");
+                }
+
+                productoDAO.actualizarStock(item.getSku(), stockResultante);
+
+                MovimientoInventario reversion = new MovimientoInventario();
+                reversion.setSku(item.getSku());
+                reversion.setIdUsuario(usuario.getIdUsuario());
+                reversion.setIdAjuste(idAjuste);
+                reversion.setTipoMovimiento("Reversión");
+                reversion.setStockAnterior(stockActual);
+                reversion.setCantidadAplicada(-item.getCantidadAplicada());
+                reversion.setStockResultante(stockResultante);
+                reversion.setModalidadAjuste("Reversión de ajuste");
+                reversion.setVigente(true);
+                movimientoDAO.insertar(reversion);
+            }
+
+            ajusteDAO.actualizarEstado(idAjuste, "Revertido");
+            return null;
         });
     }
 
@@ -256,14 +328,21 @@ public class ServicioInventario {
     }
 
     public List<MovimientoInventario> listarMovimientos() throws SQLException {
-        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
+        Autorizacion.verificarHistorialInventario();
         return movimientoDAO.listarTodos();
     }
 
     public List<MovimientoInventario> filtrarMovimientos(String sku, String tipo,
                                                          Timestamp desde,
                                                          Timestamp hasta) throws SQLException {
-        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
+        Autorizacion.verificarHistorialInventario();
         return movimientoDAO.filtrar(sku, tipo, desde, hasta);
+    }
+
+    /** RF-56: últimos diez movimientos asociados a un producto. */
+    public List<MovimientoInventario> listarUltimosMovimientos(String sku) throws SQLException {
+        Autorizacion.verificarConsultaStock();
+        if (sku == null || sku.isBlank()) return List.of();
+        return movimientoDAO.listarUltimosPorSku(sku.trim(), 10);
     }
 }

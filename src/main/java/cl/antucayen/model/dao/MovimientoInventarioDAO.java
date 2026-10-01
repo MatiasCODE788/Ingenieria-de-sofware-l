@@ -90,6 +90,29 @@ public class MovimientoInventarioDAO {
         }
     }
 
+
+    public void marcarNoVigentesPorAjuste(int idAjuste) throws SQLException {
+        String sql = "UPDATE movimiento_inventario SET vigente=0 WHERE id_ajuste=? AND vigente=1";
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setInt(1, idAjuste);
+            ps.executeUpdate();
+        }
+    }
+
+    public List<MovimientoInventario> listarUltimosPorSku(String sku, int limite) throws SQLException {
+        int limiteSeguro = Math.max(1, Math.min(limite, 100));
+        String sql = SELECT_BASE + " WHERE m.sku=? ORDER BY m.fecha_hora DESC, m.id_movimiento DESC LIMIT ?";
+        List<MovimientoInventario> lista = new ArrayList<>();
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setString(1, sku);
+            ps.setInt(2, limiteSeguro);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapear(rs));
+            }
+        }
+        return lista;
+    }
+
     public int contarEntre(Timestamp desde, Timestamp hastaExclusivo) throws SQLException {
         String sql = "SELECT COUNT(*) FROM movimiento_inventario WHERE fecha_hora >= ? AND fecha_hora < ?";
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {

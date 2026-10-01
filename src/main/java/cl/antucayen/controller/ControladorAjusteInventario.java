@@ -6,6 +6,9 @@ import cl.antucayen.model.service.ServicioImportacionInventario;
 import cl.antucayen.model.service.ServicioImportacionInventario.FilaCruda;
 import cl.antucayen.model.service.ServicioImportacionInventario.ResultadoLectura;
 import cl.antucayen.model.service.ServicioInventario;
+import cl.antucayen.model.service.ServicioExportacionDatos;
+import cl.antucayen.model.service.ServicioExportacionDatos.FormatoExportacion;
+import cl.antucayen.model.service.ServicioAuditoriaArchivos;
 import cl.antucayen.model.service.ServicioProducto;
 import cl.antucayen.security.Autorizacion;
 import cl.antucayen.view.VAjusteInventario;
@@ -15,6 +18,9 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +33,9 @@ public class ControladorAjusteInventario {
     private final ServicioInventario servicio = new ServicioInventario();
     private final ServicioImportacionInventario servicioImportacion = new ServicioImportacionInventario();
     private final ServicioProducto servicioProducto = new ServicioProducto();
+    private final ServicioExportacionDatos servicioExportacion = new ServicioExportacionDatos();
+    private final ServicioAuditoriaArchivos auditoriaArchivos = new ServicioAuditoriaArchivos();
+    private static final DateTimeFormatter FORMATO_ARCHIVO = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
     private static class ItemPreview {
         String sku, nombre, estado;
@@ -48,6 +57,7 @@ public class ControladorAjusteInventario {
 
     private void iniciarEventos() {
         vista.getBtnSeleccionar().addActionListener(e -> seleccionarArchivo());
+        vista.getBtnPlantilla().addActionListener(e -> descargarPlantilla());
         vista.getBtnCargar().addActionListener(e -> cargarPreview());
         vista.getBtnConfirmar().addActionListener(e -> confirmarAjuste());
         vista.getBtnResolverDuplicados().addActionListener(e -> resolverDuplicadosPorGrupo());
@@ -66,6 +76,36 @@ public class ControladorAjusteInventario {
         vista.mostrarAvisoDuplicados(Map.of());
     }
 
+    private void descargarPlantilla() {
+        Object[] opciones = {"Excel (.xlsx)", "CSV", "Cancelar"};
+        int seleccion = JOptionPane.showOptionDialog(vista,
+                "Selecciona el formato de la plantilla:",
+                "Descargar plantilla",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null, opciones, opciones[0]);
+        if (seleccion < 0 || seleccion == 2) return;
+
+        FormatoExportacion formato = seleccion == 0
+                ? FormatoExportacion.EXCEL : FormatoExportacion.CSV;
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Guardar plantilla de importación");
+        chooser.setSelectedFile(new File("plantilla_inventario_"
+                + LocalDateTime.now().format(FORMATO_ARCHIVO) + "." + formato.getExtension()));
+        chooser.setFileFilter(new FileNameExtensionFilter(
+                formato.getDescripcion(), formato.getExtension()));
+        if (chooser.showSaveDialog(vista) != JFileChooser.APPROVE_OPTION) return;
+
+        try {
+            Path archivo = servicioExportacion.generarPlantillaImportacion(
+                    chooser.getSelectedFile().toPath(), formato);
+            JOptionPane.showMessageDialog(vista,
+                    "Plantilla generada correctamente:\n" + archivo.toAbsolutePath());
+        } catch (IOException | SQLException | SecurityException ex) {
+            vista.mostrarError("No se pudo generar la plantilla: " + ex.getMessage());
+        }
+    }
+
     private void seleccionarArchivo() {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Seleccionar archivo Excel o CSV");
@@ -76,7 +116,7 @@ public class ControladorAjusteInventario {
         if (resultado == JFileChooser.APPROVE_OPTION) {
             File archivo = chooser.getSelectedFile();
             if (archivo.length() > ServicioImportacionInventario.TAMANO_MAXIMO_BYTES) {
-                vista.mostrarError("El archivo supera el límite de 10 MB");
+                vista.mostrarError("El archivo supera el tamaño máximo permitido de 10 MB");
                 return;
             }
             vista.setNombreArchivo(archivo.getAbsolutePath());
@@ -107,7 +147,23 @@ public class ControladorAjusteInventario {
         ResultadoLectura resultado;
         try {
             resultado = servicioImportacion.leerYValidar(ruta);
+            try {
+                String nombre = Path.of(ruta).getFileName().toString();
+                String formato = nombre.contains(".")
+                        ? nombre.substring(nombre.lastIndexOf('.') + 1).toUpperCase(Locale.ROOT)
+                        : "DESCONOCIDO";
+                auditoriaArchivos.registrar(nombre, "IMPORTACION", formato,
+                        resultado.estructuraValida() ? "EXITOSO" : "ERROR",
+                        resultado.estructuraValida() ? "Archivo leído y validado" : "Estructura inválida");
+            } catch (SQLException logEx) {
+                vista.mostrarError("No se pudo registrar la bitácora de importación: " + logEx.getMessage());
+                return;
+            }
         } catch (IOException ex) {
+            try {
+                String nombre = Path.of(ruta).getFileName().toString();
+                auditoriaArchivos.registrar(nombre, "IMPORTACION", "DESCONOCIDO", "ERROR", ex.getMessage());
+            } catch (Exception ignored) { }
             vista.mostrarError("Error al leer el archivo: " + ex.getMessage());
             return;
         }

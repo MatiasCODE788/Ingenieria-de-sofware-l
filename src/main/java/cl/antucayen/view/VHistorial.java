@@ -1,6 +1,7 @@
 package cl.antucayen.view;
 
 import cl.antucayen.view.components.ComponentesSwing;
+import cl.antucayen.util.SesionActual;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -15,6 +16,7 @@ public class VHistorial extends JPanel {
     private JButton           btnFiltrar;
     private JButton           btnLimpiar;
     private JButton           btnExportar;
+    private JButton           btnRevertirAjuste;
     private JTable            tblMovimientos;
     private DefaultTableModel modeloTabla;
 
@@ -36,7 +38,7 @@ public class VHistorial extends JPanel {
 
         filtros.add(crearLabel("Tipo:"));
         cmbTipo = new JComboBox<>(new String[]{
-                "Todos", "Ingreso por compra", "Salida por venta",
+                "Todos", "Ingreso por compra", "Venta",
                 "Ajuste positivo", "Ajuste negativo", "Reversión"
         });
         cmbTipo.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -58,15 +60,19 @@ public class VHistorial extends JPanel {
         btnFiltrar = ComponentesSwing.crearBoton("Filtrar", new Color(37, 99, 235));
         btnLimpiar = ComponentesSwing.crearBoton("Limpiar",  new Color(107, 114, 128));
         btnExportar = ComponentesSwing.crearBoton("Exportar CSV/Excel", new Color(5, 150, 105));
+        btnRevertirAjuste = ComponentesSwing.crearBoton("Revertir ajuste", new Color(185, 28, 28));
+        btnRevertirAjuste.setVisible(SesionActual.esAdministrador());
         btnFiltrar.setPreferredSize(new Dimension(100, 30));
         btnLimpiar.setPreferredSize(new Dimension(100, 30));
         btnExportar.setPreferredSize(new Dimension(165, 30));
+        btnRevertirAjuste.setPreferredSize(new Dimension(140, 30));
         filtros.add(btnFiltrar);
         filtros.add(btnLimpiar);
         filtros.add(btnExportar);
+        filtros.add(btnRevertirAjuste);
 
         String[] cols = {"Tipo", "Fecha/Hora", "SKU", "Producto",
-                "Stock anterior", "Cantidad", "Stock resultante", "ID Usuario", "Usuario"};
+                "Stock anterior", "Cantidad", "Stock resultante", "ID Usuario", "Usuario", "ID Ajuste"};
         modeloTabla = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -80,6 +86,7 @@ public class VHistorial extends JPanel {
         tblMovimientos.getColumnModel().getColumn(6).setPreferredWidth(100);
         tblMovimientos.getColumnModel().getColumn(7).setPreferredWidth(75);
         tblMovimientos.getColumnModel().getColumn(8).setPreferredWidth(170);
+        tblMovimientos.getColumnModel().getColumn(9).setPreferredWidth(70);
 
         JScrollPane scroll = new JScrollPane(tblMovimientos);
         add(filtros, BorderLayout.NORTH);
@@ -100,6 +107,7 @@ public class VHistorial extends JPanel {
     public JButton getBtnFiltrar()     { return btnFiltrar; }
     public JButton getBtnLimpiar()     { return btnLimpiar; }
     public JButton getBtnExportar()    { return btnExportar; }
+    public JButton getBtnRevertirAjuste() { return btnRevertirAjuste; }
     public JTable  getTblMovimientos() { return tblMovimientos; }
     public DefaultTableModel getModeloTabla() { return modeloTabla; }
     public void limpiarTabla()             { modeloTabla.setRowCount(0); }

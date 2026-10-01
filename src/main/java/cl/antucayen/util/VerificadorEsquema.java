@@ -11,7 +11,7 @@ import java.util.Map;
 /** Verifica tempranamente que la aplicación use el esquema definitivo. */
 public final class VerificadorEsquema {
 
-    public static final int VERSION_ESQUEMA = 20260913;
+    public static final int VERSION_ESQUEMA = 20260929;
     private static volatile boolean verificado;
     private static final Map<String, List<String>> COLUMNAS_REQUERIDAS = crearContrato();
 
@@ -100,7 +100,8 @@ public final class VerificadorEsquema {
         return new SQLException("La base de datos no corresponde a la versión actual: " + detalle
                 + ". Para una instalación nueva ejecute database/00_instalacion_completa.sql; "
                 + "para una base existente ejecute "
-                + "database/migrations/001_actualizacion_v5_definitiva.sql.");
+                + "database/migrations/001_actualizacion_v5_definitiva.sql y luego "
+                + "database/migrations/002_rf46_rf68_rf72_reportes_auditoria.sql.");
     }
 
     private static Map<String, List<String>> crearContrato() {
@@ -130,6 +131,8 @@ public final class VerificadorEsquema {
         c.put("movimiento_inventario", List.of("id_movimiento", "sku", "id_usuario", "id_factura",
                 "id_item_factura", "id_venta", "id_ajuste", "tipo_movimiento", "fecha_hora",
                 "stock_anterior", "cantidad_aplicada", "stock_resultante", "modalidad_ajuste", "vigente"));
+        c.put("log_archivo", List.of("id_log", "fecha_hora", "id_usuario", "nombre_usuario",
+                "nombre_archivo", "tipo_operacion", "formato", "resultado", "detalle"));
         return Map.copyOf(c);
     }
 }

@@ -5,9 +5,9 @@ import cl.antucayen.util.SesionActual;
 /**
  * Frontera RBAC central de Antucayen.
  *
- * <p>Los tres únicos roles soportados son Administrador, Bodeguero y Cajero.
- * Cada servicio debe usar el permiso de negocio específico y no inferir permisos
- * únicamente desde la visibilidad de botones en Swing.</p>
+ * <p>Los únicos roles soportados son Administrador, Bodeguero y Cajero. La
+ * autorización se aplica nuevamente en servicios para no depender de la
+ * visibilidad de botones o menús Swing.</p>
  */
 public final class Autorizacion {
 
@@ -45,14 +45,37 @@ public final class Autorizacion {
         verificarAdministradorOBodeguero(ACCESO_DENEGADO);
     }
 
-    /** Importaciones y ajustes directos de inventario: función administrativa. */
+    /**
+     * RF-31 a RF-45: Administrador y Bodeguero pueden importar, previsualizar
+     * y aplicar ajustes ordinarios de inventario.
+     */
     public static void verificarAjustesInventario() {
-        verificarAdministrador("Solo el Administrador puede ejecutar ajustes directos de inventario");
+        verificarAdministradorOBodeguero(ACCESO_DENEGADO);
     }
 
-    /** Consulta del historial operacional de inventario. */
+    /** Correcciones que aceptan cantidades negativas: exclusivamente Admin. */
+    public static void verificarCorreccionNegativaInventario() {
+        verificarAdministrador(
+                "Solo el Administrador puede autorizar correcciones con cantidades negativas");
+    }
+
+    /** RF-46: la reversión de un ajuste aplicado es exclusivamente Admin. */
+    public static void verificarReversionAjuste() {
+        verificarAdministrador("Solo el Administrador puede revertir ajustes de inventario");
+    }
+
+    /**
+     * RF-47/RF-60: el historial/reportes de inventario son de consulta para
+     * cualquiera de los tres roles autorizados. Las acciones administrativas
+     * dentro de la pantalla siguen verificándose por separado.
+     */
     public static void verificarHistorialInventario() {
-        verificarAdministradorOBodeguero(ACCESO_DENEGADO);
+        verificarSesionActiva();
+    }
+
+    /** Reportes operacionales disponibles para los tres roles vigentes. */
+    public static void verificarReportes() {
+        verificarSesionActiva();
     }
 
     /** Punto de Venta: Cajero y Administrador supervisor. */
@@ -63,14 +86,9 @@ public final class Autorizacion {
         }
     }
 
-    /** Consulta de productos y stock en tiempo real para los tres roles vigentes. */
+    /** Consulta de productos y stock en tiempo real para los tres roles. */
     public static void verificarConsultaStock() {
         verificarSesionActiva();
-        if (!SesionActual.esAdministrador()
-                && !SesionActual.esBodeguero()
-                && !SesionActual.esCajero()) {
-            throw new SecurityException(ACCESO_DENEGADO);
-        }
     }
 
     public static void verificarAdministradorOBodeguero(String mensaje) {

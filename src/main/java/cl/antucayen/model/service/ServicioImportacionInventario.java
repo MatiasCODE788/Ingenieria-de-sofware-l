@@ -55,7 +55,7 @@ public class ServicioImportacionInventario {
             return errorFormato("El archivo seleccionado no existe o no es un archivo válido");
         }
         if (archivo.length() > TAMANO_MAXIMO_BYTES) {
-            return errorFormato("El archivo supera el límite de 10 MB");
+            return errorFormato("El archivo supera el tamaño máximo permitido de 10 MB");
         }
 
         String rutaNormalizada = rutaArchivo.toLowerCase(Locale.ROOT);

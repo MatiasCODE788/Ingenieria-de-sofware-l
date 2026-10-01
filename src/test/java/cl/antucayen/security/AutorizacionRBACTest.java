@@ -20,16 +20,17 @@ class AutorizacionRBACTest {
     }
 
     @Test
-    void cajeroPuedeVenderYConsultarStockPeroNoAdministrar() {
+    void cajeroPuedeVenderConsultarStockHistorialYReportesPeroNoAdministrar() {
         iniciarComo("Cajero");
 
         assertDoesNotThrow(Autorizacion::verificarPuntoVenta);
         assertDoesNotThrow(Autorizacion::verificarConsultaStock);
+        assertDoesNotThrow(Autorizacion::verificarHistorialInventario);
+        assertDoesNotThrow(Autorizacion::verificarReportes);
         assertThrows(SecurityException.class, Autorizacion::verificarGestionProductos);
         assertThrows(SecurityException.class, Autorizacion::verificarGestionProveedores);
         assertThrows(SecurityException.class, Autorizacion::verificarGestionFacturas);
         assertThrows(SecurityException.class, Autorizacion::verificarAjustesInventario);
-        assertThrows(SecurityException.class, Autorizacion::verificarHistorialInventario);
         assertThrows(SecurityException.class,
                 () -> Autorizacion.verificarAdministrador("Solo Administrador"));
         assertThrows(SecurityException.class,
@@ -39,15 +40,19 @@ class AutorizacionRBACTest {
     }
 
     @Test
-    void bodegueroGestionaProductosProveedoresYFacturasPeroNoCajaNiAjustesDirectos() {
+    void bodegueroGestionaInventarioOrdinarioPeroNoCajaCorreccionesNegativasNiReversiones() {
         iniciarComo("Bodeguero");
 
         assertDoesNotThrow(Autorizacion::verificarGestionProductos);
         assertDoesNotThrow(Autorizacion::verificarGestionProveedores);
         assertDoesNotThrow(Autorizacion::verificarGestionFacturas);
         assertDoesNotThrow(Autorizacion::verificarConsultaStock);
+        assertDoesNotThrow(Autorizacion::verificarAjustesInventario);
+        assertDoesNotThrow(Autorizacion::verificarHistorialInventario);
+        assertDoesNotThrow(Autorizacion::verificarReportes);
         assertThrows(SecurityException.class, Autorizacion::verificarPuntoVenta);
-        assertThrows(SecurityException.class, Autorizacion::verificarAjustesInventario);
+        assertThrows(SecurityException.class, Autorizacion::verificarCorreccionNegativaInventario);
+        assertThrows(SecurityException.class, Autorizacion::verificarReversionAjuste);
     }
 
     @Test
@@ -58,12 +63,14 @@ class AutorizacionRBACTest {
     }
 
     @Test
-    void administradorPuedeSupervisarCajaYAdministrar() {
+    void administradorPuedeSupervisarCajaAdministrarCorregirYRevertir() {
         iniciarComo("Administrador");
 
         assertDoesNotThrow(Autorizacion::verificarPuntoVenta);
         assertDoesNotThrow(Autorizacion::verificarGestionProductos);
         assertDoesNotThrow(Autorizacion::verificarAjustesInventario);
+        assertDoesNotThrow(Autorizacion::verificarCorreccionNegativaInventario);
+        assertDoesNotThrow(Autorizacion::verificarReversionAjuste);
         assertDoesNotThrow(() -> Autorizacion.verificarAdministrador("Solo Administrador"));
     }
 
@@ -74,6 +81,7 @@ class AutorizacionRBACTest {
         assertFalse(SesionActual.esRolSoportado());
         assertThrows(SecurityException.class, Autorizacion::verificarConsultaStock);
         assertThrows(SecurityException.class, Autorizacion::verificarPuntoVenta);
+        assertThrows(SecurityException.class, Autorizacion::verificarReportes);
     }
 
     private void iniciarComo(String perfil) {

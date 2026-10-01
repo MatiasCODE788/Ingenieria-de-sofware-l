@@ -22,7 +22,7 @@ public class ServicioArchivoFactura {
             throw new IllegalArgumentException("El archivo de factura está vacío");
         }
         if (archivo.length() > MAX_BYTES) {
-            throw new IllegalArgumentException("El archivo de factura no puede superar 10 MB");
+            throw new IllegalArgumentException("El archivo supera el tamaño máximo permitido de 10 MB");
         }
         String extension = extension(archivo.getName());
         if (!EXTENSIONES.contains(extension)) {

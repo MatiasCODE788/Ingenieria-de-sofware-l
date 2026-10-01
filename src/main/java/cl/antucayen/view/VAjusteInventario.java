@@ -18,6 +18,7 @@ public class VAjusteInventario extends JPanel {
     private JComboBox<String> cmbModalidad;
     private JCheckBox chkCorreccionAutorizada;
     private JButton btnCargar;
+    private JButton btnPlantilla;
     private JTable tblPreview;
     private DefaultTableModel modeloPreview;
     private JButton btnConfirmar;
@@ -127,9 +128,15 @@ public class VAjusteInventario extends JPanel {
         p.add(chkCorreccionAutorizada, gbc);
 
         gbc.gridy = 6;
+        JPanel accionesArchivo = new JPanel(new GridLayout(1, 2, 10, 0));
+        accionesArchivo.setBackground(Color.WHITE);
+        btnPlantilla = ComponentesSwing.crearBoton("Descargar plantilla", new Color(14, 116, 144));
         btnCargar = ComponentesSwing.crearBoton("Cargar y previsualizar", new Color(5, 150, 105));
+        btnPlantilla.setPreferredSize(new Dimension(0, 40));
         btnCargar.setPreferredSize(new Dimension(0, 40));
-        p.add(btnCargar, gbc);
+        accionesArchivo.add(btnPlantilla);
+        accionesArchivo.add(btnCargar);
+        p.add(accionesArchivo, gbc);
 
         gbc.gridy = 7;
         lblEstado = new JLabel("");
@@ -289,6 +296,7 @@ public class VAjusteInventario extends JPanel {
 
     public JButton getBtnSeleccionar() { return btnSeleccionar; }
     public JButton getBtnCargar() { return btnCargar; }
+    public JButton getBtnPlantilla() { return btnPlantilla; }
     public JButton getBtnConfirmar() { return btnConfirmar; }
     public JButton getBtnCancelar() { return btnCancelar; }
     public JButton getBtnResolverDuplicados() { return btnResolverDuplicados; }

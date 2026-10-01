@@ -22,6 +22,7 @@ public class VPrincipal extends JFrame {
     private JButton btnProcesarFactura;
     private JButton btnImportarInventario;
     private JButton btnHistorial;
+    private JButton btnReportes;
     private JButton btnUsuarios;
     private JButton btnCerrarSesion;
 
@@ -113,7 +114,9 @@ public class VPrincipal extends JFrame {
         seccionAnalisis = crearSeccion("ANÁLISIS");
         menuPanel.add(seccionAnalisis);
         btnHistorial = crearBotonMenu("Historial");
+        btnReportes = crearBotonMenu("Reportes");
         menuPanel.add(btnHistorial);
+        menuPanel.add(btnReportes);
 
         seccionAdministracion = crearSeccion("ADMINISTRACIÓN");
         menuPanel.add(seccionAdministracion);
@@ -255,13 +258,14 @@ public class VPrincipal extends JFrame {
         btnEquivalencias.setVisible(esAdmin || esBodeguero);
         btnFacturas.setVisible(esAdmin || esBodeguero);
         btnProcesarFactura.setVisible(esAdmin || esBodeguero);
-        btnImportarInventario.setVisible(esAdmin);
-        btnHistorial.setVisible(esAdmin || esBodeguero);
+        btnImportarInventario.setVisible(esAdmin || esBodeguero);
+        btnHistorial.setVisible(perfilSoportado);
+        btnReportes.setVisible(perfilSoportado);
         btnUsuarios.setVisible(esAdmin);
 
         seccionFacturacion.setVisible(esAdmin || esBodeguero);
-        seccionInventarioMasivo.setVisible(esAdmin);
-        seccionAnalisis.setVisible(esAdmin || esBodeguero);
+        seccionInventarioMasivo.setVisible(esAdmin || esBodeguero);
+        seccionAnalisis.setVisible(perfilSoportado);
         seccionAdministracion.setVisible(esAdmin);
     }
 
@@ -309,6 +313,7 @@ public class VPrincipal extends JFrame {
     public JButton getBtnProcesarFactura()    { return btnProcesarFactura; }
     public JButton getBtnImportarInventario() { return btnImportarInventario; }
     public JButton getBtnHistorial()          { return btnHistorial; }
+    public JButton getBtnReportes()           { return btnReportes; }
     public JButton getBtnUsuarios()           { return btnUsuarios; }
     public JButton getBtnCerrarSesion()       { return btnCerrarSesion; }
 }

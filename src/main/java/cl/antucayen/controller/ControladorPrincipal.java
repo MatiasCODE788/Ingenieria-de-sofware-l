@@ -65,11 +65,13 @@ public class ControladorPrincipal {
         }));
 
         vista.getBtnHistorial().addActionListener(e -> ejecutarSeguro(() -> {
-            Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
+            Autorizacion.verificarHistorialInventario();
             VHistorial panel = new VHistorial();
             new ControladorHistorial(panel);
             vista.setContenido(panel, "Historial de Movimientos");
         }));
+
+        vista.getBtnReportes().addActionListener(e -> ejecutarSeguro(this::mostrarReportes));
 
         vista.getBtnUsuarios().addActionListener(e -> ejecutarSeguro(() -> {
             Autorizacion.verificarAdministrador("Solo el Administrador puede gestionar usuarios");
@@ -79,6 +81,19 @@ public class ControladorPrincipal {
         }));
 
         vista.getBtnCerrarSesion().addActionListener(e -> cerrarSesion());
+    }
+
+
+    private void mostrarReportes() {
+        Autorizacion.verificarReportes();
+        VReportes panel = new VReportes();
+        new ControladorReportes(panel, () -> ejecutarSeguro(() -> {
+            Autorizacion.verificarGestionEquivalencias();
+            VConsultaEquivalencias equivalencias = new VConsultaEquivalencias();
+            new ControladorProveedor(equivalencias);
+            vista.setContenido(equivalencias, "Consulta de Equivalencias");
+        }));
+        vista.setContenido(panel, "Reportes");
     }
 
     private void abrirProcesarFactura() {
