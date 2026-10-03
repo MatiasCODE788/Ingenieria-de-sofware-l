@@ -479,8 +479,7 @@ Tras una instalación nueva de la base de datos están disponibles estas cuentas
 | `matias_bodega` | `bodega123` | Bodeguero | Productos |
 | `cajero_demo` | `cajero123` | Cajero | Punto de Venta |
 
-> [!IMPORTANT]
-> Son credenciales de demostración. Para un uso real, crea tus propios usuarios en «Usuarios y permisos» y desactiva estas cuentas: la aplicación no incluye una función para cambiar contraseñas.
+
 
 ### Menú lateral
 
