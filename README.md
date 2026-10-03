@@ -350,8 +350,6 @@ Con estos valores la aplicación construye la URL `jdbc:mariadb://<host>:<port>/
 
 El archivo `database/Antucayen_Instalacion_Unica.sql` es la única fuente del esquema. Crea la base `minimarket` (`utf8mb4`, colación `utf8mb4_spanish_ci`, tablas InnoDB) y carga datos de demostración. El repositorio no incluye migraciones incrementales.
 
-> [!WARNING]
-> El script ejecuta `DROP DATABASE IF EXISTS minimarket` y vuelve a crear la base. Si ya tienes datos, respáldalos antes de ejecutarlo.
 
 ```bash
 # Linux / macOS
