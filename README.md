@@ -8,9 +8,6 @@
 
 Aplicación de escritorio **Java/Swing** para la gestión del minimarket Antucayen: productos y stock, proveedores, facturas de compra, punto de venta, historial de movimientos, reportes y usuarios con control de acceso por roles, sobre una base de datos **MariaDB**.
 
-> [!NOTE]
-> Es una aplicación local: no utiliza Spring Boot, no levanta un servidor HTTP y no expone API. La interfaz Swing se comunica con MariaDB directamente por JDBC.
-
 ## Tabla de contenidos
 
 1. [Descripción](#descripción)
