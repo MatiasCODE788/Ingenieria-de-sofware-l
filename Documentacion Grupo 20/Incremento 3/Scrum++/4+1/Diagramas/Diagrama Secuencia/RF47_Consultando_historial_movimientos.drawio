@@ -1,0 +1,140 @@
+<mxfile host="app.diagrams.net" agent="claude">
+  <diagram id="rf47" name="DS-RF47 - Consultando historial de movimientos">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1630" pageHeight="523" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ttl" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;" value="DS-RF47 - Consultando historial de movimientos" vertex="1">
+          <mxGeometry height="24" width="1550" x="20" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="sub" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;" value="CU-68 | RF-47" vertex="1">
+          <mxGeometry height="18" width="1550" x="20" y="27" as="geometry" />
+        </mxCell>
+        <mxCell id="p0" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;fontSize=18;" value="Usuario autorizado" vertex="1">
+          <mxGeometry height="94" width="60" x="110" y="-49" as="geometry" />
+        </mxCell>
+        <mxCell id="life0" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135" y="78" as="sourcePoint" />
+            <mxPoint x="135" y="463" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="Vista Inventario" vertex="1">
+          <mxGeometry height="28" width="230" x="280" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life1" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="395" y="78" as="sourcePoint" />
+            <mxPoint x="395" y="463" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="C_Consulta" vertex="1">
+          <mxGeometry height="28" width="230" x="540" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life2" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="655" y="78" as="sourcePoint" />
+            <mxPoint x="655" y="463" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="ServicioHistorial" vertex="1">
+          <mxGeometry height="28" width="230" x="800" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life3" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="915" y="78" as="sourcePoint" />
+            <mxPoint x="915" y="463" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="C_MariaDB" vertex="1">
+          <mxGeometry height="28" width="230" x="1060" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life4" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1175" y="78" as="sourcePoint" />
+            <mxPoint x="1175" y="463" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="movimiento_inventario" vertex="1">
+          <mxGeometry height="28" width="230" x="1320" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life5" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1435" y="78" as="sourcePoint" />
+            <mxPoint x="1435" y="463" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="1. seleccionar producto y solicitar historial">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="135" y="93" as="sourcePoint" />
+            <mxPoint x="395" y="93" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="2. consultarHistorial(sku, filtros)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="123" as="sourcePoint" />
+            <mxPoint x="655" y="123" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="3. buscarMovimientos(sku, filtros)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="153" as="sourcePoint" />
+            <mxPoint x="915" y="153" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="4. SELECT movimiento_inventario WHERE sku AND vigente=1 ORDER BY fecha_hora DESC">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="183" as="sourcePoint" />
+            <mxPoint x="1175" y="183" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="5. cursor.execute(query)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="213" as="sourcePoint" />
+            <mxPoint x="1435" y="213" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="6. return: cursor_result">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1435" y="243" as="sourcePoint" />
+            <mxPoint x="1175" y="243" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="7. movimientos, cantidad_aplicada y stocks obtenidos">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="273" as="sourcePoint" />
+            <mxPoint x="915" y="273" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="8. historial filtrado (por fecha/SKU/usuario)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="303" as="sourcePoint" />
+            <mxPoint x="655" y="303" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="9. historial de movimientos">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="333" as="sourcePoint" />
+            <mxPoint x="395" y="333" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="10. visualizar historial (solo lectura)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="363" as="sourcePoint" />
+            <mxPoint x="135" y="363" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

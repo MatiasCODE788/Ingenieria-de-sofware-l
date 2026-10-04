@@ -1,0 +1,214 @@
+<mxfile host="app.diagrams.net" agent="claude">
+  <diagram id="rf72" name="DS-RF72 - Emitiendo comprobante de venta">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="2150" pageHeight="763" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ttl" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;" value="DS-RF72 - Emitiendo comprobante de venta" vertex="1">
+          <mxGeometry height="24" width="2070" x="20" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="sub" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;" value="CU-83 | RF-72" vertex="1">
+          <mxGeometry height="18" width="2070" x="20" y="27" as="geometry" />
+        </mxCell>
+        <mxCell id="p0" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;fontSize=18;" value="Cajero" vertex="1">
+          <mxGeometry height="94" width="60" x="105" y="-49" as="geometry" />
+        </mxCell>
+        <mxCell id="life0" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135" y="78" as="sourcePoint" />
+            <mxPoint x="135" y="703" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="Vista Ventas" vertex="1">
+          <mxGeometry height="28" width="230" x="280" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life1" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="395" y="78" as="sourcePoint" />
+            <mxPoint x="395" y="703" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="C_Venta" vertex="1">
+          <mxGeometry height="28" width="230" x="540" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life2" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="655" y="78" as="sourcePoint" />
+            <mxPoint x="655" y="703" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="ServicioVenta" vertex="1">
+          <mxGeometry height="28" width="230" x="800" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life3" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="915" y="78" as="sourcePoint" />
+            <mxPoint x="915" y="703" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="C_MariaDB" vertex="1">
+          <mxGeometry height="28" width="230" x="1060" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life4" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1175" y="78" as="sourcePoint" />
+            <mxPoint x="1175" y="703" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="venta" vertex="1">
+          <mxGeometry height="28" width="230" x="1320" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life5" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1435" y="78" as="sourcePoint" />
+            <mxPoint x="1435" y="703" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="item_venta" vertex="1">
+          <mxGeometry height="28" width="230" x="1580" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life6" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1695" y="78" as="sourcePoint" />
+            <mxPoint x="1695" y="703" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="pago_venta" vertex="1">
+          <mxGeometry height="28" width="230" x="1840" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life7" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1955" y="78" as="sourcePoint" />
+            <mxPoint x="1955" y="703" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="1. [venta en estado &#39;Pagada&#39;] generar comprobante automaticamente">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="140" y="100" as="sourcePoint" />
+            <mxPoint x="400" y="100" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="2. generarComprobante(idVenta)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="123" as="sourcePoint" />
+            <mxPoint x="655" y="123" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="3. obtenerComprobante(idVenta)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="153" as="sourcePoint" />
+            <mxPoint x="915" y="153" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="4. SELECT venta WHERE id_venta (fecha_confirmacion, monto_total)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="183" as="sourcePoint" />
+            <mxPoint x="1175" y="183" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="5. cursor.execute(query)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="213" as="sourcePoint" />
+            <mxPoint x="1435" y="213" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="6. return: cursor_result">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1435" y="243" as="sourcePoint" />
+            <mxPoint x="1175" y="243" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="7. datos de cabecera">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="273" as="sourcePoint" />
+            <mxPoint x="915" y="273" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="8. SELECT item_venta WHERE id_venta (sku, cantidad, precio_unitario_venta, subtotal)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="303" as="sourcePoint" />
+            <mxPoint x="1175" y="303" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="9. cursor.execute(query)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="333" as="sourcePoint" />
+            <mxPoint x="1695" y="333" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="10. return: cursor_result">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1695" y="363" as="sourcePoint" />
+            <mxPoint x="1175" y="363" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m11" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="11. detalle de productos">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="393" as="sourcePoint" />
+            <mxPoint x="915" y="393" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="12. SELECT pago_venta WHERE id_venta (medio_pago, monto)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="423" as="sourcePoint" />
+            <mxPoint x="1175" y="423" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m13" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="13. cursor.execute(query)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="453" as="sourcePoint" />
+            <mxPoint x="1955" y="453" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m14" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="14. return: cursor_result">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1955" y="483" as="sourcePoint" />
+            <mxPoint x="1175" y="483" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m15" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="15. medios de pago obtenidos">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="513" as="sourcePoint" />
+            <mxPoint x="915" y="513" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m16" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="16. comprobante generado (fecha, usuario, detalle, total, medios de pago)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="543" as="sourcePoint" />
+            <mxPoint x="655" y="543" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m17" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="17. comprobante listo">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="573" as="sourcePoint" />
+            <mxPoint x="395" y="573" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m18" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="18. mostrar / imprimir comprobante de venta">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="603" as="sourcePoint" />
+            <mxPoint x="135" y="603" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
