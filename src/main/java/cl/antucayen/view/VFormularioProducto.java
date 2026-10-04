@@ -1,8 +1,10 @@
 package cl.antucayen.view;
 
+import cl.antucayen.model.domain.EstadoProducto;
 import cl.antucayen.model.entity.Proveedor;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -82,7 +84,10 @@ public class VFormularioProducto extends JDialog {
         txtStock = crearCampo();
         txtStock.setText("0");
         txtStock.setEditable(!modoEdicion);
-        cmbEstado = new JComboBox<>(new String[]{"Activo", "Inactivo"});
+        cmbEstado = new JComboBox<>(new String[]{
+                EstadoProducto.ACTIVO.valorDb(),
+                EstadoProducto.INACTIVO.valorDb()
+        });
         cmbEstado.setFont(new Font("Arial", Font.PLAIN, 13));
         cmbEstado.setEnabled(modoEdicion);
         gbc.gridx = 0; gbc.gridy = 7; form.add(txtStock, gbc);
@@ -210,10 +215,6 @@ public class VFormularioProducto extends JDialog {
     }
 
     public void limpiarError() { lblError.setVisible(false); }
-
-    public void marcarSkuError() {
-        txtSku.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-    }
 
     public void setDatos(String sku, String nombre, String cb, String unidad,
                          int precioVenta, int stock, String estado) {

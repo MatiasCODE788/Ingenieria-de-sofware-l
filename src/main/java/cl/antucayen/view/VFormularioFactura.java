@@ -1,12 +1,14 @@
 package cl.antucayen.view;
 
+import cl.antucayen.model.domain.EstadoItemFactura;
+import cl.antucayen.model.dto.ItemFacturaExtraido;
 import cl.antucayen.model.entity.Proveedor;
-import cl.antucayen.model.service.ServicioExtraccionFacturaDigital.ItemExtraido;
 import cl.antucayen.view.components.ComponentesSwing;
 import cl.antucayen.view.components.SelectorFecha;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.io.File;
 import java.time.LocalDate;
@@ -38,6 +40,7 @@ public class VFormularioFactura extends JDialog {
     private JButton btnCancelar;
     private JLabel lblError;
     private File archivoSeleccionado;
+    private boolean analisisRealizado;
 
     public VFormularioFactura(JFrame parent) {
         super(parent, "Registrar Factura", true);
@@ -112,7 +115,7 @@ public class VFormularioFactura extends JDialog {
         txtArchivo.setText("Sin archivo adjunto");
         btnSeleccionarArchivo = new JButton("Seleccionar");
         btnVistaPrevia = new JButton("Vista previa");
-        btnExtraerItems = new JButton("Extraer ítems");
+        btnExtraerItems = new JButton("Analizar factura");
         JPanel accionesArchivo = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
         accionesArchivo.setBackground(Color.WHITE);
         accionesArchivo.add(btnSeleccionarArchivo);
@@ -146,11 +149,11 @@ public class VFormularioFactura extends JDialog {
         topItems.add(lblItems, BorderLayout.WEST);
         topItems.add(botonesItems, BorderLayout.EAST);
 
-        String[] colsItems = {"Código proveedor", "Descripción", "Cantidad", "Estado"};
+        String[] colsItems = {"Código proveedor", "Descripción", "Cantidad", "Precio unitario", "Estado"};
         modeloItems = new DefaultTableModel(colsItems, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column < 3;
+                return column < 4;
             }
         };
         tblItems = ComponentesSwing.crearTabla(modeloItems);
@@ -181,7 +184,7 @@ public class VFormularioFactura extends JDialog {
         add(botones, BorderLayout.SOUTH);
 
         btnAgregarProducto.addActionListener(e ->
-                modeloItems.addRow(new Object[]{"", "", "", "Observado"}));
+                modeloItems.addRow(new Object[]{"", "", "", "0", EstadoItemFactura.OBSERVADO.valorDb()}));
         btnQuitarProducto.addActionListener(e -> {
             int fila = tblItems.getSelectedRow();
             if (fila >= 0) modeloItems.removeRow(fila);
@@ -201,22 +204,71 @@ public class VFormularioFactura extends JDialog {
     }
 
     public void setArchivoSeleccionado(File archivo) {
+        boolean cambioArchivo = this.archivoSeleccionado == null
+                || archivo == null
+                || !this.archivoSeleccionado.equals(archivo);
         this.archivoSeleccionado = archivo;
+        this.analisisRealizado = false;
+        if (cambioArchivo) {
+            modeloItems.setRowCount(0);
+        }
         txtArchivo.setText(archivo == null ? "Sin archivo adjunto" : archivo.getAbsolutePath());
         btnVistaPrevia.setEnabled(esModalidadDigital() && archivo != null);
         btnExtraerItems.setEnabled(esModalidadDigital() && archivo != null);
     }
 
-    public void cargarItemsExtraidos(List<ItemExtraido> items) {
+    public void cargarItemsExtraidos(List<ItemFacturaExtraido> items) {
         modeloItems.setRowCount(0);
-        for (ItemExtraido item : items) {
+        for (ItemFacturaExtraido item : items) {
             modeloItems.addRow(new Object[]{
                     item.codigoInterno() == null ? "" : item.codigoInterno(),
                     item.descripcion() == null ? "" : item.descripcion(),
                     item.cantidad(),
+                    item.precioUnitario(),
                     item.estado()
             });
         }
+    }
+
+
+    /** Completa automáticamente los datos de cabecera detectados en el archivo.
+     *  Los campos siguen siendo editables para permitir corrección manual. */
+    public void cargarDatosExtraidos(String numeroFactura,
+                                     LocalDate fechaEmision,
+                                     Integer valorTotal) {
+        if (numeroFactura != null && !numeroFactura.isBlank()) {
+            txtNumero.setText(numeroFactura.trim());
+        }
+        if (fechaEmision != null) {
+            txtFecha.setText(FORMATO_FECHA.format(fechaEmision));
+        }
+        if (valorTotal != null && valorTotal >= 0) {
+            txtValorTotal.setText(String.valueOf(valorTotal));
+        }
+        analisisRealizado = true;
+    }
+
+    public boolean isAnalisisRealizado() { return analisisRealizado; }
+
+    public void marcarAnalisisRealizado() { analisisRealizado = true; }
+
+    /**
+     * Bloquea las acciones que podrían iniciar un segundo procesamiento del
+     * mismo archivo mientras una tarea de PDF/OCR está ejecutándose fuera del
+     * EDT. Los campos se mantienen visibles y se restauran según la modalidad
+     * al finalizar.
+     */
+    public void setProcesandoDocumento(boolean procesando) {
+        cmbModalidad.setEnabled(!procesando);
+        btnSeleccionarArchivo.setEnabled(!procesando && esModalidadDigital());
+        btnVistaPrevia.setEnabled(!procesando && esModalidadDigital() && archivoSeleccionado != null);
+        btnExtraerItems.setEnabled(!procesando && esModalidadDigital() && archivoSeleccionado != null);
+        btnGuardar.setEnabled(!procesando);
+        btnCancelar.setEnabled(!procesando);
+        btnAgregarProducto.setEnabled(!procesando);
+        btnQuitarProducto.setEnabled(!procesando);
+        setCursor(Cursor.getPredefinedCursor(
+                procesando ? Cursor.WAIT_CURSOR : Cursor.DEFAULT_CURSOR));
     }
 
     private void actualizarRutProveedor() {

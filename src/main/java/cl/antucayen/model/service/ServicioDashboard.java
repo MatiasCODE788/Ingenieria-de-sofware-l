@@ -5,6 +5,7 @@ import cl.antucayen.model.dao.ItemVentaDAO;
 import cl.antucayen.model.dao.MovimientoInventarioDAO;
 import cl.antucayen.model.dao.ProductoDAO;
 import cl.antucayen.model.dao.VentaDAO;
+import cl.antucayen.model.domain.EstadoFactura;
 import cl.antucayen.model.dto.ProductoVendido;
 import cl.antucayen.security.Autorizacion;
 
@@ -25,14 +26,12 @@ public class ServicioDashboard {
 
     public int productosActivos() throws SQLException {
         verificarAccesoDashboard();
-        return (int) productoDAO.listarTodos().stream()
-                .filter(p -> "Activo".equals(p.getEstado()))
-                .count();
+        return productoDAO.contarActivos();
     }
 
     public int facturasPendientes() throws SQLException {
         verificarAccesoDashboard();
-        return facturaDAO.listarPorEstado("Pendiente").size();
+        return facturaDAO.contarPorEstado(EstadoFactura.PENDIENTE.valorDb());
     }
 
     public int movimientosHoy() throws SQLException {

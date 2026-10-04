@@ -1,6 +1,5 @@
 package cl.antucayen.model.dao;
 
-import cl.antucayen.model.entity.Proveedor;
 import cl.antucayen.util.DBConexion;
 
 import java.sql.Connection;
@@ -52,28 +51,4 @@ public class ProductoProveedorDAO {
         return ids;
     }
 
-    public List<Proveedor> listarProveedoresPorSku(String sku) throws SQLException {
-        String sql = """
-                SELECT p.*
-                FROM proveedor p
-                JOIN producto_proveedor pp ON pp.id_proveedor = p.id_proveedor
-                WHERE pp.sku=?
-                ORDER BY p.nombre
-                """;
-        List<Proveedor> proveedores = new ArrayList<>();
-        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setString(1, sku);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    proveedores.add(new Proveedor(
-                            rs.getInt("id_proveedor"),
-                            rs.getString("rut"),
-                            rs.getString("nombre"),
-                            rs.getString("telefono"),
-                            rs.getString("correo_electronico")));
-                }
-            }
-        }
-        return proveedores;
-    }
 }

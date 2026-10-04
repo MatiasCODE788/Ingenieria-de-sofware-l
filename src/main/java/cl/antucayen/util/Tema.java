@@ -5,8 +5,8 @@ import java.awt.Color;
 /**
  * Los 5 temas visuales disponibles para el sistema.
  * Cada uno define su propia paleta de colores; las vistas (VLogin, VPrincipal, etc.)
- * leen los colores desde GestorTemas.getInstancia().getPaleta() en vez de tenerlos
- * escritos directamente en el código.
+ * obtienen el tema activo mediante GestorTemas.getInstancia().getTema() y leen
+ * directamente desde ese Tema los colores de la interfaz.
  */
 public enum Tema {
 

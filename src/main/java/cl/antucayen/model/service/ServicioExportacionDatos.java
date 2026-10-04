@@ -1,10 +1,13 @@
 package cl.antucayen.model.service;
 
-import cl.antucayen.model.entity.ItemFactura;
+import cl.antucayen.model.domain.EstadoItemFactura;
+import cl.antucayen.model.domain.EstadoProducto;
 import cl.antucayen.model.dto.ReporteTabular;
+import cl.antucayen.model.entity.ItemFactura;
 import cl.antucayen.model.entity.MovimientoInventario;
 import cl.antucayen.model.entity.Producto;
 import cl.antucayen.security.Autorizacion;
+
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
@@ -62,7 +65,7 @@ public class ServicioExportacionDatos {
         Objects.requireNonNull(productos, "La lista de productos no puede ser nula");
         List<Producto> activos = productos.stream()
                 .filter(Objects::nonNull)
-                .filter(p -> "Activo".equals(p.getEstado()))
+                .filter(p -> EstadoProducto.ACTIVO.coincide(p.getEstado()))
                 .toList();
         Path archivo = prepararDestino(destino, formato);
         ejecutarExportacionAuditada(archivo, formato, () -> {
@@ -95,7 +98,7 @@ public class ServicioExportacionDatos {
         Objects.requireNonNull(items, "La lista de ítems no puede ser nula");
         List<ItemFactura> validos = items.stream()
                 .filter(Objects::nonNull)
-                .filter(i -> "Válido".equals(i.getEstadoItem()))
+                .filter(i -> EstadoItemFactura.VALIDO.coincide(i.getEstadoItem()))
                 .filter(i -> i.getSku() != null && !i.getSku().isBlank())
                 .toList();
         if (validos.isEmpty()) {

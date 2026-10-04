@@ -1,11 +1,12 @@
 package cl.antucayen.view;
 
-import cl.antucayen.view.components.ComponentesSwing;
-
+import cl.antucayen.model.domain.EstadoFactura;
 import cl.antucayen.model.entity.Proveedor;
+import cl.antucayen.view.components.ComponentesSwing;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.util.List;
 
@@ -20,7 +21,6 @@ public class VFacturas extends JPanel {
     private JButton           btnLimpiar;
     private JButton           btnNueva;
     private JTable            tblFacturas;
-    private JLabel            lblAyuda;
     private DefaultTableModel modeloTabla;
 
     public VFacturas() { initComponents(); }
@@ -40,7 +40,12 @@ public class VFacturas extends JPanel {
         txtFiltroDesde.setToolTipText("dd-mm-aaaa");
         txtFiltroHasta = crearCampoFiltro(100);
         txtFiltroHasta.setToolTipText("dd-mm-aaaa");
-        cmbFiltroEstado = new JComboBox<>(new String[]{"Todos", "Pendiente", "Procesada", "Observada"});
+        cmbFiltroEstado = new JComboBox<>(new String[]{
+                "Todos",
+                EstadoFactura.PENDIENTE.valorDb(),
+                EstadoFactura.PROCESADA.valorDb(),
+                EstadoFactura.OBSERVADA.valorDb()
+        });
         cmbFiltroEstado.setFont(new Font("Arial", Font.PLAIN, 13));
         cmbFiltroEstado.setPreferredSize(new Dimension(120, 32));
 
@@ -77,7 +82,7 @@ public class VFacturas extends JPanel {
         tblFacturas.getColumnModel().getColumn(4).setPreferredWidth(100);
 
         JScrollPane scroll = new JScrollPane(tblFacturas);
-        lblAyuda = new JLabel("  Doble clic sobre una factura para ver su detalle y procesarla");
+        JLabel lblAyuda = new JLabel("  Doble clic sobre una factura para ver su detalle y procesarla");
         lblAyuda.setFont(new Font("Arial", Font.ITALIC, 12));
         lblAyuda.setForeground(new Color(107, 114, 128));
 
@@ -116,13 +121,6 @@ public class VFacturas extends JPanel {
         txtFiltroHasta.setText("");
         cmbFiltroEstado.setSelectedIndex(0);
         cmbFiltroProveedor.setSelectedIndex(0);
-    }
-
-    public void setModoSoloLectura(boolean soloLectura) {
-        btnNueva.setVisible(!soloLectura);
-        lblAyuda.setText(soloLectura
-                ? "  Doble clic sobre una factura para ver su detalle"
-                : "  Doble clic sobre una factura para ver su detalle y procesarla");
     }
 
     public JButton getBtnBuscar()     { return btnBuscar; }

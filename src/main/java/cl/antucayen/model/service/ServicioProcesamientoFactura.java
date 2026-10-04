@@ -4,6 +4,10 @@ import cl.antucayen.model.dao.EquivalenciaDAO;
 import cl.antucayen.model.dao.FacturaDAO;
 import cl.antucayen.model.dao.ItemFacturaDAO;
 import cl.antucayen.model.dao.ProductoDAO;
+import cl.antucayen.model.domain.EstadoFactura;
+import cl.antucayen.model.domain.EstadoItemFactura;
+import cl.antucayen.model.domain.EstadoProducto;
+import cl.antucayen.model.dto.ResumenProcesamiento;
 import cl.antucayen.model.entity.Equivalencia;
 import cl.antucayen.model.entity.ErrorImportacion;
 import cl.antucayen.model.entity.Factura;
@@ -65,14 +69,14 @@ public class ServicioProcesamientoFactura {
 
                 facturaDAO.actualizarEstado(
                         idFactura,
-                        "Observada"
+                        EstadoFactura.OBSERVADA.valorDb()
                 );
 
             } else {
 
                 facturaDAO.actualizarEstado(
                         idFactura,
-                        "Pendiente"
+                        EstadoFactura.PENDIENTE.valorDb()
                 );
             }
 
@@ -152,7 +156,7 @@ public class ServicioProcesamientoFactura {
              * lo que un reproceso posterior no duplica ingresos ya aplicados.
              */
             for (ResolucionItem resolucion : resoluciones) {
-                if (!"Válido".equals(resolucion.estado())) continue;
+                if (!EstadoItemFactura.VALIDO.coincide(resolucion.estado())) continue;
 
                 ItemFactura item = resolucion.item();
                 servicioInventario.registrarIngresoPorCompra(
@@ -165,9 +169,9 @@ public class ServicioProcesamientoFactura {
 
             if (resumen.observados() > 0
                     || resumen.noProcesados() > 0) {
-                facturaDAO.actualizarEstado(idFactura, "Observada");
+                facturaDAO.actualizarEstado(idFactura, EstadoFactura.OBSERVADA.valorDb());
             } else {
-                facturaDAO.actualizarEstado(idFactura, "Procesada");
+                facturaDAO.actualizarEstado(idFactura, EstadoFactura.PROCESADA.valorDb());
             }
 
             return resumen;
@@ -201,7 +205,7 @@ public class ServicioProcesamientoFactura {
                 );
             }
 
-            if (!"Procesada".equals(
+            if (!EstadoFactura.PROCESADA.coincide(
                     factura.getEstado())) {
 
                 throw new IllegalStateException(
@@ -267,7 +271,7 @@ public class ServicioProcesamientoFactura {
 
             facturaDAO.actualizarEstado(
                     idFactura,
-                    "Procesada"
+                    EstadoFactura.PROCESADA.valorDb()
             );
 
             return resumen;
@@ -292,7 +296,7 @@ public class ServicioProcesamientoFactura {
             );
         }
 
-        if ("Procesada".equals(
+        if (EstadoFactura.PROCESADA.coincide(
                 factura.getEstado())) {
 
             throw new IllegalStateException(
@@ -300,9 +304,9 @@ public class ServicioProcesamientoFactura {
             );
         }
 
-        if (!"Pendiente".equals(
+        if (!EstadoFactura.PENDIENTE.coincide(
                 factura.getEstado())
-                && !"Observada".equals(
+                && !EstadoFactura.OBSERVADA.coincide(
                 factura.getEstado())) {
 
             throw new IllegalStateException(
@@ -343,7 +347,7 @@ public class ServicioProcesamientoFactura {
                             new ResolucionItem(
                                     item,
                                     skuActual,
-                                    "Válido"
+                                    EstadoItemFactura.VALIDO.valorDb()
                             )
                     );
 
@@ -353,7 +357,7 @@ public class ServicioProcesamientoFactura {
                             new ResolucionItem(
                                     item,
                                     null,
-                                    "No Procesado"
+                                    EstadoItemFactura.NO_PROCESADO.valorDb()
                             )
                     );
                 }
@@ -375,7 +379,7 @@ public class ServicioProcesamientoFactura {
                         new ResolucionItem(
                                 item,
                                 equivalencia.getSku(),
-                                "Válido"
+                                EstadoItemFactura.VALIDO.valorDb()
                         )
                 );
 
@@ -385,7 +389,7 @@ public class ServicioProcesamientoFactura {
                         new ResolucionItem(
                                 item,
                                 null,
-                                "Observado"
+                                EstadoItemFactura.OBSERVADO.valorDb()
                         )
                 );
             }
@@ -403,7 +407,7 @@ public class ServicioProcesamientoFactura {
                 );
 
         return producto != null
-                && "Activo".equals(
+                && EstadoProducto.ACTIVO.coincide(
                 producto.getEstado()
         );
     }
@@ -415,7 +419,7 @@ public class ServicioProcesamientoFactura {
                 (int) resoluciones.stream()
                         .filter(
                                 r ->
-                                        "Válido".equals(
+                                        EstadoItemFactura.VALIDO.coincide(
                                                 r.estado()
                                         )
                         )
@@ -425,7 +429,7 @@ public class ServicioProcesamientoFactura {
                 (int) resoluciones.stream()
                         .filter(
                                 r ->
-                                        "Observado".equals(
+                                        EstadoItemFactura.OBSERVADO.coincide(
                                                 r.estado()
                                         )
                         )
@@ -435,7 +439,7 @@ public class ServicioProcesamientoFactura {
                 (int) resoluciones.stream()
                         .filter(
                                 r ->
-                                        "No Procesado".equals(
+                                        EstadoItemFactura.NO_PROCESADO.coincide(
                                                 r.estado()
                                         )
                         )
@@ -545,7 +549,7 @@ public class ServicioProcesamientoFactura {
             itemFacturaDAO.actualizarSkuYEstado(
                     idItem,
                     nuevoSku,
-                    "Válido"
+                    EstadoItemFactura.VALIDO.valorDb()
             );
 
             return null;
@@ -571,7 +575,7 @@ public class ServicioProcesamientoFactura {
                 (int) items.stream()
                         .filter(
                                 i ->
-                                        "Válido".equals(
+                                        EstadoItemFactura.VALIDO.coincide(
                                                 i.getEstadoItem()
                                         )
                         )
@@ -581,7 +585,7 @@ public class ServicioProcesamientoFactura {
                 (int) items.stream()
                         .filter(
                                 i ->
-                                        "Observado".equals(
+                                        EstadoItemFactura.OBSERVADO.coincide(
                                                 i.getEstadoItem()
                                         )
                         )
@@ -591,7 +595,7 @@ public class ServicioProcesamientoFactura {
                 (int) items.stream()
                         .filter(
                                 i ->
-                                        "No Procesado".equals(
+                                        EstadoItemFactura.NO_PROCESADO.coincide(
                                                 i.getEstadoItem()
                                         )
                         )
@@ -625,7 +629,7 @@ public class ServicioProcesamientoFactura {
                             ? ""
                             : item.getCodigoInternoProveedor();
 
-            if ("Observado".equals(
+            if (EstadoItemFactura.OBSERVADO.coincide(
                     item.getEstadoItem())) {
 
                 errores.add(
@@ -637,7 +641,7 @@ public class ServicioProcesamientoFactura {
                         )
                 );
 
-            } else if ("No Procesado".equals(
+            } else if (EstadoItemFactura.NO_PROCESADO.coincide(
                     item.getEstadoItem())) {
 
                 String referencia =
@@ -667,10 +671,4 @@ public class ServicioProcesamientoFactura {
             String estado) {
     }
 
-    public record ResumenProcesamiento(
-            int leidos,
-            int validos,
-            int observados,
-            int noProcesados) {
-    }
 }

@@ -8,8 +8,12 @@ import cl.antucayen.view.VDashboard;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ControladorDashboard {
+
+    private static final Logger LOGGER = Logger.getLogger(ControladorDashboard.class.getName());
 
     private final VDashboard vista;
     private final ServicioDashboard servicio = new ServicioDashboard();
@@ -17,10 +21,6 @@ public class ControladorDashboard {
     public ControladorDashboard(VDashboard vista) {
         Autorizacion.verificarAdministrador("Solo el Administrador puede acceder al Dashboard y a reportes globales");
         this.vista = vista;
-        cargarEstadisticas();
-    }
-
-    public void refrescar() {
         cargarEstadisticas();
     }
 
@@ -44,7 +44,7 @@ public class ControladorDashboard {
             List<ProductoVendido> top5 = servicio.productosMasVendidosDelMes(5);
             vista.setTopProductos(top5);
         } catch (SQLException ex) {
-            System.err.println("Error al cargar dashboard: " + ex.getMessage());
+            LOGGER.log(Level.WARNING, "Error al cargar las estadísticas del dashboard", ex);
         }
     }
 }

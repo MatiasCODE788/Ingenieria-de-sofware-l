@@ -1,17 +1,19 @@
-// filepath: src/main/java/cl/antucayen/controller/ControladorFactura.java
-
 package cl.antucayen.controller;
 
+import cl.antucayen.model.domain.EstadoFactura;
+import cl.antucayen.model.domain.EstadoItemFactura;
+import cl.antucayen.model.dto.ResumenProcesamiento;
 import cl.antucayen.model.entity.Factura;
 import cl.antucayen.model.entity.ItemFactura;
-import cl.antucayen.model.entity.Proveedor;
 import cl.antucayen.model.service.ServicioArchivoFactura;
+import cl.antucayen.model.service.ServicioExportacionDatos.FormatoExportacion;
+import cl.antucayen.model.service.ServicioExportacionDatos;
 import cl.antucayen.model.service.ServicioExtraccionFacturaDigital;
 import cl.antucayen.model.service.ServicioFactura;
 import cl.antucayen.model.service.ServicioProcesamientoFactura;
 import cl.antucayen.model.service.ServicioProveedor;
 import cl.antucayen.security.Autorizacion;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 import cl.antucayen.view.VDetalleFactura;
 import cl.antucayen.view.VFacturas;
 import cl.antucayen.view.VFormularioFactura;
@@ -20,25 +22,32 @@ import cl.antucayen.view.VProcesamientoFactura;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class ControladorFactura {
 
     private static final DateTimeFormatter FORMATO_FECHA =
             DateTimeFormatter.ofPattern("dd-MM-uuuu")
                     .withResolverStyle(ResolverStyle.STRICT);
+    private static final DateTimeFormatter NOMBRE_ARCHIVO =
+            DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
     private final ServicioFactura servicio = new ServicioFactura();
+    private final ServicioExportacionDatos servicioExportacion = new ServicioExportacionDatos();
     private final ServicioProveedor servicioProveedor = new ServicioProveedor();
     private final ServicioArchivoFactura servicioArchivo = new ServicioArchivoFactura();
     private final ServicioExtraccionFacturaDigital servicioExtraccion =
@@ -51,7 +60,6 @@ public class ControladorFactura {
     public ControladorFactura(VFacturas vista) {
         Autorizacion.verificarGestionFacturas();
         this.vista = vista;
-        vista.setModoSoloLectura(false);
         cargarProveedoresEnFiltro();
         cargarTodas();
         iniciarEventos();
@@ -155,6 +163,14 @@ public class ControladorFactura {
     }
 
     public void abrirNuevaFactura() {
+        abrirNuevaFactura(null);
+    }
+
+    /**
+     * Abre el formulario de registro y, cuando la factura se guarda, ejecuta
+     * opcionalmente un callback para refrescar/navegar la pantalla que lo abrió.
+     */
+    public void abrirNuevaFactura(Runnable alGuardar) {
         try {
             Autorizacion.verificarGestionFacturas();
 
@@ -169,10 +185,10 @@ public class ControladorFactura {
                     .addActionListener(e -> mostrarVistaPrevia(form));
 
             form.getBtnExtraerItems()
-                    .addActionListener(e -> extraerItems(form, true));
+                    .addActionListener(e -> extraerItemsAsync(form, true, null));
 
             form.getBtnGuardar()
-                    .addActionListener(e -> guardarFactura(form));
+                    .addActionListener(e -> guardarFactura(form, alGuardar));
 
             form.setVisible(true);
 
@@ -217,102 +233,155 @@ public class ControladorFactura {
             return;
         }
 
-        try {
-            BufferedImage imagen =
-                    servicioExtraccion.renderizarVistaPrevia(archivo);
+        form.setProcesandoDocumento(true);
+        form.limpiarError();
 
-            int maxAncho = 900;
-            int maxAlto = 650;
+        new SwingWorker<PreviewFactura, Void>() {
+            @Override
+            protected PreviewFactura doInBackground() throws Exception {
+                BufferedImage imagen = servicioExtraccion.renderizarVistaPrevia(archivo);
+                int maxAncho = 900;
+                int maxAlto = 650;
+                double escala = Math.min(1d, Math.min(
+                        (double) maxAncho / imagen.getWidth(),
+                        (double) maxAlto / imagen.getHeight()));
+                int ancho = Math.max(1, (int) Math.round(imagen.getWidth() * escala));
+                int alto = Math.max(1, (int) Math.round(imagen.getHeight() * escala));
+                Image escalada = imagen.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
+                return new PreviewFactura(new ImageIcon(escalada), ancho, alto, maxAncho, maxAlto);
+            }
 
-            double escala = Math.min(
-                    1d,
-                    Math.min(
-                            (double) maxAncho / imagen.getWidth(),
-                            (double) maxAlto / imagen.getHeight()
-                    )
-            );
-
-            int ancho = Math.max(
-                    1,
-                    (int) Math.round(imagen.getWidth() * escala)
-            );
-
-            int alto = Math.max(
-                    1,
-                    (int) Math.round(imagen.getHeight() * escala)
-            );
-
-            Image escalada = imagen.getScaledInstance(
-                    ancho,
-                    alto,
-                    Image.SCALE_SMOOTH
-            );
-
-            JLabel etiqueta = new JLabel(new ImageIcon(escalada));
-            JScrollPane scroll = new JScrollPane(etiqueta);
-
-            scroll.setPreferredSize(new Dimension(
-                    Math.min(maxAncho + 30, ancho + 30),
-                    Math.min(maxAlto + 30, alto + 30)
-            ));
-
-            JOptionPane.showMessageDialog(
-                    form,
-                    scroll,
-                    "Vista previa - " + archivo.getName(),
-                    JOptionPane.PLAIN_MESSAGE
-            );
-
-        } catch (IOException | IllegalArgumentException ex) {
-            form.mostrarError(
-                    "No se pudo generar la vista previa: " + ex.getMessage()
-            );
-        }
+            @Override
+            protected void done() {
+                if (!form.isDisplayable()) return;
+                form.setProcesandoDocumento(false);
+                try {
+                    PreviewFactura preview = get();
+                    JLabel etiqueta = new JLabel(preview.icono());
+                    JScrollPane scroll = new JScrollPane(etiqueta);
+                    scroll.setPreferredSize(new Dimension(
+                            Math.min(preview.maxAncho() + 30, preview.ancho() + 30),
+                            Math.min(preview.maxAlto() + 30, preview.alto() + 30)));
+                    JOptionPane.showMessageDialog(
+                            form,
+                            scroll,
+                            "Vista previa - " + archivo.getName(),
+                            JOptionPane.PLAIN_MESSAGE);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    form.mostrarError("La vista previa fue interrumpida");
+                } catch (ExecutionException ex) {
+                    Throwable causa = ex.getCause();
+                    form.mostrarError("No se pudo generar la vista previa: "
+                            + (causa == null ? ex.getMessage() : causa.getMessage()));
+                }
+            }
+        }.execute();
     }
 
-    private boolean extraerItems(VFormularioFactura form, boolean informar) {
+    private void extraerItemsAsync(VFormularioFactura form,
+                                   boolean informar,
+                                   Runnable alCompletar) {
         File archivo = form.getArchivoSeleccionado();
 
         if (archivo == null) {
             form.mostrarError("Debes seleccionar un archivo digital");
-            return false;
+            return;
         }
 
-        try {
-            var items = servicioExtraccion.extraer(archivo);
+        form.setProcesandoDocumento(true);
+        form.limpiarError();
 
-            form.cargarItemsExtraidos(items);
-            form.limpiarError();
-
-            if (informar) {
-                long noProcesados = items.stream()
-                        .filter(i -> "No Procesado".equals(i.estado()))
-                        .count();
-
-                JOptionPane.showMessageDialog(
-                        form,
-                        "Extracción terminada: " + items.size() + " ítem(s)."
-                                + (noProcesados > 0
-                                ? "\nLos registros no legibles quedan marcados como No Procesado."
-                                : "")
-                );
+        new SwingWorker<ServicioExtraccionFacturaDigital.ResultadoExtraccion, Void>() {
+            @Override
+            protected ServicioExtraccionFacturaDigital.ResultadoExtraccion doInBackground()
+                    throws Exception {
+                return servicioExtraccion.analizar(archivo);
             }
 
-            return true;
-
-        } catch (IOException | IllegalArgumentException ex) {
-            form.mostrarError(
-                    "Error de extracción: " + ex.getMessage()
-            );
-            return false;
-        }
+            @Override
+            protected void done() {
+                if (!form.isDisplayable()) return;
+                form.setProcesandoDocumento(false);
+                try {
+                    ServicioExtraccionFacturaDigital.ResultadoExtraccion resultado = get();
+                    aplicarResultadoExtraccion(form, resultado, informar);
+                    if (alCompletar != null) alCompletar.run();
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    form.mostrarError("El análisis fue interrumpido");
+                } catch (ExecutionException ex) {
+                    Throwable causa = ex.getCause();
+                    form.mostrarError("Error de análisis: "
+                            + (causa == null ? ex.getMessage() : causa.getMessage()));
+                }
+            }
+        }.execute();
     }
 
-    private void guardarFactura(VFormularioFactura form) {
+    private void aplicarResultadoExtraccion(
+            VFormularioFactura form,
+            ServicioExtraccionFacturaDigital.ResultadoExtraccion resultado,
+            boolean informar) {
+        form.cargarDatosExtraidos(
+                resultado.numeroFactura(),
+                resultado.fechaEmision(),
+                resultado.valorTotal());
+        form.cargarItemsExtraidos(resultado.items());
+        form.marcarAnalisisRealizado();
+        form.limpiarError();
+
+        if (!informar) return;
+
+        long noProcesados = resultado.items().stream()
+                .filter(i -> EstadoItemFactura.NO_PROCESADO.coincide(i.estado()))
+                .count();
+        String folio = resultado.numeroFactura() == null
+                ? "No detectado" : resultado.numeroFactura();
+        String fecha = resultado.fechaEmision() == null
+                ? "No detectada" : FORMATO_FECHA.format(resultado.fechaEmision());
+        String total = resultado.valorTotal() == null
+                ? "No detectado" : "$" + formatearMonto(resultado.valorTotal());
+
+        JOptionPane.showMessageDialog(
+                form,
+                "Análisis terminado."
+                        + "\nFolio detectado: " + folio
+                        + "\nFecha de emisión detectada: " + fecha
+                        + "\nTotal detectado: " + total
+                        + "\nÍtems detectados: " + resultado.items().size()
+                        + (noProcesados > 0
+                        ? "\nLos registros no legibles quedan marcados como No Procesado."
+                        : "")
+                        + "\n\nRevisa los valores antes de guardar; todos los campos siguen siendo editables.");
+    }
+
+    private record PreviewFactura(ImageIcon icono,
+                                  int ancho,
+                                  int alto,
+                                  int maxAncho,
+                                  int maxAlto) { }
+
+    private void guardarFactura(VFormularioFactura form, Runnable alGuardar) {
         String copiaGuardada = null;
         boolean facturaRegistrada = false;
 
         try {
+            if (form.esModalidadDigital()) {
+                if (form.getArchivoSeleccionado() == null) {
+                    throw new IllegalArgumentException(
+                            "En modalidad digital debes adjuntar un archivo PDF, JPG o PNG"
+                    );
+                }
+
+                // Si el usuario pulsa Guardar sin analizar previamente, se analiza
+                // una vez para intentar completar folio, total e ítems.
+                if (!form.isAnalisisRealizado() || form.getModeloItems().getRowCount() == 0) {
+                    extraerItemsAsync(form, false, () -> guardarFactura(form, alGuardar));
+                    return;
+                }
+            }
+
             LocalDate fecha =
                     LocalDate.parse(
                             form.getFechaTexto().trim(),
@@ -325,17 +394,6 @@ public class ControladorFactura {
                     );
 
             if (form.esModalidadDigital()) {
-                if (form.getArchivoSeleccionado() == null) {
-                    throw new IllegalArgumentException(
-                            "En modalidad digital debes adjuntar un archivo PDF, JPG o PNG"
-                    );
-                }
-
-                if (form.getModeloItems().getRowCount() == 0
-                        && !extraerItems(form, false)) {
-                    return;
-                }
-
                 copiaGuardada =
                         servicioArchivo.guardarCopia(
                                 form.getArchivoSeleccionado()
@@ -358,7 +416,7 @@ public class ControladorFactura {
 
             facturaRegistrada = true;
 
-            ServicioProcesamientoFactura.ResumenProcesamiento resumen =
+            ResumenProcesamiento resumen =
                     servicioProcesamiento.resolverEquivalenciasAlRegistrar(
                             idFactura,
                             factura.getIdProveedor()
@@ -366,6 +424,7 @@ public class ControladorFactura {
 
             form.dispose();
             cargarTodas();
+            ejecutarCallback(alGuardar);
 
             JOptionPane.showMessageDialog(
                     vista,
@@ -391,7 +450,7 @@ public class ControladorFactura {
             }
 
             form.mostrarError(
-                    "Valor total o cantidad inválida en algún ítem"
+                    "Valor total, cantidad o precio unitario inválido en algún ítem"
             );
 
         } catch (IllegalArgumentException
@@ -425,6 +484,7 @@ public class ControladorFactura {
             } else {
                 form.dispose();
                 cargarTodas();
+                ejecutarCallback(alGuardar);
 
                 JOptionPane.showMessageDialog(
                         vista,
@@ -461,22 +521,34 @@ public class ControladorFactura {
             String textoCantidad =
                     valor(modelo.getValueAt(i, 2));
 
-            String estado =
+            String textoPrecio =
                     valor(modelo.getValueAt(i, 3));
+
+            String estado =
+                    valor(modelo.getValueAt(i, 4));
 
             if (estado.isBlank()) {
                 estado = codigo.isBlank()
-                        ? "No Procesado"
-                        : "Observado";
+                        ? EstadoItemFactura.NO_PROCESADO.valorDb()
+                        : EstadoItemFactura.OBSERVADO.valorDb();
             }
 
             int cantidad =
                     textoCantidad.isBlank()
-                            && "No Procesado".equals(estado)
+                            && EstadoItemFactura.NO_PROCESADO.coincide(estado)
                             ? 0
                             : Integer.parseInt(textoCantidad);
 
-            if ("No Procesado".equals(estado)) {
+            int precioUnitario = textoPrecio.isBlank()
+                    ? 0
+                    : Integer.parseInt(textoPrecio.replaceAll("[^0-9]", ""));
+            if (precioUnitario < 0) {
+                throw new IllegalArgumentException(
+                        "El precio unitario no puede ser negativo"
+                );
+            }
+
+            if (EstadoItemFactura.NO_PROCESADO.coincide(estado)) {
                 if (cantidad < 0) {
                     throw new IllegalArgumentException(
                             "La cantidad no puede ser negativa"
@@ -496,7 +568,7 @@ public class ControladorFactura {
                     );
                 }
 
-                estado = "Observado";
+                estado = EstadoItemFactura.OBSERVADO.valorDb();
             }
 
             ItemFactura item = new ItemFactura();
@@ -510,7 +582,7 @@ public class ControladorFactura {
             );
 
             item.setCantidadFacturada(cantidad);
-            item.setPrecioUnitarioCompra(0);
+            item.setPrecioUnitarioCompra(precioUnitario);
             item.setEstadoItem(estado);
 
             items.add(item);
@@ -545,39 +617,13 @@ public class ControladorFactura {
             VDetalleFactura detalle =
                     new VDetalleFactura(null);
 
-            detalle.cargarCabecera(f);
-
-            detalle.cargarItems(
-                    servicio.obtenerItems(idFactura)
-            );
-
-            boolean puedeGestionar =
-                    SesionActual.esAdministrador()
-                            || SesionActual.esBodeguero();
-
-            boolean noProcesada =
-                    !"Procesada".equals(f.getEstado());
-
-            detalle.getBtnProcesar()
-                    .setEnabled(
-                            puedeGestionar
-                                    && noProcesada
-                    );
-
-            detalle.getBtnObservar()
-                    .setEnabled(
-                            puedeGestionar
-                                    && noProcesada
-                    );
-
-            detalle.getBtnProcesarItems()
-                    .setEnabled(puedeGestionar);
+            refrescarDetalle(detalle, f);
 
             detalle.getBtnProcesar()
                     .addActionListener(
                             e -> cambiarEstado(
                                     idFactura,
-                                    "Procesada",
+                                    EstadoFactura.PROCESADA.valorDb(),
                                     detalle
                             )
                     );
@@ -586,7 +632,7 @@ public class ControladorFactura {
                     .addActionListener(
                             e -> cambiarEstado(
                                     idFactura,
-                                    "Observada",
+                                    EstadoFactura.OBSERVADA.valorDb(),
                                     detalle
                             )
                     );
@@ -607,11 +653,87 @@ public class ControladorFactura {
                             )
                     );
 
+            detalle.getBtnExportarValidos()
+                    .addActionListener(
+                            e -> exportarItemsValidos(
+                                    idFactura,
+                                    detalle
+                            )
+                    );
+
             detalle.setVisible(true);
 
         } catch (SQLException ex) {
             mostrarError(ex);
         }
+    }
+
+    private void exportarItemsValidos(int idFactura, VDetalleFactura detalle) {
+        try {
+            List<ItemFactura> items = servicio.obtenerItems(idFactura);
+            Object[] opciones = {"Excel (.xlsx)", "CSV", "Cancelar"};
+            int seleccion = JOptionPane.showOptionDialog(
+                    detalle,
+                    "Selecciona el formato de exportación:",
+                    "Exportar ítems válidos",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]
+            );
+            if (seleccion < 0 || seleccion == 2) return;
+
+            FormatoExportacion formato = seleccion == 0
+                    ? FormatoExportacion.EXCEL
+                    : FormatoExportacion.CSV;
+
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Guardar ítems válidos");
+            chooser.setSelectedFile(new File(
+                    "items_validos_factura_" + idFactura + "_"
+                            + LocalDateTime.now().format(NOMBRE_ARCHIVO)
+                            + "." + formato.getExtension()
+            ));
+            chooser.setFileFilter(new FileNameExtensionFilter(
+                    formato.getDescripcion(),
+                    formato.getExtension()
+            ));
+            if (chooser.showSaveDialog(detalle) != JFileChooser.APPROVE_OPTION) return;
+
+            Path archivo = servicioExportacion.exportarItemsValidosFactura(
+                    items,
+                    chooser.getSelectedFile().toPath(),
+                    formato
+            );
+            JOptionPane.showMessageDialog(
+                    detalle,
+                    "Ítems válidos exportados correctamente:\n" + archivo.toAbsolutePath()
+            );
+        } catch (IllegalArgumentException | SecurityException ex) {
+            JOptionPane.showMessageDialog(detalle, ex.getMessage());
+        } catch (SQLException ex) {
+            mostrarError(ex);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(
+                    detalle,
+                    "No se pudo generar el archivo: " + ex.getMessage()
+            );
+        }
+    }
+
+    private void ejecutarCallback(Runnable callback) {
+        if (callback == null) return;
+        try {
+            callback.run();
+        } catch (RuntimeException ex) {
+            // La factura ya fue persistida; un fallo visual de refresco no debe
+            // convertir el registro exitoso en un error de negocio.
+        }
+    }
+
+    private String formatearMonto(int monto) {
+        return String.format("%,d", monto).replace(',', '.');
     }
 
     private void abrirArchivoAdjunto(VDetalleFactura detalle) {
@@ -678,45 +800,32 @@ public class ControladorFactura {
 
             if (facturaActualizada == null) return;
 
-            detalle.cargarCabecera(
-                    facturaActualizada
-            );
-
-            detalle.cargarItems(
-                    servicio.obtenerItems(idFactura)
-            );
-
-            boolean puedeGestionar =
-                    SesionActual.esAdministrador()
-                            || SesionActual.esBodeguero();
-
-            boolean noProcesada =
-                    !"Procesada".equals(
-                            facturaActualizada.getEstado()
-                    );
-
-            detalle.getBtnProcesar()
-                    .setEnabled(
-                            puedeGestionar
-                                    && noProcesada
-                    );
-
-            detalle.getBtnObservar()
-                    .setEnabled(
-                            puedeGestionar
-                                    && noProcesada
-                    );
-
-            detalle.getBtnProcesarItems()
-                    .setEnabled(
-                            puedeGestionar
-                    );
+            refrescarDetalle(detalle, facturaActualizada);
 
         } catch (SQLException ex) {
             mostrarError(ex);
         }
 
         cargarTodas();
+    }
+
+    /**
+     * Recarga el contenido y los permisos visuales del detalle desde una
+     * factura ya consultada. Centraliza la misma regla usada al abrir el
+     * detalle y al volver desde el procesamiento de ítems.
+     */
+    private void refrescarDetalle(VDetalleFactura detalle, Factura factura)
+            throws SQLException {
+        detalle.cargarCabecera(factura);
+        detalle.cargarItems(servicio.obtenerItems(factura.getIdFactura()));
+
+        boolean puedeGestionar =
+                SesionActual.esAdministrador() || SesionActual.esBodeguero();
+        boolean noProcesada = !EstadoFactura.PROCESADA.coincide(factura.getEstado());
+
+        detalle.getBtnProcesar().setEnabled(puedeGestionar && noProcesada);
+        detalle.getBtnObservar().setEnabled(puedeGestionar && noProcesada);
+        detalle.getBtnProcesarItems().setEnabled(puedeGestionar);
     }
 
     private void cambiarEstado(
@@ -730,7 +839,7 @@ public class ControladorFactura {
                         "¿Confirmas cambiar el estado de la factura a '"
                                 + nuevoEstado
                                 + "'?"
-                                + ("Procesada".equals(nuevoEstado)
+                                + (EstadoFactura.PROCESADA.coincide(nuevoEstado)
                                 ? "\nEsto ingresará el stock únicamente de los ítems validados."
                                 : ""),
                         "Confirmar cambio de estado",

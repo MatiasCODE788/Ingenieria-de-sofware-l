@@ -6,8 +6,12 @@ import cl.antucayen.view.VLogin;
 import cl.antucayen.view.VPrincipal;
 
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ControladorLogin {
+
+    private static final Logger LOGGER = Logger.getLogger(ControladorLogin.class.getName());
 
     private final VLogin               vista;
     private final ServicioAutenticacion servicio = new ServicioAutenticacion();
@@ -38,12 +42,11 @@ public class ControladorLogin {
             vista.mostrarError(ex.getMessage());
         } catch (SecurityException ex) {
             vista.mostrarError("Usuario o contraseña incorrectos");
-            // no llames limpiarCampos() aquí, o el mensaje se oculta al instante
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error de conexión durante el inicio de sesión", ex);
             vista.mostrarError("Error de conexión: " + ex.getMessage());
         } catch (Exception ex) {
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error inesperado durante el inicio de sesión", ex);
             vista.mostrarError("Error inesperado: " + ex.getMessage());
         }
     }

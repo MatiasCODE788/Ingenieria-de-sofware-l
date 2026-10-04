@@ -1,7 +1,6 @@
 package cl.antucayen.model.service;
 
 import cl.antucayen.model.entity.ErrorImportacion;
-import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvValidationException;
@@ -132,23 +131,16 @@ public class ServicioImportacionInventario {
     }
 
     private ResultadoLectura leerCsv(String ruta) throws IOException {
-        ResultadoLectura conComa = leerCsvConSeparador(Path.of(ruta), ',');
-        if (conComa.estructuraValida()) return conComa;
-
-        ResultadoLectura conPuntoComa = leerCsvConSeparador(Path.of(ruta), ';');
-        if (conPuntoComa.estructuraValida()) return conPuntoComa;
-
-        return errorEncabezadoInvalido();
-    }
-
-    private ResultadoLectura leerCsvConSeparador(Path ruta, char separador) throws IOException {
         List<FilaCruda> filas = new ArrayList<>();
         List<ErrorImportacion> errores = new ArrayList<>();
 
-        try (Reader reader = Files.newBufferedReader(ruta, StandardCharsets.UTF_8);
-             CSVReader csv = new CSVReaderBuilder(reader)
-                     .withCSVParser(new CSVParserBuilder().withSeparator(separador).build())
-                     .build()) {
+        /*
+         * Contrato del sistema: la plantilla CSV oficial usa UTF-8 y coma
+         * como separador. No se intenta autodetectar ni aceptar otros
+         * delimitadores para mantener un único formato de importación.
+         */
+        try (Reader reader = Files.newBufferedReader(Path.of(ruta), StandardCharsets.UTF_8);
+             CSVReader csv = new CSVReaderBuilder(reader).build()) {
 
             String[] encabezados = csv.readNext();
             if (encabezados == null) return errorSinEncabezado();

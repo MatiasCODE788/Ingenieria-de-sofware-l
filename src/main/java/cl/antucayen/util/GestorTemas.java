@@ -3,6 +3,8 @@ package cl.antucayen.util;
 import java.io.*;
 import java.nio.file.*;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Guarda qué tema está activo y lo recuerda entre sesiones.
@@ -12,6 +14,8 @@ import java.util.Properties;
  * de una app de escritorio normal.
  */
 public class GestorTemas {
+
+    private static final Logger LOGGER = Logger.getLogger(GestorTemas.class.getName());
 
     private static GestorTemas instancia;
 
@@ -55,7 +59,7 @@ public class GestorTemas {
                 p.store(out, "Preferencia de tema — Minimarket Antucayen");
             }
         } catch (IOException e) {
-            System.err.println("No se pudo guardar la preferencia de tema: " + e.getMessage());
+            LOGGER.log(Level.WARNING, "No se pudo guardar la preferencia de tema", e);
         }
     }
 }

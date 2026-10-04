@@ -1,6 +1,5 @@
 package cl.antucayen.security;
 
-import cl.antucayen.util.SesionActual;
 
 /**
  * Frontera RBAC central de Antucayen.

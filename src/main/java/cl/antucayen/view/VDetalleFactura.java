@@ -1,14 +1,17 @@
 package cl.antucayen.view;
 
+import cl.antucayen.model.domain.EstadoFactura;
+import cl.antucayen.model.domain.EstadoItemFactura;
 import cl.antucayen.model.entity.Factura;
 import cl.antucayen.model.entity.ItemFactura;
 import cl.antucayen.view.components.ComponentesSwing;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
-import java.time.format.DateTimeFormatter;
 import java.io.File;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class VDetalleFactura extends JDialog {
@@ -20,6 +23,7 @@ public class VDetalleFactura extends JDialog {
     private JLabel lblFecha;
     private JLabel lblProveedor;
     private JLabel lblEstado;
+    private JLabel lblValorTotal;
     private JLabel lblArchivo;
     private JTable tblItems;
     private DefaultTableModel modeloItems;
@@ -27,6 +31,7 @@ public class VDetalleFactura extends JDialog {
     private JButton btnProcesar;
     private JButton btnObservar;
     private JButton btnProcesarItems;
+    private JButton btnExportarValidos;
     private JButton btnCerrar;
     private String rutaArchivo;
 
@@ -36,7 +41,7 @@ public class VDetalleFactura extends JDialog {
     }
 
     private void initComponents() {
-        setSize(660, 510);
+        setSize(720, 560);
         setLocationRelativeTo(getParent());
         setResizable(false);
         setLayout(new BorderLayout());
@@ -70,9 +75,13 @@ public class VDetalleFactura extends JDialog {
         gbc.gridx = 0; gbc.gridy = 3; cabecera.add(lblProveedor, gbc);
         gbc.gridx = 1; cabecera.add(lblEstado, gbc);
 
+        gbc.gridx = 0; gbc.gridy = 4; cabecera.add(crearTitulo("Valor total"), gbc);
+        lblValorTotal = crearValor();
+        gbc.gridx = 0; gbc.gridy = 5; cabecera.add(lblValorTotal, gbc);
+
         gbc.gridwidth = 2;
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         cabecera.add(crearTitulo("Archivo digital adjunto"), gbc);
 
         JPanel panelArchivo = new JPanel(new BorderLayout(8, 0));
@@ -84,7 +93,7 @@ public class VDetalleFactura extends JDialog {
         btnAbrirArchivo.setEnabled(false);
         panelArchivo.add(lblArchivo, BorderLayout.CENTER);
         panelArchivo.add(btnAbrirArchivo, BorderLayout.EAST);
-        gbc.gridy = 5;
+        gbc.gridy = 7;
         cabecera.add(panelArchivo, gbc);
 
         JPanel panelItems = new JPanel(new BorderLayout(0, 6));
@@ -95,6 +104,19 @@ public class VDetalleFactura extends JDialog {
         lblItems.setFont(new Font("Arial", Font.BOLD, 13));
         lblItems.setForeground(new Color(17, 24, 39));
 
+        btnExportarValidos = new JButton("Exportar ítems válidos");
+        btnExportarValidos.setFont(new Font("Arial", Font.BOLD, 11));
+        btnExportarValidos.setBackground(new Color(14, 116, 144));
+        btnExportarValidos.setForeground(Color.WHITE);
+        btnExportarValidos.setFocusPainted(false);
+        btnExportarValidos.setBorderPainted(false);
+        btnExportarValidos.setEnabled(false);
+
+        JPanel cabeceraItems = new JPanel(new BorderLayout());
+        cabeceraItems.setBackground(Color.WHITE);
+        cabeceraItems.add(lblItems, BorderLayout.WEST);
+        cabeceraItems.add(btnExportarValidos, BorderLayout.EAST);
+
         String[] cols = {"Código proveedor", "SKU", "Cantidad", "Precio unitario", "Estado ítem"};
         modeloItems = new DefaultTableModel(cols, 0) {
             @Override
@@ -104,7 +126,7 @@ public class VDetalleFactura extends JDialog {
         JScrollPane scrollItems = new JScrollPane(tblItems);
         scrollItems.setPreferredSize(new Dimension(0, 180));
 
-        panelItems.add(lblItems, BorderLayout.NORTH);
+        panelItems.add(cabeceraItems, BorderLayout.NORTH);
         panelItems.add(scrollItems, BorderLayout.CENTER);
 
         JPanel centro = new JPanel(new BorderLayout());
@@ -173,6 +195,7 @@ public class VDetalleFactura extends JDialog {
         lblFecha.setText(f.getFechaEmision() != null ? FORMATO_FECHA.format(f.getFechaEmision()) : "-");
         lblProveedor.setText(f.getNombreProveedor());
         lblEstado.setText(f.getEstado());
+        lblValorTotal.setText("$" + String.format("%,d", f.getValorTotal()).replace(',', '.'));
 
         rutaArchivo = f.getRutaArchivoDigital();
         boolean tieneAdjunto = rutaArchivo != null && !rutaArchivo.isBlank();
@@ -181,7 +204,7 @@ public class VDetalleFactura extends JDialog {
         btnAbrirArchivo.setToolTipText(tieneAdjunto && !new File(rutaArchivo).isFile()
                 ? "La ruta registrada no existe en este equipo" : null);
 
-        boolean procesada = "Procesada".equals(f.getEstado());
+        boolean procesada = EstadoFactura.PROCESADA.coincide(f.getEstado());
         btnProcesar.setEnabled(!procesada);
         btnObservar.setEnabled(!procesada);
         // El controlador decide si Procesar Ítems queda disponible para intentar
@@ -191,6 +214,7 @@ public class VDetalleFactura extends JDialog {
 
     public void cargarItems(List<ItemFactura> items) {
         modeloItems.setRowCount(0);
+        boolean hayValidos = false;
         for (ItemFactura it : items) {
             modeloItems.addRow(new Object[]{
                     it.getCodigoInternoProveedor() != null ? it.getCodigoInternoProveedor() : "-",
@@ -199,7 +223,12 @@ public class VDetalleFactura extends JDialog {
                     it.getPrecioUnitarioCompra(),
                     it.getEstadoItem()
             });
+            if (EstadoItemFactura.VALIDO.coincide(it.getEstadoItem())
+                    && it.getSku() != null && !it.getSku().isBlank()) {
+                hayValidos = true;
+            }
         }
+        btnExportarValidos.setEnabled(hayValidos);
     }
 
     public String getRutaArchivo() { return rutaArchivo; }
@@ -207,5 +236,5 @@ public class VDetalleFactura extends JDialog {
     public JButton getBtnProcesar() { return btnProcesar; }
     public JButton getBtnObservar() { return btnObservar; }
     public JButton getBtnProcesarItems() { return btnProcesarItems; }
-    public JButton getBtnCerrar() { return btnCerrar; }
+    public JButton getBtnExportarValidos() { return btnExportarValidos; }
 }

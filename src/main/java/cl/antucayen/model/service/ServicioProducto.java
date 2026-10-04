@@ -1,10 +1,13 @@
 package cl.antucayen.model.service;
 
+import cl.antucayen.model.dao.MovimientoInventarioDAO;
 import cl.antucayen.model.dao.ProductoDAO;
 import cl.antucayen.model.dao.ProductoProveedorDAO;
+import cl.antucayen.model.domain.EstadoProducto;
+import cl.antucayen.model.entity.MovimientoInventario;
 import cl.antucayen.model.entity.Producto;
-import cl.antucayen.model.entity.Proveedor;
 import cl.antucayen.security.Autorizacion;
+import cl.antucayen.security.SesionActual;
 import cl.antucayen.util.DBConexion;
 
 import java.sql.SQLException;
@@ -17,10 +20,7 @@ public class ServicioProducto {
 
     private final ProductoDAO productoDAO = new ProductoDAO();
     private final ProductoProveedorDAO productoProveedorDAO = new ProductoProveedorDAO();
-
-    public void registrar(Producto producto) throws SQLException {
-        registrar(producto, List.of());
-    }
+    private final MovimientoInventarioDAO movimientoDAO = new MovimientoInventarioDAO();
 
     /** Registra producto y asociaciones a proveedores en una sola transacción. */
     public void registrar(Producto producto, List<Integer> idsProveedor) throws SQLException {
@@ -35,13 +35,25 @@ public class ServicioProducto {
             }
             productoDAO.insertar(producto);
             productoProveedorDAO.reemplazarAsociaciones(producto.getSku(), idsProveedor);
+
+            // El stock inicial debe formar parte del kardex. Si el producto se
+            // crea con stock mayor a cero, se registra su origen explícitamente.
+            if (producto.getStockActual() > 0) {
+                if (SesionActual.getUsuario() == null) {
+                    throw new SecurityException("No existe una sesión autenticada");
+                }
+                MovimientoInventario inicial = new MovimientoInventario();
+                inicial.setSku(producto.getSku());
+                inicial.setIdUsuario(SesionActual.getUsuario().getIdUsuario());
+                inicial.setTipoMovimiento("Stock inicial");
+                inicial.setStockAnterior(0);
+                inicial.setCantidadAplicada(producto.getStockActual());
+                inicial.setStockResultante(producto.getStockActual());
+                inicial.setVigente(true);
+                movimientoDAO.insertar(inicial);
+            }
             return null;
         });
-    }
-
-    public void modificar(Producto producto) throws SQLException {
-        Autorizacion.verificarGestionProductos();
-        modificar(producto, productoProveedorDAO.listarIdsPorSku(producto.getSku()));
     }
 
     /** Modifica ficha y asociaciones a proveedores de forma atómica. */
@@ -70,6 +82,15 @@ public class ServicioProducto {
         productoDAO.inactivar(sku.trim());
     }
 
+    /** Reactiva un producto previamente inactivado sin alterar su historial. */
+    public void reactivar(String sku) throws SQLException {
+        Autorizacion.verificarGestionProductos();
+        if (sku == null || sku.isBlank()) throw new IllegalArgumentException("El SKU es obligatorio");
+        Producto producto = productoDAO.buscarPorSku(sku.trim());
+        if (producto == null) throw new IllegalArgumentException("El producto no existe");
+        productoDAO.reactivar(sku.trim());
+    }
+
     private void validarProducto(Producto producto, boolean validarSku) {
         if (producto == null) throw new IllegalArgumentException("El producto es obligatorio");
         if (validarSku && (producto.getSku() == null || producto.getSku().isBlank())) {
@@ -91,7 +112,8 @@ public class ServicioProducto {
             throw new IllegalArgumentException("El stock actual no puede ser negativo");
         }
         if (producto.getEstado() == null
-                || (!"Activo".equals(producto.getEstado()) && !"Inactivo".equals(producto.getEstado()))) {
+                || (!EstadoProducto.ACTIVO.coincide(producto.getEstado())
+                && !EstadoProducto.INACTIVO.coincide(producto.getEstado()))) {
             throw new IllegalArgumentException("Estado de producto no válido");
         }
 
@@ -116,14 +138,16 @@ public class ServicioProducto {
         return productoDAO.buscarPorNombre(texto);
     }
 
+    public List<Producto> buscarSugerenciasActivas(String texto, int limite) throws SQLException {
+        Autorizacion.verificarConsultaStock();
+        if (texto == null || texto.isBlank()) return List.of();
+        int limiteSeguro = Math.max(1, Math.min(limite, 20));
+        return productoDAO.buscarSugerenciasActivas(texto.trim(), limiteSeguro);
+    }
+
     public List<Producto> listarTodos() throws SQLException {
         Autorizacion.verificarConsultaStock();
         return productoDAO.listarTodos();
-    }
-
-    public List<Producto> listarActivos() throws SQLException {
-        Autorizacion.verificarConsultaStock();
-        return productoDAO.listarActivos();
     }
 
     public List<Integer> listarIdsProveedores(String sku) throws SQLException {
@@ -131,8 +155,4 @@ public class ServicioProducto {
         return productoProveedorDAO.listarIdsPorSku(sku);
     }
 
-    public List<Proveedor> listarProveedores(String sku) throws SQLException {
-        Autorizacion.verificarGestionProductos();
-        return productoProveedorDAO.listarProveedoresPorSku(sku);
-    }
 }

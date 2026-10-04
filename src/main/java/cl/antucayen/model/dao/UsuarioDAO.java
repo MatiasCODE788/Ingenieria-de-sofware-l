@@ -11,8 +11,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UsuarioDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(UsuarioDAO.class.getName());
 
     private Connection getConexion() throws SQLException {
         return DBConexion.getInstancia().getConexion();
@@ -53,8 +57,9 @@ public class UsuarioDAO {
             try {
                 actualizarPasswordHash(usuario.getIdUsuario(), PasswordHasher.hash(password));
             } catch (SQLException migracionEx) {
-                System.err.println("No se pudo migrar el hash legado del usuario "
-                        + usuario.getUsername() + ": " + migracionEx.getMessage());
+                LOGGER.log(Level.WARNING,
+                        "No se pudo migrar el hash legado del usuario " + usuario.getUsername(),
+                        migracionEx);
             }
         }
         return usuario;

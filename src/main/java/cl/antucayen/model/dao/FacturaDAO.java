@@ -89,22 +89,6 @@ public class FacturaDAO {
         return lista;
     }
 
-    public List<Factura> listarPorEstado(String estado) throws SQLException {
-        String sql = """
-            SELECT f.*, p.nombre AS nombre_proveedor
-            FROM factura f
-            JOIN proveedor p ON f.id_proveedor = p.id_proveedor
-            WHERE f.estado=?
-            ORDER BY f.id_factura DESC
-            """;
-        List<Factura> lista = new ArrayList<>();
-        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setString(1, estado);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) lista.add(mapear(rs));
-        }
-        return lista;
-    }
 
     public boolean existeNumeroPorProveedor(int idProveedor, String numeroFactura) throws SQLException {
         String sql = "SELECT COUNT(*) FROM factura WHERE id_proveedor=? AND numero_factura=?";
@@ -115,6 +99,17 @@ public class FacturaDAO {
             if (rs.next()) return rs.getInt(1) > 0;
         }
         return false;
+    }
+
+    /** Conteo directo por estado para tarjetas/resúmenes. */
+    public int contarPorEstado(String estado) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM factura WHERE estado=?";
+        try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
+            ps.setString(1, estado);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
     }
 
     /**
