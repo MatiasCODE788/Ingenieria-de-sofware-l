@@ -1,0 +1,172 @@
+<mxfile host="Electron">
+  <diagram name="Diagrama de Componentes" id="comp-3tier-final">
+    <mxGraphModel dx="3400" dy="1604" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontStyle=1;fontColor=#1a1a2e;" value="Diagrama de Componentes — Sistema de Gestión de Inventario y Facturas" vertex="1">
+          <mxGeometry height="32" width="1820" x="-100" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontStyle=1;fontSize=11;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Usuario&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="95" width="55" x="782.5" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="L1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;strokeWidth=2;fontStyle=1;fontSize=13;spacingLeft=12;spacingTop=8;" value="«capa» Presentación (Vista)  —  Java Swing + HTML / CSS / JavaScript" vertex="1">
+          <mxGeometry height="300" width="1730" x="-40" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="cSwing" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;InterfazSwing (Java Swing)&lt;br&gt;&lt;font style=&#39;font-size:8px&#39;&gt;Formularios: productos, carga de&lt;br&gt;facturas, previsualización de ajustes&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="95" width="440" x="850" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="cWeb" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;VisorReportes (HTML/CSS/JS)&lt;br&gt;&lt;font style=&#39;font-size:8px&#39;&gt;Visualización e impresión&lt;br&gt;de reportes&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="95" width="440" x="330" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ball" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;fontSize=9;fontStyle=1;" value="«interface» API REST" vertex="1">
+          <mxGeometry height="52" width="52" x="770" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="L2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;strokeWidth=2;fontStyle=1;fontSize=13;spacingLeft=12;spacingTop=8;" value="«capa» Controlador  —  Spring Boot / Java 17  ·  Spring Data JPA" vertex="1">
+          <mxGeometry height="310" width="1730" x="-40" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="subA" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=2;fontSize=11;" value="Controladores REST" vertex="1">
+          <mxGeometry height="18" width="400" x="-20" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="ctP" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;ProductoController&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="75" width="180" x="-10" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="ctV" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;ProveedorController&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="75" width="395" x="205" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="ctF" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;FacturaController&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="75" width="395" x="635" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="ctI" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;InventarioController&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="75" width="180" x="1065" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="ctU" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;UsuarioController&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="75" width="395" x="1280" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="subB" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontStyle=2;fontSize=11;" value="Spring Data JPA  —  Repositorios" vertex="1">
+          <mxGeometry height="18" width="400" x="-20" y="797" as="geometry" />
+        </mxCell>
+        <mxCell id="rP" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;ProductoRepository&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="180" x="-10" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="rV" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;ProveedorRepository&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="180" x="205" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="rE" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;EquivalenciaRepository&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="180" x="420" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="rF" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;FacturaRepository&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="180" x="635" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="rD" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;ItemFacturaRepository&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="180" x="850" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="rM" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;MovimientoInvRepository&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="180" x="1065" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="rU" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;UsuarioRepository&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="180" x="1280" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="rPe" parent="1" style="shape=component;align=center;spacingLeft=28;whiteSpace=wrap;html=1;fontSize=10;fontStyle=0;strokeWidth=1.5;" value="&lt;div style=&#39;text-align:center&#39;&gt;&lt;font style=&#39;font-size:8px&#39;&gt;«component»&lt;/font&gt;&lt;br&gt;&lt;b&gt;PerfilRepository&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="180" x="1495" y="825" as="geometry" />
+        </mxCell>
+        <mxCell id="L3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;strokeWidth=2;fontStyle=1;fontSize=13;spacingLeft=12;spacingTop=8;" value="«capa» Datos (Modelo)  —  MySQL 8" vertex="1">
+          <mxGeometry height="200" width="1730" x="-40" y="1025" as="geometry" />
+        </mxCell>
+        <mxCell id="db" parent="1" style="shape=cylinder3;html=1;whiteSpace=wrap;boundedLbl=1;backgroundOutline=1;size=14;fontSize=10;fontStyle=1;verticalAlign=top;spacingTop=8;" value="&lt;&lt;database&gt;&gt; minimarket_db (MySQL 8)&#xa;&#xa;Entidades maestras: perfil · usuario · producto · proveedor&#xa;Entidades asociativas / transaccionales: equivalencia · factura · item_factura · movimiento_inventario&#xa;&#xa;Integridad referencial (claves foráneas) — Auditoría logística (fecha, hora y usuario en movimiento_inventario)" vertex="1">
+          <mxGeometry height="140" width="940" x="340" y="1065" as="geometry" />
+        </mxCell>
+        <mxCell id="e0a" edge="1" parent="1" source="actor" style="edgeStyle=orthogonalEdgeStyle;dashed=0;endArrow=none;endFill=0;strokeColor=#1a3a5c;strokeWidth=2;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="cSwing" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="810" y="290" />
+              <mxPoint x="1070" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e0b" edge="1" parent="1" source="actor" style="edgeStyle=orthogonalEdgeStyle;dashed=0;endArrow=none;endFill=0;strokeColor=#1a3a5c;strokeWidth=2;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" target="cWeb" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="810" y="290" />
+              <mxPoint x="550" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ereq2" edge="1" parent="1" source="cWeb" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.6;fontStyle=1;fontSize=9;fontColor=#6a2c8a;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="ball" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="500" />
+              <mxPoint x="796" y="500" />
+            </Array>
+            <mxPoint x="650" y="605" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eprov" edge="1" parent="1" source="ball" style="endArrow=none;html=1;strokeWidth=2;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="L2" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2115" y="79.99999999999955" as="sourcePoint" />
+            <mxPoint x="1800" y="70" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ecr0" edge="1" parent="1" source="ctP" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.4;fontStyle=1;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rP" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr1" edge="1" parent="1" source="ctV" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.4;fontStyle=1;fontSize=9;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rV" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr2" edge="1" parent="1" source="ctV" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.4;fontStyle=1;fontSize=9;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rE" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr3" edge="1" parent="1" source="ctF" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.4;fontStyle=1;fontSize=9;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rF" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr4" edge="1" parent="1" source="ctF" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.4;fontStyle=1;fontSize=9;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rD" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr5" edge="1" parent="1" source="ctI" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.4;fontStyle=1;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rM" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr6" edge="1" parent="1" source="ctU" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.4;fontStyle=1;fontSize=9;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rU" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr7" edge="1" parent="1" source="ctU" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;strokeWidth=1.4;fontStyle=1;fontSize=9;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="rPe" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="erd0" edge="1" parent="1" source="rP" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.8;fontStyle=1;fontSize=10;fontColor=#1a7a40;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.0;entryY=0.5;entryDx=0;entryDy=0;" target="db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="erd1" edge="1" parent="1" source="rV" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.8;fontStyle=1;fontSize=10;fontColor=#1a7a40;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.1;entryY=0.0;entryDx=0;entryDy=0;" target="db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="erd2" edge="1" parent="1" source="rE" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.8;fontStyle=1;fontSize=10;fontColor=#1a7a40;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0.0;entryDx=0;entryDy=0;" target="db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="erd3" edge="1" parent="1" source="rF" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.8;fontStyle=1;fontSize=10;fontColor=#1a7a40;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.42;entryY=0.0;entryDx=0;entryDy=0;" target="db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="erd4" edge="1" parent="1" source="rD" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.8;fontStyle=1;fontSize=10;fontColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.58;entryY=0.0;entryDx=0;entryDy=0;" target="db" value="JPA/JDBC">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="erd5" edge="1" parent="1" source="rM" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.8;fontStyle=1;fontSize=10;fontColor=#1a7a40;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0.0;entryDx=0;entryDy=0;" target="db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="erd6" edge="1" parent="1" source="rU" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.8;fontStyle=1;fontSize=10;fontColor=#1a7a40;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.9;entryY=0.0;entryDx=0;entryDy=0;" target="db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="erd7" edge="1" parent="1" source="rPe" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.8;fontStyle=1;fontSize=10;fontColor=#1a7a40;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1.0;entryY=0.5;entryDx=0;entryDy=0;" target="db" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="OtPfbCkcNVy5SNgDOyUX-1" edge="1" parent="1" source="cSwing" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=none;endFill=0;strokeWidth=1.6;fontStyle=1;fontSize=9;fontColor=#6a2c8a;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.533;exitY=0.984;exitDx=0;exitDy=0;exitPerimeter=0;" target="ball" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1085" y="490" />
+              <mxPoint x="1085" y="500" />
+              <mxPoint x="796" y="500" />
+            </Array>
+            <mxPoint x="1030" y="490" as="sourcePoint" />
+            <mxPoint x="1276" y="635" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
