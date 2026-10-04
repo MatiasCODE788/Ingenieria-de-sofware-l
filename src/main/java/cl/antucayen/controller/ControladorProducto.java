@@ -1,13 +1,14 @@
 package cl.antucayen.controller;
 
+import cl.antucayen.model.domain.EstadoProducto;
 import cl.antucayen.model.entity.Producto;
-import cl.antucayen.model.service.ServicioExportacionDatos;
 import cl.antucayen.model.service.ServicioExportacionDatos.FormatoExportacion;
-import cl.antucayen.model.service.ServicioProducto;
+import cl.antucayen.model.service.ServicioExportacionDatos;
 import cl.antucayen.model.service.ServicioInventario;
+import cl.antucayen.model.service.ServicioProducto;
 import cl.antucayen.model.service.ServicioProveedor;
 import cl.antucayen.security.Autorizacion;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 import cl.antucayen.view.VBuscadorProductos;
 import cl.antucayen.view.VFormularioProducto;
 import cl.antucayen.view.VHistorialProducto;
@@ -16,6 +17,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -125,7 +127,7 @@ public class ControladorProducto {
     private void exportar() {
         try {
             List<Producto> productos = obtenerProductosConFiltrosActuales().stream()
-                    .filter(p -> "Activo".equals(p.getEstado()))
+                    .filter(p -> EstadoProducto.ACTIVO.coincide(p.getEstado()))
                     .toList();
             if (productos.isEmpty()) {
                 JOptionPane.showMessageDialog(vista,
@@ -200,7 +202,7 @@ public class ControladorProducto {
             Producto p = new Producto(
                     form.getSku(), form.getNombre(), form.getCodigoBarras(),
                     form.getUnidad(), Integer.parseInt(form.getPrecioVenta()),
-                    Integer.parseInt(form.getStock()), "Activo"
+                    Integer.parseInt(form.getStock()), EstadoProducto.ACTIVO.valorDb()
             );
             servicio.registrar(p, form.getIdsProveedoresSeleccionados());
             form.dispose();
@@ -237,7 +239,16 @@ public class ControladorProducto {
                 form.cargarProveedores(servicioProveedor.listarTodos(),
                         servicio.listarIdsProveedores(sku));
                 form.getBtnGuardar().addActionListener(e -> guardarEdicion(form, p));
-                form.getBtnInactivar().addActionListener(e -> inactivar(form, sku));
+
+                boolean productoActivo = EstadoProducto.ACTIVO.coincide(p.getEstado());
+                configurarBotonEstado(form, productoActivo);
+                form.getBtnInactivar().addActionListener(e -> {
+                    if (productoActivo) {
+                        inactivar(form, sku);
+                    } else {
+                        reactivar(form, sku);
+                    }
+                });
             }
             form.setVisible(true);
         } catch (SQLException | SecurityException ex) {
@@ -267,6 +278,33 @@ public class ControladorProducto {
         }
     }
 
+    private void configurarBotonEstado(VFormularioProducto form, boolean productoActivo) {
+        if (form.getBtnInactivar() == null) return;
+        form.getBtnInactivar().setText(productoActivo ? "Inactivar" : "Reactivar");
+        form.getBtnInactivar().setBackground(productoActivo
+                ? new java.awt.Color(234, 88, 12)
+                : new java.awt.Color(5, 150, 105));
+    }
+
+    private void reactivar(VFormularioProducto form, String sku) {
+        int confirm = JOptionPane.showConfirmDialog(
+                form, "¿Reactivar el producto " + sku + "?",
+                "Confirmar", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        try {
+            servicio.reactivar(sku);
+            form.dispose();
+            cargarTodos();
+            JOptionPane.showMessageDialog(vista,
+                    "Producto reactivado correctamente.");
+        } catch (IllegalArgumentException | SecurityException ex) {
+            mostrarError(ex.getMessage());
+        } catch (SQLException ex) {
+            mostrarError("Error al reactivar: " + ex.getMessage());
+        }
+    }
+
     private void inactivar(VFormularioProducto form, String sku) {
         int confirm = JOptionPane.showConfirmDialog(
                 form, "¿Inactivar el producto " + sku + "?",
@@ -279,7 +317,7 @@ public class ControladorProducto {
             cargarTodos();
             JOptionPane.showMessageDialog(vista,
                     "Producto inactivado. Su historial se conserva íntegramente.");
-        } catch (SecurityException ex) {
+        } catch (IllegalArgumentException | SecurityException ex) {
             mostrarError(ex.getMessage());
         } catch (SQLException ex) {
             mostrarError("Error al inactivar: " + ex.getMessage());

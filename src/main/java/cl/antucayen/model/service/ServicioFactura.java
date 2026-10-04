@@ -3,12 +3,15 @@ package cl.antucayen.model.service;
 import cl.antucayen.model.dao.FacturaDAO;
 import cl.antucayen.model.dao.ItemFacturaDAO;
 import cl.antucayen.model.dao.ProductoDAO;
+import cl.antucayen.model.domain.EstadoFactura;
+import cl.antucayen.model.domain.EstadoItemFactura;
+import cl.antucayen.model.domain.EstadoProducto;
 import cl.antucayen.model.entity.Factura;
 import cl.antucayen.model.entity.ItemFactura;
 import cl.antucayen.model.entity.Producto;
 import cl.antucayen.security.Autorizacion;
+import cl.antucayen.security.SesionActual;
 import cl.antucayen.util.DBConexion;
-import cl.antucayen.util.SesionActual;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -22,7 +25,7 @@ public class ServicioFactura {
             "Factura ya procesada anteriormente";
 
     private static final List<String> ESTADOS_VALIDOS =
-            List.of("Pendiente", "Procesada", "Observada");
+            List.of(EstadoFactura.PENDIENTE.valorDb(), EstadoFactura.PROCESADA.valorDb(), EstadoFactura.OBSERVADA.valorDb());
 
     private final FacturaDAO facturaDAO = new FacturaDAO();
     private final ItemFacturaDAO itemFacturaDAO = new ItemFacturaDAO();
@@ -42,7 +45,7 @@ public class ServicioFactura {
                 }
 
                 factura.setIdUsuario(SesionActual.getUsuario().getIdUsuario());
-                factura.setEstado("Pendiente");
+                factura.setEstado(EstadoFactura.PENDIENTE.valorDb());
                 int idFactura = facturaDAO.insertar(factura);
                 if (idFactura <= 0) {
                     throw new SQLException("No se pudo obtener el ID de la factura generada");
@@ -51,9 +54,11 @@ public class ServicioFactura {
                 for (ItemFactura item : items) {
                     validarSkuActivoParaNuevaFactura(item);
                     if (item.getEstadoItem() == null || item.getEstadoItem().isBlank()) {
-                        item.setEstadoItem(item.getSku() != null ? "Válido" : "Observado");
+                        item.setEstadoItem(item.getSku() != null
+                                ? EstadoItemFactura.VALIDO.valorDb()
+                                : EstadoItemFactura.OBSERVADO.valorDb());
                     }
-                    if ("No Procesado".equals(item.getEstadoItem())) {
+                    if (EstadoItemFactura.NO_PROCESADO.coincide(item.getEstadoItem())) {
                         if (item.getCantidadFacturada() < 0) {
                             throw new IllegalArgumentException(
                                     "La cantidad de un ítem No Procesado no puede ser negativa");
@@ -90,7 +95,7 @@ public class ServicioFactura {
         if (producto == null) {
             throw new IllegalArgumentException("El SKU no existe: " + sku);
         }
-        if (!"Activo".equals(producto.getEstado())) {
+        if (!EstadoProducto.ACTIVO.coincide(producto.getEstado())) {
             throw new IllegalArgumentException(
                     "El producto " + sku + " está Inactivo y no puede utilizarse en nuevas facturas");
         }
@@ -138,22 +143,22 @@ public class ServicioFactura {
         DBConexion.getInstancia().ejecutarEnTransaccion(() -> {
             Factura actual = facturaDAO.buscarPorIdParaActualizar(idFactura);
             if (actual == null) throw new IllegalArgumentException("La factura no existe");
-            if ("Procesada".equals(actual.getEstado())) {
+            if (EstadoFactura.PROCESADA.coincide(actual.getEstado())) {
                 throw new IllegalStateException(MENSAJE_FACTURA_PROCESADA);
             }
             if (actual.getEstado().equals(nuevoEstado)) return null;
-            if ("Observada".equals(actual.getEstado())) {
+            if (EstadoFactura.OBSERVADA.coincide(actual.getEstado())) {
                 throw new IllegalStateException(
                         "Una factura Observada solo puede cambiar de estado tras corregir equivalencias y reprocesar");
             }
 
-            if ("Procesada".equals(nuevoEstado)) {
+            if (EstadoFactura.PROCESADA.coincide(nuevoEstado)) {
                 List<ItemFactura> items = itemFacturaDAO.listarPorFactura(idFactura);
                 if (items.isEmpty()) {
                     throw new IllegalStateException("La factura no tiene ítems para procesar");
                 }
                 boolean hayPendientes = items.stream().anyMatch(item ->
-                        item.getSku() == null || !"Válido".equals(item.getEstadoItem()));
+                        item.getSku() == null || !EstadoItemFactura.VALIDO.coincide(item.getEstadoItem()));
                 if (hayPendientes) {
                     throw new IllegalStateException(
                             "No se puede marcar como Procesada mientras existan ítems Observados o No Procesados");
@@ -184,10 +189,6 @@ public class ServicioFactura {
         return facturaDAO.listarTodas();
     }
 
-    public List<Factura> listarPorEstado(String estado) throws SQLException {
-        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
-        return facturaDAO.listarPorEstado(estado);
-    }
 
     public List<Factura> consultar(String numero, Integer idProveedor,
                                    LocalDate desde, LocalDate hasta) throws SQLException {

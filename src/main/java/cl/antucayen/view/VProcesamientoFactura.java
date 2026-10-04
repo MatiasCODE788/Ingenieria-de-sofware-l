@@ -3,7 +3,7 @@ package cl.antucayen.view;
 import cl.antucayen.model.entity.ErrorImportacion;
 import cl.antucayen.model.entity.Factura;
 import cl.antucayen.model.entity.ItemFactura;
-import cl.antucayen.model.service.ServicioProcesamientoFactura.ResumenProcesamiento;
+import cl.antucayen.model.dto.ResumenProcesamiento;
 import cl.antucayen.view.components.ComponentesSwing;
 
 import javax.swing.*;
@@ -19,7 +19,6 @@ public class VProcesamientoFactura extends JDialog {
     private DefaultTableModel modeloObservados;
     private JButton btnCorregir;
     private JButton btnReprocesar;
-    private JButton btnExportarValidos;
     private JButton btnCerrar;
     private JLabel lblLeidos;
     private JLabel lblValidos;
@@ -132,17 +131,9 @@ public class VProcesamientoFactura extends JDialog {
         btnReprocesar.setFocusPainted(false);
         btnReprocesar.setBorderPainted(false);
 
-        btnExportarValidos = new JButton("Exportar válidos");
-        btnExportarValidos.setFont(new Font("Arial", Font.BOLD, 12));
-        btnExportarValidos.setBackground(new Color(14, 116, 144));
-        btnExportarValidos.setForeground(Color.WHITE);
-        btnExportarValidos.setFocusPainted(false);
-        btnExportarValidos.setBorderPainted(false);
-
         botones.add(btnCerrar);
         botones.add(btnCorregir);
         botones.add(btnReprocesar);
-        botones.add(btnExportarValidos);
 
         add(header, BorderLayout.NORTH);
         add(new JScrollPane(contenido,
@@ -246,6 +237,4 @@ public class VProcesamientoFactura extends JDialog {
 
     public JButton getBtnCorregir() { return btnCorregir; }
     public JButton getBtnReprocesar() { return btnReprocesar; }
-    public JButton getBtnExportarValidos() { return btnExportarValidos; }
-    public JButton getBtnCerrar() { return btnCerrar; }
 }

@@ -1,24 +1,26 @@
 package cl.antucayen.controller;
 
+import cl.antucayen.model.domain.EstadoProducto;
 import cl.antucayen.model.entity.ErrorImportacion;
 import cl.antucayen.model.entity.Producto;
-import cl.antucayen.model.service.ServicioImportacionInventario;
+import cl.antucayen.model.service.ServicioAuditoriaArchivos;
+import cl.antucayen.model.service.ServicioExportacionDatos.FormatoExportacion;
+import cl.antucayen.model.service.ServicioExportacionDatos;
 import cl.antucayen.model.service.ServicioImportacionInventario.FilaCruda;
 import cl.antucayen.model.service.ServicioImportacionInventario.ResultadoLectura;
+import cl.antucayen.model.service.ServicioImportacionInventario;
 import cl.antucayen.model.service.ServicioInventario;
-import cl.antucayen.model.service.ServicioExportacionDatos;
-import cl.antucayen.model.service.ServicioExportacionDatos.FormatoExportacion;
-import cl.antucayen.model.service.ServicioAuditoriaArchivos;
 import cl.antucayen.model.service.ServicioProducto;
 import cl.antucayen.security.Autorizacion;
 import cl.antucayen.view.VAjusteInventario;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class ControladorAjusteInventario {
 
@@ -144,29 +147,62 @@ public class ControladorAjusteInventario {
         vista.getPanelErroresEstructura().limpiar();
         vista.mostrarAvisoDuplicados(Map.of());
 
-        ResultadoLectura resultado;
-        try {
-            resultado = servicioImportacion.leerYValidar(ruta);
-            try {
-                String nombre = Path.of(ruta).getFileName().toString();
-                String formato = nombre.contains(".")
-                        ? nombre.substring(nombre.lastIndexOf('.') + 1).toUpperCase(Locale.ROOT)
-                        : "DESCONOCIDO";
-                auditoriaArchivos.registrar(nombre, "IMPORTACION", formato,
-                        resultado.estructuraValida() ? "EXITOSO" : "ERROR",
-                        resultado.estructuraValida() ? "Archivo leído y validado" : "Estructura inválida");
-            } catch (SQLException logEx) {
-                vista.mostrarError("No se pudo registrar la bitácora de importación: " + logEx.getMessage());
-                return;
+        boolean correccionAutorizada = vista.isCorreccionAutorizada();
+        vista.setProcesandoArchivo(true);
+        vista.mostrarError("Leyendo y validando archivo...");
+
+        new SwingWorker<ResultadoLectura, Void>() {
+            @Override
+            protected ResultadoLectura doInBackground() throws Exception {
+                return servicioImportacion.leerYValidar(ruta);
             }
-        } catch (IOException ex) {
-            try {
-                String nombre = Path.of(ruta).getFileName().toString();
-                auditoriaArchivos.registrar(nombre, "IMPORTACION", "DESCONOCIDO", "ERROR", ex.getMessage());
-            } catch (Exception ignored) { }
-            vista.mostrarError("Error al leer el archivo: " + ex.getMessage());
-            return;
+
+            @Override
+            protected void done() {
+                vista.setProcesandoArchivo(false);
+                try {
+                    ResultadoLectura resultado = get();
+                    registrarLecturaEnAuditoria(ruta, resultado);
+                    procesarResultadoLectura(resultado, modalidad, correccionAutorizada);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    vista.mostrarError("La lectura del archivo fue interrumpida");
+                } catch (ExecutionException ex) {
+                    Throwable causa = ex.getCause();
+                    String detalle = causa == null ? ex.getMessage() : causa.getMessage();
+                    registrarErrorLecturaSilencioso(ruta, detalle);
+                    vista.mostrarError("Error al leer el archivo: " + detalle);
+                } catch (SQLException ex) {
+                    vista.mostrarError("No se pudo registrar la bitácora de importación: " + ex.getMessage());
+                }
+            }
+        }.execute();
+    }
+
+    private void registrarLecturaEnAuditoria(String ruta, ResultadoLectura resultado)
+            throws SQLException {
+        String nombre = Path.of(ruta).getFileName().toString();
+        String formato = nombre.contains(".")
+                ? nombre.substring(nombre.lastIndexOf('.') + 1).toUpperCase(Locale.ROOT)
+                : "DESCONOCIDO";
+        auditoriaArchivos.registrar(nombre, "IMPORTACION", formato,
+                resultado.estructuraValida() ? "EXITOSO" : "ERROR",
+                resultado.estructuraValida() ? "Archivo leído y validado" : "Estructura inválida");
+    }
+
+    private void registrarErrorLecturaSilencioso(String ruta, String detalle) {
+        try {
+            String nombre = Path.of(ruta).getFileName().toString();
+            auditoriaArchivos.registrar(
+                    nombre, "IMPORTACION", "DESCONOCIDO", "ERROR", detalle);
+        } catch (Exception ignored) {
+            // El error principal de lectura no se reemplaza por un fallo de bitácora.
         }
+    }
+
+    private void procesarResultadoLectura(ResultadoLectura resultado,
+                                          String modalidad,
+                                          boolean correccionAutorizada) {
 
         erroresConsolidados.addAll(resultado.erroresLectura());
         if (!resultado.estructuraValida()) {
@@ -174,8 +210,6 @@ public class ControladorAjusteInventario {
             vista.getPanelErroresEstructura().cargarErrores(erroresConsolidados);
             return;
         }
-
-        boolean correccionAutorizada = vista.isCorreccionAutorizada();
 
         for (FilaCruda fila : resultado.filas()) {
             ItemPreview item = new ItemPreview();
@@ -224,7 +258,7 @@ public class ControladorAjusteInventario {
                             fila.numeroFila(), "SKU", fila.sku(), "SKU no encontrado en el sistema"));
                     continue;
                 }
-                if (!"Activo".equals(p.getEstado())) {
+                if (!EstadoProducto.ACTIVO.coincide(p.getEstado())) {
                     item.estado = "ERROR: producto Inactivo";
                     item.esError = true;
                     itemsCargados.add(item);

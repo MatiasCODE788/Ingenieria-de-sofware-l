@@ -6,7 +6,7 @@ import cl.antucayen.model.entity.AuditoriaProveedor;
 import cl.antucayen.model.entity.Proveedor;
 import cl.antucayen.security.Autorizacion;
 import cl.antucayen.util.DBConexion;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -66,8 +66,7 @@ public class ServicioProveedor {
         if (proveedor.getCorreoElectronico() == null || proveedor.getCorreoElectronico().isBlank())
             throw new IllegalArgumentException("El correo electrónico es obligatorio");
         proveedor.setNombre(proveedor.getNombre().trim());
-        proveedor.setRut(proveedor.getRut() == null || proveedor.getRut().isBlank()
-                ? null : proveedor.getRut().trim());
+        proveedor.setRut(normalizarRut(proveedor.getRut()));
         proveedor.setTelefono(proveedor.getTelefono().trim());
         proveedor.setCorreoElectronico(proveedor.getCorreoElectronico().trim());
     }
@@ -77,6 +76,36 @@ public class ServicioProveedor {
         if (Objects.equals(valorAnterior, valorNuevo)) return;
         auditoriaDAO.insertar(new AuditoriaProveedor(
                 idProveedor, idUsuario, campo, valorAnterior, valorNuevo));
+    }
+
+
+    /**
+     * Normaliza el RUT opcional a una representación canónica sin puntos y con
+     * guion antes del dígito verificador. La normalización evita que variantes
+     * de formato eludan la restricción UNIQUE del esquema.
+     */
+    private String normalizarRut(String rut) {
+        if (rut == null || rut.isBlank()) return null;
+        String limpio = rut.trim().toUpperCase()
+                .replace(".", "")
+                .replace("-", "")
+                .replaceAll("\\s+", "");
+        if (limpio.length() < 2) {
+            throw new IllegalArgumentException("El RUT informado no tiene un formato válido");
+        }
+        String cuerpo = limpio.substring(0, limpio.length() - 1);
+        char dv = limpio.charAt(limpio.length() - 1);
+        if (!cuerpo.chars().allMatch(Character::isDigit)
+                || !(Character.isDigit(dv) || dv == 'K')) {
+            throw new IllegalArgumentException("El RUT informado no tiene un formato válido");
+        }
+        return cuerpo + "-" + dv;
+    }
+
+    public List<AuditoriaProveedor> listarAuditoria(int idProveedor) throws SQLException {
+        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
+        if (idProveedor <= 0) throw new IllegalArgumentException("Proveedor no válido");
+        return auditoriaDAO.listarPorProveedor(idProveedor);
     }
 
     public Proveedor buscarPorId(int id) throws SQLException {

@@ -56,4 +56,48 @@ class ServicioVentaPagoTest {
                         List.of(new PagoVenta("Efectivo", 8_000)),
                         8_500));
     }
+    @Test
+    void sobrepagoMixtoSeRechazaSiElVueltoSuperaElEfectivoRecibido() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.calcularVuelto(
+                        List.of(
+                                new PagoVenta("Débito", 9_000),
+                                new PagoVenta("Efectivo", 1_000)),
+                        8_500));
+    }
+
+    @Test
+    void medioDePagoDesconocidoSeRechaza() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.calcularVuelto(
+                        List.of(new PagoVenta("Transferencia", 8_500)),
+                        8_500));
+    }
+
+    @Test
+    void pagoCeroSeRechaza() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.calcularVuelto(
+                        List.of(new PagoVenta("Efectivo", 0)),
+                        0));
+    }
+
+    @Test
+    void totalNegativoSeRechaza() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.calcularVuelto(
+                        List.of(new PagoVenta("Efectivo", 1)),
+                        -1));
+    }
+
+    @Test
+    void desbordamientoEnSumaDePagosSeRechaza() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.calcularVuelto(
+                        List.of(
+                                new PagoVenta("Efectivo", Integer.MAX_VALUE),
+                                new PagoVenta("Efectivo", 1)),
+                        Integer.MAX_VALUE));
+    }
+
 }

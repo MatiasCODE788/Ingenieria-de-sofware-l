@@ -1,7 +1,7 @@
 package cl.antucayen.view;
 
 import cl.antucayen.view.components.ComponentesSwing;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -38,7 +38,7 @@ public class VHistorial extends JPanel {
 
         filtros.add(crearLabel("Tipo:"));
         cmbTipo = new JComboBox<>(new String[]{
-                "Todos", "Ingreso por compra", "Venta",
+                "Todos", "Stock inicial", "Ingreso por compra", "Venta",
                 "Ajuste positivo", "Ajuste negativo", "Reversión"
         });
         cmbTipo.setFont(new Font("Arial", Font.PLAIN, 12));

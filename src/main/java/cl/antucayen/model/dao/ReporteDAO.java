@@ -124,11 +124,10 @@ public class ReporteDAO {
         String sql = """
                 SELECT m.fecha_hora, m.tipo_movimiento, m.sku, p.nombre AS producto,
                        m.cantidad_aplicada,
-                       COALESCE(NULLIF(a.nombre_usuario,''), NULLIF(u.nombre_completo,''), u.username) AS usuario
+                       COALESCE(NULLIF(u.nombre_completo,''), u.username) AS usuario
                 FROM movimiento_inventario m
                 JOIN producto p ON p.sku=m.sku
                 JOIN usuario u ON u.id_usuario=m.id_usuario
-                LEFT JOIN ajuste_inventario a ON a.id_ajuste=m.id_ajuste
                 WHERE m.fecha_hora>=? AND m.fecha_hora<?
                 ORDER BY m.fecha_hora DESC, m.id_movimiento DESC
                 """;

@@ -4,7 +4,7 @@ import cl.antucayen.model.dao.LogArchivoDAO;
 import cl.antucayen.model.entity.LogArchivo;
 import cl.antucayen.model.entity.Usuario;
 import cl.antucayen.security.Autorizacion;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 
 import java.sql.SQLException;
 import java.util.List;

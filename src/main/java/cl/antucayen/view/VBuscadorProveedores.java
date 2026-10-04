@@ -11,6 +11,7 @@ public class VBuscadorProveedores extends JPanel {
     private JTextField        txtBusqueda;
     private JButton           btnBuscar;
     private JButton           btnNuevo;
+    private JButton           btnHistorial;
     private JTable            tblProveedores;
     private DefaultTableModel modeloTabla;
 
@@ -28,14 +29,16 @@ public class VBuscadorProveedores extends JPanel {
         txtBusqueda.setFont(new Font("Arial", Font.PLAIN, 13));
         txtBusqueda.setPreferredSize(new Dimension(280, 32));
 
-        btnBuscar = ComponentesSwing.crearBoton("Buscar",       new Color(37, 99, 235));
-        btnNuevo  = ComponentesSwing.crearBoton("+ Nuevo proveedor", new Color(5, 150, 105));
+        btnBuscar    = ComponentesSwing.crearBoton("Buscar", new Color(37, 99, 235));
+        btnNuevo     = ComponentesSwing.crearBoton("+ Nuevo proveedor", new Color(5, 150, 105));
+        btnHistorial = ComponentesSwing.crearBoton("Historial de cambios", new Color(75, 85, 99));
 
         barraTop.add(new JLabel("Buscar:"));
         barraTop.add(txtBusqueda);
         barraTop.add(btnBuscar);
         barraTop.add(Box.createHorizontalStrut(16));
         barraTop.add(btnNuevo);
+        barraTop.add(btnHistorial);
 
         String[] cols = {"ID", "RUT", "Nombre", "Teléfono", "Correo"};
         modeloTabla = new DefaultTableModel(cols, 0) {
@@ -61,6 +64,7 @@ public class VBuscadorProveedores extends JPanel {
     public String  getTextoBusqueda()  { return txtBusqueda.getText().trim(); }
     public JButton getBtnBuscar()      { return btnBuscar; }
     public JButton getBtnNuevo()       { return btnNuevo; }
+    public JButton getBtnHistorial()   { return btnHistorial; }
     public JTable  getTblProveedores() { return tblProveedores; }
     public DefaultTableModel getModeloTabla() { return modeloTabla; }
     public void limpiarTabla()             { modeloTabla.setRowCount(0); }

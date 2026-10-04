@@ -248,16 +248,4 @@ public class VLogin extends JFrame {
         lblError.setText(msg);
         lblError.setVisible(true);
     }
-
-    public void limpiarCampos() {
-        txtUsername.setText("");
-        txtPassword.setText("");
-        lblError.setVisible(false);
-    }
-
-    /** Solo borra la contraseña (por seguridad) y le devuelve el foco, sin tocar el usuario ni ocultar el error. */
-    public void limpiarSoloContrasena() {
-        txtPassword.setText("");
-        txtPassword.requestFocusInWindow();
-    }
 }

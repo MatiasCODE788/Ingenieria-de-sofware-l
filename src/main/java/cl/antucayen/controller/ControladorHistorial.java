@@ -122,7 +122,7 @@ public class ControladorHistorial {
 
         int confirmar = JOptionPane.showConfirmDialog(vista,
                 "¿Revertir completamente el ajuste #" + idAjuste + "?\n"
-                        + "La operación restaurará el stock anterior y registrará movimientos de Reversión.",
+                        + "La operación quitará el efecto del ajuste sobre el stock actual, sin eliminar movimientos posteriores, y registrará movimientos de Reversión.",
                 "Confirmar reversión",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);

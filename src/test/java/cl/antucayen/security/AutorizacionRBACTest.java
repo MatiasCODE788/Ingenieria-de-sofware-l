@@ -3,8 +3,7 @@ package cl.antucayen.security;
 import cl.antucayen.model.entity.Usuario;
 import cl.antucayen.model.service.ServicioDashboard;
 import cl.antucayen.model.service.ServicioProducto;
-import cl.antucayen.model.service.ServicioVenta;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,9 +33,9 @@ class AutorizacionRBACTest {
         assertThrows(SecurityException.class,
                 () -> Autorizacion.verificarAdministrador("Solo Administrador"));
         assertThrows(SecurityException.class,
-                () -> new ServicioProducto().listarProveedores("SKU-DE-PRUEBA"));
+                () -> new ServicioProducto().listarIdsProveedores("SKU-DE-PRUEBA"));
         assertThrows(SecurityException.class,
-                () -> new ServicioVenta().totalMesActual());
+                () -> new ServicioDashboard().ventasMesActual());
     }
 
     @Test

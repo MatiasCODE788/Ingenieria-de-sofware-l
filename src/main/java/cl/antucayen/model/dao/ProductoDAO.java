@@ -1,5 +1,6 @@
 package cl.antucayen.model.dao;
 
+import cl.antucayen.model.domain.EstadoProducto;
 import cl.antucayen.model.entity.Producto;
 import cl.antucayen.util.DBConexion;
 
@@ -53,9 +54,18 @@ public class ProductoDAO {
     }
 
     public void inactivar(String sku) throws SQLException {
-        String sql = "UPDATE producto SET estado='Inactivo' WHERE sku=?";
+        actualizarEstado(sku, EstadoProducto.INACTIVO.valorDb());
+    }
+
+    public void reactivar(String sku) throws SQLException {
+        actualizarEstado(sku, EstadoProducto.ACTIVO.valorDb());
+    }
+
+    private void actualizarEstado(String sku, String estado) throws SQLException {
+        String sql = "UPDATE producto SET estado=? WHERE sku=?";
         try (PreparedStatement ps = getConexion().prepareStatement(sql)) {
-            ps.setString(1, sku);
+            ps.setString(1, estado);
+            ps.setString(2, sku);
             ps.executeUpdate();
         }
     }
@@ -102,6 +112,53 @@ public class ProductoDAO {
         return lista;
     }
 
+
+    /**
+     * Autocompletado del POS: busca productos activos por SKU, nombre o código
+     * de barras y prioriza coincidencias exactas/prefijos de SKU.
+     */
+    public List<Producto> buscarSugerenciasActivas(String texto, int limite) throws SQLException {
+        try (Connection conexion = DBConexion.getInstancia().abrirConexionIndependiente()) {
+            return buscarSugerenciasActivas(conexion, texto, limite);
+        }
+    }
+
+    private List<Producto> buscarSugerenciasActivas(Connection conexion,
+                                                     String texto,
+                                                     int limite) throws SQLException {
+        if (texto == null || texto.isBlank() || limite <= 0) return List.of();
+        String termino = texto.trim();
+        String contiene = "%" + termino + "%";
+        String prefijo = termino + "%";
+        String sql = """
+            SELECT *
+            FROM producto
+            WHERE estado='Activo'
+              AND (sku LIKE ? OR nombre LIKE ? OR codigo_barras LIKE ?)
+            ORDER BY CASE
+                WHEN sku = ? THEN 0
+                WHEN sku LIKE ? THEN 1
+                WHEN nombre LIKE ? THEN 2
+                ELSE 3
+            END, nombre, sku
+            LIMIT ?
+            """;
+        List<Producto> lista = new ArrayList<>();
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setString(1, contiene);
+            ps.setString(2, contiene);
+            ps.setString(3, contiene);
+            ps.setString(4, termino);
+            ps.setString(5, prefijo);
+            ps.setString(6, prefijo);
+            ps.setInt(7, limite);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapear(rs));
+            }
+        }
+        return lista;
+    }
+
     public List<Producto> listarTodos() throws SQLException {
         String sql = "SELECT * FROM producto ORDER BY nombre";
         List<Producto> lista = new ArrayList<>();
@@ -112,15 +169,14 @@ public class ProductoDAO {
         return lista;
     }
 
-    /** Solo productos activos (útil para el módulo de Ventas). */
-    public List<Producto> listarActivos() throws SQLException {
-        String sql = "SELECT * FROM producto WHERE estado='Activo' ORDER BY nombre";
-        List<Producto> lista = new ArrayList<>();
+
+    /** Conteo directo para el Dashboard; evita materializar toda la tabla. */
+    public int contarActivos() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM producto WHERE estado='Activo'";
         try (PreparedStatement ps = getConexion().prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapear(rs));
+            return rs.next() ? rs.getInt(1) : 0;
         }
-        return lista;
     }
 
     /** Cantidad de productos activos en stock bajo (para la tarjeta del dashboard). */

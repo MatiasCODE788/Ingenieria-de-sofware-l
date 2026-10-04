@@ -52,7 +52,6 @@ public class VGestionUsuarios extends JPanel {
     public JButton getBtnNuevo() { return btnNuevo; }
     public JButton getBtnEditar() { return btnEditar; }
     public JButton getBtnDesactivar() { return btnDesactivar; }
-    public JTable getTblUsuarios() { return tblUsuarios; }
     public DefaultTableModel getModeloTabla() { return modeloTabla; }
     public void limpiarTabla() { modeloTabla.setRowCount(0); }
     public void agregarFila(Object[] fila) { modeloTabla.addRow(fila); }

@@ -36,15 +36,28 @@ class ServicioImportacionInventarioTest {
     }
 
     @Test
-    void csvAceptaPuntoYComaYExtensionEnMayusculas() throws IOException {
+    void csvAceptaExtensionEnMayusculasConSeparadorComa() throws IOException {
         Path archivo = tempDir.resolve("inventario.CSV");
-        Files.writeString(archivo, "SKU;cantidad\nBEB-0001;5\n", StandardCharsets.UTF_8);
+        Files.writeString(archivo, "SKU,cantidad\nBEB-0001,5\n", StandardCharsets.UTF_8);
 
         var resultado = servicio.leerYValidar(archivo.toString());
 
         assertTrue(resultado.estructuraValida());
         assertEquals(1, resultado.filas().size());
         assertEquals("5", resultado.filas().get(0).cantidadTexto());
+    }
+
+    @Test
+    void csvRechazaPuntoYComaFueraDelContratoDeLaPlantilla() throws IOException {
+        Path archivo = tempDir.resolve("inventario.csv");
+        Files.writeString(archivo, "SKU;cantidad\nBEB-0001;5\n", StandardCharsets.UTF_8);
+
+        var resultado = servicio.leerYValidar(archivo.toString());
+
+        assertFalse(resultado.estructuraValida());
+        assertTrue(resultado.filas().isEmpty());
+        assertEquals("Estructura inválida: faltan las columnas SKU o cantidad",
+                resultado.erroresLectura().get(0).getDescripcion());
     }
 
     @Test

@@ -24,6 +24,7 @@ public class VPrincipal extends JFrame {
     private JButton btnHistorial;
     private JButton btnReportes;
     private JButton btnUsuarios;
+    private JButton btnAuditoriaArchivos;
     private JButton btnCerrarSesion;
 
     private JLabel seccionFacturacion;
@@ -121,7 +122,9 @@ public class VPrincipal extends JFrame {
         seccionAdministracion = crearSeccion("ADMINISTRACIÓN");
         menuPanel.add(seccionAdministracion);
         btnUsuarios = crearBotonMenu("Usuarios y permisos");
+        btnAuditoriaArchivos = crearBotonMenu("Auditoría de archivos");
         menuPanel.add(btnUsuarios);
+        menuPanel.add(btnAuditoriaArchivos);
 
         menuPanel.add(Box.createVerticalGlue());
 
@@ -262,6 +265,7 @@ public class VPrincipal extends JFrame {
         btnHistorial.setVisible(perfilSoportado);
         btnReportes.setVisible(perfilSoportado);
         btnUsuarios.setVisible(esAdmin);
+        btnAuditoriaArchivos.setVisible(esAdmin);
 
         seccionFacturacion.setVisible(esAdmin || esBodeguero);
         seccionInventarioMasivo.setVisible(esAdmin || esBodeguero);
@@ -315,5 +319,6 @@ public class VPrincipal extends JFrame {
     public JButton getBtnHistorial()          { return btnHistorial; }
     public JButton getBtnReportes()           { return btnReportes; }
     public JButton getBtnUsuarios()           { return btnUsuarios; }
+    public JButton getBtnAuditoriaArchivos() { return btnAuditoriaArchivos; }
     public JButton getBtnCerrarSesion()       { return btnCerrarSesion; }
 }

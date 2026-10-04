@@ -2,9 +2,14 @@ package cl.antucayen.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 public class DBConexion {
@@ -13,6 +18,9 @@ public class DBConexion {
     public interface OperacionSQL<T> {
         T ejecutar() throws SQLException;
     }
+
+    private static final String ARCHIVO_CONFIG = "config.properties";
+    private static final String PROPIEDAD_RUTA_CONFIG = "antucayen.config";
 
     private static DBConexion instancia;
     private Connection conexion;
@@ -35,10 +43,15 @@ public class DBConexion {
 
     private void cargarConfiguracion() {
         Properties props = new Properties();
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-            if (input != null) props.load(input);
+        List<String> ubicacionesIntentadas = new ArrayList<>();
+
+        try {
+            cargarArchivoExplicito(props, ubicacionesIntentadas);
+            if (props.isEmpty()) cargarDesdeClasspath(props, ubicacionesIntentadas);
+            if (props.isEmpty()) cargarDesdeSistemaDeArchivos(props, ubicacionesIntentadas);
         } catch (IOException e) {
-            throw new IllegalStateException("Error al leer config.properties: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Error al leer la configuración de base de datos: " + e.getMessage(), e);
         }
 
         host = valorConfiguracion(props, "db.host", "ANTUCAYEN_DB_HOST");
@@ -46,15 +59,80 @@ public class DBConexion {
         nombre = valorConfiguracion(props, "db.nombre", "ANTUCAYEN_DB_NAME");
         usuario = valorConfiguracion(props, "db.usuario", "ANTUCAYEN_DB_USER");
         contrasena = valorConfiguracion(props, "db.contrasena", "ANTUCAYEN_DB_PASSWORD");
-
-        String ssl = valorOpcional(props, "db.ssl", "ANTUCAYEN_DB_SSL", "false");
-        usarSsl = Boolean.parseBoolean(ssl);
+        usarSsl = Boolean.parseBoolean(
+                valorOpcional(props, "db.ssl", "ANTUCAYEN_DB_SSL", "false"));
 
         if (host == null || port == null || nombre == null || usuario == null || contrasena == null) {
+            String directorioTrabajo = System.getProperty("user.dir", "<desconocido>");
+            String intentos = ubicacionesIntentadas.isEmpty()
+                    ? "ninguna ubicación de archivo disponible"
+                    : String.join("; ", ubicacionesIntentadas);
             throw new IllegalStateException(
-                    "Configuración de base de datos incompleta. Copia config.properties.example como "
-                            + "config.properties o define las variables ANTUCAYEN_DB_HOST, ANTUCAYEN_DB_PORT, "
-                            + "ANTUCAYEN_DB_NAME, ANTUCAYEN_DB_USER y ANTUCAYEN_DB_PASSWORD.");
+                    "Configuración de base de datos incompleta. Directorio de trabajo: "
+                            + directorioTrabajo + ". Ubicaciones revisadas: " + intentos
+                            + ". Asegúrate de que exista src/main/resources/config.properties, "
+                            + "o ejecuta con -Dantucayen.config=RUTA_AL_ARCHIVO, o define "
+                            + "ANTUCAYEN_DB_HOST, ANTUCAYEN_DB_PORT, ANTUCAYEN_DB_NAME, "
+                            + "ANTUCAYEN_DB_USER y ANTUCAYEN_DB_PASSWORD.");
+        }
+    }
+
+    private void cargarArchivoExplicito(Properties props,
+                                        List<String> ubicacionesIntentadas) throws IOException {
+        String rutaExplicita = System.getProperty(PROPIEDAD_RUTA_CONFIG);
+        if (rutaExplicita == null || rutaExplicita.isBlank()) return;
+
+        Path archivo = Paths.get(rutaExplicita.trim()).toAbsolutePath().normalize();
+        ubicacionesIntentadas.add(archivo.toString());
+        cargarSiExiste(props, archivo);
+    }
+
+    private void cargarDesdeClasspath(Properties props,
+                                      List<String> ubicacionesIntentadas) throws IOException {
+        ubicacionesIntentadas.add("classpath:/" + ARCHIVO_CONFIG);
+
+        ClassLoader contexto = Thread.currentThread().getContextClassLoader();
+        if (contexto != null) {
+            try (InputStream input = contexto.getResourceAsStream(ARCHIVO_CONFIG)) {
+                if (input != null) {
+                    props.load(input);
+                    return;
+                }
+            }
+        }
+
+        try (InputStream input = DBConexion.class.getResourceAsStream("/" + ARCHIVO_CONFIG)) {
+            if (input != null) props.load(input);
+        }
+    }
+
+    private void cargarDesdeSistemaDeArchivos(Properties props,
+                                              List<String> ubicacionesIntentadas) throws IOException {
+        Path trabajo = Paths.get(System.getProperty("user.dir", "."))
+                .toAbsolutePath().normalize();
+
+        Path configLocal = trabajo.resolve(ARCHIVO_CONFIG);
+        ubicacionesIntentadas.add(configLocal.toString());
+        if (cargarSiExiste(props, configLocal)) return;
+
+        Path actual = trabajo;
+        for (int nivel = 0; nivel < 6 && actual != null; nivel++) {
+            Path candidato = actual.resolve("src")
+                    .resolve("main")
+                    .resolve("resources")
+                    .resolve(ARCHIVO_CONFIG)
+                    .normalize();
+            ubicacionesIntentadas.add(candidato.toString());
+            if (cargarSiExiste(props, candidato)) return;
+            actual = actual.getParent();
+        }
+    }
+
+    private boolean cargarSiExiste(Properties props, Path archivo) throws IOException {
+        if (!Files.isRegularFile(archivo)) return false;
+        try (InputStream input = Files.newInputStream(archivo)) {
+            props.load(input);
+            return true;
         }
     }
 
@@ -65,7 +143,8 @@ public class DBConexion {
         return valor == null || valor.isBlank() ? null : valor.trim();
     }
 
-    private String valorOpcional(Properties props, String clave, String variableEntorno, String defecto) {
+    private String valorOpcional(Properties props, String clave,
+                                 String variableEntorno, String defecto) {
         String entorno = System.getenv(variableEntorno);
         if (entorno != null && !entorno.isBlank()) return entorno.trim();
         return props.getProperty(clave, defecto).trim();
@@ -73,12 +152,29 @@ public class DBConexion {
 
     public synchronized Connection getConexion() throws SQLException {
         if (conexion == null || conexion.isClosed()) {
-            String url = "jdbc:mariadb://" + host + ":" + port + "/" + nombre
-                    + "?useUnicode=true&characterEncoding=UTF-8"
-                    + "&allowPublicKeyRetrieval=true&useSsl=" + usarSsl;
-            conexion = DriverManager.getConnection(url, usuario, contrasena);
+            conexion = crearConexion();
         }
         return conexion;
+    }
+
+    /**
+     * Abre una conexión independiente de la conexión transaccional compartida.
+     *
+     * <p>Se usa exclusivamente en lecturas ejecutadas fuera del EDT (por
+     * ejemplo, autocompletado del POS). El llamador debe cerrarla mediante
+     * try-with-resources. De esta forma una consulta en segundo plano no
+     * comparte simultáneamente el mismo objeto JDBC Connection con una venta o
+     * ajuste ejecutado en el hilo principal.</p>
+     */
+    public Connection abrirConexionIndependiente() throws SQLException {
+        return crearConexion();
+    }
+
+    private Connection crearConexion() throws SQLException {
+        String url = "jdbc:mariadb://" + host + ":" + port + "/" + nombre
+                + "?useUnicode=true&characterEncoding=UTF-8"
+                + "&allowPublicKeyRetrieval=true&useSsl=" + usarSsl;
+        return DriverManager.getConnection(url, usuario, contrasena);
     }
 
     /**
@@ -107,12 +203,10 @@ public class DBConexion {
             try {
                 conn.setAutoCommit(true);
             } catch (SQLException ex) {
-                // Si no se puede restaurar la conexión, se descarta para que
-                // la siguiente operación abra una nueva conexión limpia.
                 try {
                     conn.close();
                 } catch (SQLException ignored) {
-                    // no hay acción adicional segura que realizar aquí
+                    // Sin acción adicional segura.
                 }
                 conexion = null;
             }

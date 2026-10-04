@@ -1,25 +1,30 @@
 package cl.antucayen.controller;
 
+import cl.antucayen.model.domain.EstadoProducto;
+import cl.antucayen.model.domain.EstadoVenta;
 import cl.antucayen.model.entity.ItemVenta;
 import cl.antucayen.model.entity.PagoVenta;
 import cl.antucayen.model.entity.Producto;
 import cl.antucayen.model.entity.Venta;
+import cl.antucayen.model.service.ServicioComprobanteVenta;
 import cl.antucayen.model.service.ServicioProducto;
 import cl.antucayen.model.service.ServicioVenta;
-import cl.antucayen.model.service.ServicioComprobanteVenta;
-import cl.antucayen.util.SesionActual;
-import cl.antucayen.view.VVentas;
+import cl.antucayen.security.SesionActual;
 import cl.antucayen.view.VComprobanteVenta;
+import cl.antucayen.view.VVentas;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
+
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class ControladorVenta {
@@ -30,25 +35,29 @@ public class ControladorVenta {
     private final ServicioComprobanteVenta servicioComprobante = new ServicioComprobanteVenta();
 
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
-    private int idVentaEnCurso;
+    private final Timer temporizadorSugerencias = new Timer(120, e -> actualizarSugerencias());
+    private SwingWorker<List<Producto>, Void> tareaSugerencias;
+    private long versionBusqueda;
 
     public ControladorVenta(VVentas vista) {
         this.vista = vista;
+        temporizadorSugerencias.setRepeats(false);
         iniciarEventos();
-        iniciarVentaPersistida();
+        prepararPuntoVenta();
         cargarVentasDelDia();
         actualizarEstadoPago();
     }
 
-    private void iniciarVentaPersistida() {
+    private void prepararPuntoVenta() {
         try {
-            idVentaEnCurso = servicio.iniciarVenta();
-            vista.setVentaEnCurso(idVentaEnCurso);
+            // No se reserva un ID al abrir el POS. Solo se limpian borradores
+            // heredados de versiones anteriores y se deja la operación en memoria.
+            servicio.prepararPuntoVenta();
+            vista.setVentaPendiente();
         } catch (SQLException | SecurityException ex) {
-            idVentaEnCurso = 0;
-            vista.setVentaEnCurso(0);
+            vista.setVentaPendiente();
             JOptionPane.showMessageDialog(vista,
-                    "No se pudo iniciar una nueva venta: " + ex.getMessage(),
+                    "No se pudo preparar el punto de venta: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -60,7 +69,53 @@ public class ControladorVenta {
 
     private void iniciarEventos() {
         vista.getBtnAgregar().addActionListener(e -> agregarAlCarrito());
-        vista.getTxtBusqueda().addActionListener(e -> agregarAlCarrito()); // Enter también agrega
+
+        // Autocompletado del POS: consulta coincidencias con una pequeña pausa
+        // para no golpear la BD en cada pulsación individual.
+        vista.getTxtBusqueda().getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { programarSugerencias(); }
+            @Override public void removeUpdate(DocumentEvent e) { programarSugerencias(); }
+            @Override public void changedUpdate(DocumentEvent e) { programarSugerencias(); }
+        });
+
+        vista.getTxtBusqueda().addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN && vista.isSugerenciasVisible()) {
+                    vista.moverSeleccionSugerencia(1);
+                    e.consume();
+                } else if (e.getKeyCode() == java.awt.event.KeyEvent.VK_UP && vista.isSugerenciasVisible()) {
+                    vista.moverSeleccionSugerencia(-1);
+                    e.consume();
+                } else if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    if (vista.isSugerenciasVisible() && vista.getProductoSugeridoSeleccionado() != null) {
+                        agregarSugerenciaSeleccionada();
+                    } else {
+                        agregarAlCarrito();
+                    }
+                    e.consume();
+                } else if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) {
+                    vista.ocultarSugerencias();
+                    e.consume();
+                }
+            }
+        });
+
+        vista.getLstSugerencias().addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() >= 2) agregarSugerenciaSeleccionada();
+            }
+        });
+        vista.getLstSugerencias().addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {
+                    agregarSugerenciaSeleccionada();
+                    e.consume();
+                }
+            }
+        });
 
         vista.getBtnLimpiarCarrito().addActionListener(e -> {
             vista.limpiarCarrito();
@@ -69,6 +124,7 @@ public class ControladorVenta {
         });
 
         vista.getBtnCobrar().addActionListener(e -> cobrar());
+        vista.getBtnVerComprobante().addActionListener(e -> mostrarComprobanteSeleccionado());
 
         // Botones de pago único: llenan el 100% del total en un solo medio
         vista.getBtnChipEfectivo().addActionListener(e -> pagarTodoCon("Efectivo"));
@@ -90,7 +146,7 @@ public class ControladorVenta {
         vista.getTxtPagoCredito().getDocument().addDocumentListener(recalcPago);
 
         vista.getModeloCarrito().addTableModelListener(evt -> {
-            if (evt.getColumn() == 3 && evt.getType() == TableModelEvent.UPDATE) {
+            if (evt.getColumn() == 2 && evt.getType() == TableModelEvent.UPDATE) {
                 recalcularFila(evt.getFirstRow());
             }
         });
@@ -102,6 +158,75 @@ public class ControladorVenta {
         });
     }
 
+    private void programarSugerencias() {
+        versionBusqueda++;
+        if (tareaSugerencias != null && !tareaSugerencias.isDone()) {
+            tareaSugerencias.cancel(true);
+        }
+
+        String texto = vista.getTextoBusqueda();
+        if (texto.isBlank()) {
+            temporizadorSugerencias.stop();
+            vista.ocultarSugerencias();
+            return;
+        }
+
+        // Debounce corto: la lista acompaña la escritura sin ejecutar una
+        // consulta por cada evento intermedio del documento. El popup no toma
+        // el foco, por lo que el usuario puede continuar escribiendo mientras
+        // las coincidencias se reemplazan en tiempo real.
+        temporizadorSugerencias.restart();
+    }
+
+    private void actualizarSugerencias() {
+        String texto = vista.getTextoBusqueda().trim();
+        if (texto.isBlank()) {
+            vista.ocultarSugerencias();
+            return;
+        }
+
+        final long version = versionBusqueda;
+        tareaSugerencias = new SwingWorker<>() {
+            @Override
+            protected List<Producto> doInBackground() throws Exception {
+                return servicioProducto.buscarSugerenciasActivas(texto, 8);
+            }
+
+            @Override
+            protected void done() {
+                if (isCancelled()
+                        || version != versionBusqueda
+                        || !texto.equals(vista.getTextoBusqueda().trim())) {
+                    return;
+                }
+                try {
+                    vista.mostrarSugerencias(get());
+                } catch (CancellationException ignored) {
+                    // Una búsqueda más reciente reemplazó esta consulta.
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    vista.ocultarSugerencias();
+                } catch (ExecutionException ex) {
+                    vista.ocultarSugerencias();
+                }
+            }
+        };
+        tareaSugerencias.execute();
+    }
+
+    private void agregarSugerenciaSeleccionada() {
+        Producto producto = vista.getProductoSugeridoSeleccionado();
+        if (producto == null) return;
+        vista.ocultarSugerencias();
+        if (producto.getStockActual() <= 0) {
+            JOptionPane.showMessageDialog(vista,
+                    "Sin stock disponible de '" + producto.getNombre() + "'");
+            return;
+        }
+        agregarOIncrementar(producto);
+        vista.limpiarBusqueda();
+    }
+
     private void agregarAlCarrito() {
         String texto = vista.getTextoBusqueda();
         if (texto.isEmpty()) return;
@@ -109,10 +234,13 @@ public class ControladorVenta {
         try {
             Producto p = servicioProducto.buscarPorSku(texto);
             if (p == null) p = servicioProducto.buscarPorCodigoBarras(texto);
+            if (p == null && vista.isSugerenciasVisible()) {
+                p = vista.getProductoSugeridoSeleccionado();
+            }
 
             if (p == null) {
                 List<Producto> coincidencias = servicioProducto.buscarPorNombre(texto);
-                coincidencias.removeIf(prod -> !"Activo".equals(prod.getEstado()));
+                coincidencias.removeIf(prod -> !EstadoProducto.ACTIVO.coincide(prod.getEstado()));
                 if (coincidencias.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "No se encontró ningún producto activo para: " + texto);
                     vista.limpiarBusqueda();
@@ -125,7 +253,7 @@ public class ControladorVenta {
                 }
             }
 
-            if (!"Activo".equals(p.getEstado())) {
+            if (!EstadoProducto.ACTIVO.coincide(p.getEstado())) {
                 JOptionPane.showMessageDialog(null, "El producto '" + p.getNombre() + "' está inactivo");
                 vista.limpiarBusqueda();
                 return;
@@ -159,19 +287,19 @@ public class ControladorVenta {
         DefaultTableModel modelo = vista.getModeloCarrito();
         for (int i = 0; i < modelo.getRowCount(); i++) {
             if (modelo.getValueAt(i, 0).equals(p.getSku())) {
-                int cantidadActual = (int) modelo.getValueAt(i, 3);
+                int cantidadActual = (int) modelo.getValueAt(i, 2);
                 int nuevaCantidad = cantidadActual + 1;
                 if (nuevaCantidad > p.getStockActual()) {
                     JOptionPane.showMessageDialog(null,
                             "No hay más stock disponible de '" + p.getNombre() + "' (stock: " + p.getStockActual() + ")");
                     return;
                 }
-                modelo.setValueAt(nuevaCantidad, i, 3);
+                modelo.setValueAt(nuevaCantidad, i, 2);
                 return;
             }
         }
         int precio = p.getPrecioVenta();
-        vista.agregarFilaCarrito(new Object[]{p.getSku(), p.getNombre(), precio, 1, precio});
+        vista.agregarFilaCarrito(new Object[]{p.getSku(), p.getNombre(), 1, precio, precio});
         recalcularTotal();
     }
 
@@ -179,21 +307,21 @@ public class ControladorVenta {
         DefaultTableModel modelo = vista.getModeloCarrito();
         if (fila < 0 || fila >= modelo.getRowCount()) return;
         try {
-            int cantidad = (int) modelo.getValueAt(fila, 3);
+            int cantidad = (int) modelo.getValueAt(fila, 2);
             String sku = (String) modelo.getValueAt(fila, 0);
             if (cantidad <= 0) {
                 JOptionPane.showMessageDialog(null, "La cantidad debe ser mayor a cero");
-                modelo.setValueAt(1, fila, 3);
+                modelo.setValueAt(1, fila, 2);
                 return;
             }
             Producto p = servicioProducto.buscarPorSku(sku);
             if (p != null && cantidad > p.getStockActual()) {
                 JOptionPane.showMessageDialog(null,
                         "Stock insuficiente (disponible: " + p.getStockActual() + ")");
-                modelo.setValueAt(p.getStockActual(), fila, 3);
+                modelo.setValueAt(p.getStockActual(), fila, 2);
                 cantidad = p.getStockActual();
             }
-            int precioUnit = (int) modelo.getValueAt(fila, 2);
+            int precioUnit = (int) modelo.getValueAt(fila, 3);
             modelo.setValueAt(precioUnit * cantidad, fila, 4);
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
@@ -275,8 +403,8 @@ public class ControladorVenta {
         for (int i = 0; i < modelo.getRowCount(); i++) {
             ItemVenta item = new ItemVenta();
             item.setSku((String) modelo.getValueAt(i, 0));
-            item.setCantidad((int) modelo.getValueAt(i, 3));
-            item.setPrecioUnitarioVenta((int) modelo.getValueAt(i, 2));
+            item.setCantidad((int) modelo.getValueAt(i, 2));
+            item.setPrecioUnitarioVenta((int) modelo.getValueAt(i, 3));
             item.setSubtotal((int) modelo.getValueAt(i, 4));
             items.add(item);
         }
@@ -330,8 +458,7 @@ public class ControladorVenta {
         if (confirmar != JOptionPane.YES_OPTION) return;
 
         try {
-            if (idVentaEnCurso <= 0) throw new IllegalStateException("No existe una venta en curso activa");
-            int idVenta = servicio.registrar(idVentaEnCurso, pagos, items);
+            int idVenta = servicio.registrar(pagos, items);
             vista.limpiarCarrito();
             vista.limpiarPagos();
             actualizarEstadoPago();
@@ -339,14 +466,14 @@ public class ControladorVenta {
 
             // RF-72: el comprobante se genera automáticamente después del
             // commit exitoso de la venta y se reconstruye desde la BD.
-            var comprobante = servicioComprobante.obtener(idVenta, pagado, vuelto);
+            var comprobante = servicioComprobante.obtener(idVenta);
             java.awt.Window owner = SwingUtilities.getWindowAncestor(vista);
             VComprobanteVenta dialogo = new VComprobanteVenta(owner, comprobante);
             dialogo.setVisible(true);
 
-            // RF-64: al terminar una venta se abre inmediatamente una nueva
-            // operación en curso para el siguiente cliente.
-            iniciarVentaPersistida();
+            // El siguiente cliente parte con una operación en memoria. El número
+            // de venta se asignará únicamente cuando el cobro se confirme.
+            vista.setVentaPendiente();
         } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         } catch (SQLException ex) {
@@ -383,12 +510,32 @@ public class ControladorVenta {
                         "$" + formatear(v.getMontoTotal()),
                         v.getEstado()
                 });
-                if ("Pagada".equals(v.getEstado())) totalDia += v.getMontoTotal();
+                if (EstadoVenta.PAGADA.coincide(v.getEstado())) totalDia += v.getMontoTotal();
             }
             String alcance = SesionActual.esAdministrador() ? "Ventas del día" : "Mis ventas del día";
             vista.setResumenDia(alcance + ": " + ventas.size() + " venta(s) — total $" + formatear(totalDia));
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, "Error al cargar ventas del día: " + ex.getMessage());
+        }
+    }
+
+    private void mostrarComprobanteSeleccionado() {
+        int fila = vista.getTblVentasDia().getSelectedRow();
+        if (fila < 0) {
+            JOptionPane.showMessageDialog(vista, "Selecciona una venta para ver su comprobante.");
+            return;
+        }
+        int idVenta = (int) vista.getModeloVentasDia().getValueAt(fila, 0);
+        try {
+            var comprobante = servicioComprobante.obtener(idVenta);
+            java.awt.Window owner = SwingUtilities.getWindowAncestor(vista);
+            VComprobanteVenta dialogo = new VComprobanteVenta(owner, comprobante);
+            dialogo.setVisible(true);
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
+            JOptionPane.showMessageDialog(vista, ex.getMessage());
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(vista,
+                    "No se pudo reconstruir el comprobante: " + ex.getMessage());
         }
     }
 
@@ -398,7 +545,7 @@ public class ControladorVenta {
         int idVenta = (int) vista.getModeloVentasDia().getValueAt(fila, 0);
         String estado = (String) vista.getModeloVentasDia().getValueAt(fila, 5);
 
-        if (!"Pagada".equals(estado)) {
+        if (!EstadoVenta.PAGADA.coincide(estado)) {
             JOptionPane.showMessageDialog(null, "Esta venta ya está " + estado.toLowerCase());
             return;
         }
@@ -421,4 +568,5 @@ public class ControladorVenta {
             JOptionPane.showMessageDialog(null, "Error al anular: " + ex.getMessage());
         }
     }
+
 }

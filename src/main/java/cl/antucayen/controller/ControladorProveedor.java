@@ -7,9 +7,10 @@ import cl.antucayen.model.service.ServicioEquivalencia;
 import cl.antucayen.model.service.ServicioProveedor;
 import cl.antucayen.security.Autorizacion;
 import cl.antucayen.view.VBuscadorProveedores;
+import cl.antucayen.view.VAuditoriaProveedor;
 import cl.antucayen.view.VConsultaEquivalencias;
 import cl.antucayen.view.VFormularioProveedor;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -45,6 +46,7 @@ public class ControladorProveedor {
     private void iniciarEventosBuscador() {
         vistaBuscador.getBtnBuscar().addActionListener(e -> buscar());
         vistaBuscador.getBtnNuevo().addActionListener(e -> abrirNuevo());
+        vistaBuscador.getBtnHistorial().addActionListener(e -> abrirHistorial());
         vistaBuscador.getTblProveedores().addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 if (e.getClickCount() == 2) abrirEdicion();
@@ -78,6 +80,28 @@ public class ControladorProveedor {
                             p.getTelefono(), p.getCorreoElectronico()
                     });
             }
+        } catch (SQLException ex) {
+            mostrarError(ex);
+        }
+    }
+
+
+    private void abrirHistorial() {
+        int fila = vistaBuscador.getTblProveedores().getSelectedRow();
+        if (fila < 0) {
+            javax.swing.JOptionPane.showMessageDialog(
+                    vistaBuscador, "Selecciona un proveedor para consultar su historial.");
+            return;
+        }
+        int filaModelo = vistaBuscador.getTblProveedores().convertRowIndexToModel(fila);
+        int idProveedor = (int) vistaBuscador.getModeloTabla().getValueAt(filaModelo, 0);
+        String nombre = String.valueOf(vistaBuscador.getModeloTabla().getValueAt(filaModelo, 2));
+        try {
+            var auditorias = servicio.listarAuditoria(idProveedor);
+            java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(vistaBuscador);
+            new VAuditoriaProveedor(owner, nombre, auditorias).setVisible(true);
+        } catch (IllegalArgumentException | SecurityException ex) {
+            javax.swing.JOptionPane.showMessageDialog(vistaBuscador, ex.getMessage());
         } catch (SQLException ex) {
             mostrarError(ex);
         }

@@ -1,7 +1,7 @@
 package cl.antucayen.controller;
 
 import cl.antucayen.security.Autorizacion;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 import cl.antucayen.view.*;
 
 import javax.swing.JOptionPane;
@@ -48,12 +48,7 @@ public class ControladorPrincipal {
             vista.setContenido(panel, "Consulta de Equivalencias");
         }));
 
-        vista.getBtnFacturas().addActionListener(e -> ejecutarSeguro(() -> {
-            Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
-            VFacturas panel = new VFacturas();
-            new ControladorFactura(panel);
-            vista.setContenido(panel, "Facturas");
-        }));
+        vista.getBtnFacturas().addActionListener(e -> ejecutarSeguro(this::mostrarFacturas));
 
         vista.getBtnProcesarFactura().addActionListener(e -> ejecutarSeguro(this::abrirProcesarFactura));
 
@@ -80,6 +75,14 @@ public class ControladorPrincipal {
             vista.setContenido(panel, "Usuarios y Permisos");
         }));
 
+        vista.getBtnAuditoriaArchivos().addActionListener(e -> ejecutarSeguro(() -> {
+            Autorizacion.verificarAdministrador(
+                    "Solo el Administrador puede consultar la bitácora de archivos");
+            VAuditoriaArchivos panel = new VAuditoriaArchivos();
+            new ControladorAuditoriaArchivos(panel);
+            vista.setContenido(panel, "Auditoría de archivos");
+        }));
+
         vista.getBtnCerrarSesion().addActionListener(e -> cerrarSesion());
     }
 
@@ -98,7 +101,14 @@ public class ControladorPrincipal {
 
     private void abrirProcesarFactura() {
         Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
-        new ControladorFactura().abrirNuevaFactura();
+        new ControladorFactura().abrirNuevaFactura(() -> ejecutarSeguro(this::mostrarFacturas));
+    }
+
+    private void mostrarFacturas() {
+        Autorizacion.verificarAdministradorOBodeguero(Autorizacion.ACCESO_DENEGADO);
+        VFacturas panel = new VFacturas();
+        new ControladorFactura(panel);
+        vista.setContenido(panel, "Facturas");
     }
 
     private void mostrarDashboard() {

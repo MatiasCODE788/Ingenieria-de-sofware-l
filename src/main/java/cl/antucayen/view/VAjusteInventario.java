@@ -1,6 +1,6 @@
 package cl.antucayen.view;
 
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 import cl.antucayen.view.components.ComponentesSwing;
 
 import javax.swing.*;
@@ -68,7 +68,7 @@ public class VAjusteInventario extends JPanel {
         gbc.gridy = 0;
         p.add(lbl, gbc);
 
-        JLabel desc = new JLabel("Selecciona un archivo Excel (.xlsx) o CSV con columnas SKU y cantidad en la primera fila.");
+        JLabel desc = new JLabel("Selecciona Excel (.xlsx/.xls) o CSV separado por coma con columnas SKU y cantidad.");
         desc.setFont(new Font("Arial", Font.PLAIN, 13));
         desc.setForeground(new Color(107, 114, 128));
         gbc.gridy = 1;
@@ -274,6 +274,17 @@ public class VAjusteInventario extends JPanel {
     public void limpiarPreview() { modeloPreview.setRowCount(0); }
     public void agregarFilaPreview(Object[] f) { modeloPreview.addRow(f); }
 
+    /** Mantiene libre el EDT mientras se lee un XLSX/CSV y evita doble carga. */
+    public void setProcesandoArchivo(boolean procesando) {
+        btnSeleccionar.setEnabled(!procesando);
+        btnPlantilla.setEnabled(!procesando);
+        btnCargar.setEnabled(!procesando);
+        cmbModalidad.setEnabled(!procesando);
+        chkCorreccionAutorizada.setEnabled(!procesando && SesionActual.esAdministrador());
+        setCursor(Cursor.getPredefinedCursor(
+                procesando ? Cursor.WAIT_CURSOR : Cursor.DEFAULT_CURSOR));
+    }
+
     public VReporteErrores getPanelErroresEstructura() { return panelErrores; }
 
     /** Muestra para cada SKU duplicado cuántas filas lo contienen y cuáles son. */
@@ -300,5 +311,4 @@ public class VAjusteInventario extends JPanel {
     public JButton getBtnConfirmar() { return btnConfirmar; }
     public JButton getBtnCancelar() { return btnCancelar; }
     public JButton getBtnResolverDuplicados() { return btnResolverDuplicados; }
-    public JTable getTblPreview() { return tblPreview; }
 }

@@ -3,7 +3,7 @@ package cl.antucayen.model.service;
 import cl.antucayen.model.dao.UsuarioDAO;
 import cl.antucayen.model.entity.Usuario;
 import cl.antucayen.security.RolSistema;
-import cl.antucayen.util.SesionActual;
+import cl.antucayen.security.SesionActual;
 import cl.antucayen.util.VerificadorEsquema;
 
 import java.sql.SQLException;

@@ -178,7 +178,6 @@ public class VFormularioProveedor extends JDialog {
     public JButton getBtnAgregarEquiv()   { return btnAgregarEquiv; }
     public JButton getBtnEditarEquiv()    { return btnEditarEquiv; }
     public JButton getBtnEliminarEquiv()  { return btnEliminarEquiv; }
-    public JTable  getTblEquivalencias()  { return tblEquivalencias; }
     public DefaultTableModel getModeloEquiv() { return modeloEquiv; }
 
     public void mostrarError(String msg) { lblError.setText("" + msg); lblError.setVisible(true); }

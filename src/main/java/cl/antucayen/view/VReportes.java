@@ -1,9 +1,11 @@
 package cl.antucayen.view;
 
+import cl.antucayen.model.domain.EstadoFactura;
 import cl.antucayen.view.components.ComponentesSwing;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.util.List;
 
@@ -40,7 +42,12 @@ public class VReportes extends JPanel {
         filtros.add(cmbReporte);
 
         filtros.add(new JLabel("Estado factura:"));
-        cmbEstadoFactura = new JComboBox<>(new String[]{"Todos", "Pendiente", "Procesada", "Observada"});
+        cmbEstadoFactura = new JComboBox<>(new String[]{
+                "Todos",
+                EstadoFactura.PENDIENTE.valorDb(),
+                EstadoFactura.PROCESADA.valorDb(),
+                EstadoFactura.OBSERVADA.valorDb()
+        });
         filtros.add(cmbEstadoFactura);
 
         filtros.add(new JLabel("Desde:"));

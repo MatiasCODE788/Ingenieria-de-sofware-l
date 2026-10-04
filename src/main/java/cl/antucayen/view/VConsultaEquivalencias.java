@@ -74,7 +74,6 @@ public class VConsultaEquivalencias extends JPanel {
     public String  getFiltroSku()       { return txtSku.getText().trim(); }
     public JButton getBtnBuscar()       { return btnBuscar; }
     public JButton getBtnLimpiar()      { return btnLimpiar; }
-    public JTable  getTblResultados()   { return tblResultados; }
     public DefaultTableModel getModeloTabla() { return modeloTabla; }
 
     public void limpiarFiltros() {
