@@ -475,7 +475,7 @@ Tras una instalación nueva de la base de datos están disponibles estas cuentas
 |---|---|---|---|
 | `guido_admin` | `admin123` | Administrador | Dashboard |
 | `matias_bodega` | `bodega123` | Bodeguero | Productos |
-| `cajero_demo` | `cajero123` | Cajero | Punto de Venta |
+| `diego_cajero` | `cajero123` | Cajero | Punto de Venta |
 
 
 
