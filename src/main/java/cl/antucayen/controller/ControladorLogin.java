@@ -3,6 +3,7 @@ package cl.antucayen.controller;
 import cl.antucayen.model.entity.Usuario;
 import cl.antucayen.model.service.ServicioAutenticacion;
 import cl.antucayen.view.VLogin;
+import cl.antucayen.view.DialogoConexion;
 import cl.antucayen.view.VPrincipal;
 
 import java.sql.SQLException;
@@ -19,6 +20,7 @@ public class ControladorLogin {
     public ControladorLogin(VLogin vista) {
         this.vista = vista;
         vista.getBtnIngresar().addActionListener(e -> iniciarSesion());
+        vista.getBtnConfigurarConexion().addActionListener(e -> DialogoConexion.mostrar(vista));
         vista.setOnTemaCambiado(this::recargarLoginConTemaActual);
     }
 
@@ -42,6 +44,12 @@ public class ControladorLogin {
             vista.mostrarError(ex.getMessage());
         } catch (SecurityException ex) {
             vista.mostrarError("Usuario o contraseña incorrectos");
+        } catch (IllegalStateException ex) {
+            LOGGER.log(Level.WARNING, "Configuración de base de datos pendiente", ex);
+            javax.swing.JOptionPane.showMessageDialog(vista,
+                    "Configura primero la conexión a la base de datos desde el botón "
+                    + "'Configurar conexión a la base de datos (Wi-Fi/LAN)'.",
+                    "Falta configurar la conexión", javax.swing.JOptionPane.WARNING_MESSAGE);
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error de conexión durante el inicio de sesión", ex);
             vista.mostrarError("Error de conexión: " + ex.getMessage());

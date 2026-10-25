@@ -51,14 +51,23 @@ public class ServicioVenta {
      * filas ni incrementa el identificador de venta.
      */
     public int registrar(List<PagoVenta> pagos, List<ItemVenta> items) throws SQLException {
+        return registrar(pagos, items, java.time.LocalDateTime.now());
+    }
+
+    public int registrar(List<PagoVenta> pagos, List<ItemVenta> items,
+                         java.time.LocalDateTime fechaInicio) throws SQLException {
         Autorizacion.verificarPuntoVenta();
+        if (fechaInicio == null || fechaInicio.isAfter(java.time.LocalDateTime.now())) {
+            throw new IllegalArgumentException("Fecha de inicio de venta inválida");
+        }
         return DBConexion.getInstancia().ejecutarEnTransaccion(
-                () -> registrarNuevaVentaTransaccional(pagos, items));
+                () -> registrarNuevaVentaTransaccional(pagos, items, fechaInicio));
     }
 
     private int registrarNuevaVentaTransaccional(
             List<PagoVenta> pagos,
-            List<ItemVenta> items) throws SQLException {
+            List<ItemVenta> items,
+            java.time.LocalDateTime fechaInicio) throws SQLException {
 
         if (items == null || items.isEmpty()) {
             throw new IllegalArgumentException("El carrito está vacío");
@@ -88,6 +97,7 @@ public class ServicioVenta {
                 : "Mixto";
 
         Venta venta = new Venta();
+        venta.setFechaInicio(fechaInicio);
         venta.setIdUsuario(usuarioActualId());
         venta.setMedioPago(medioPagoVenta);
         venta.setMontoTotal(montoTotal);
@@ -201,6 +211,11 @@ public class ServicioVenta {
         int montoTotal = 0;
         for (ItemVenta item : items) {
             Producto producto = productosBloqueados.get(item.getSku());
+            if (item.getPrecioUnitarioVenta() != producto.getPrecioVenta()) {
+                throw new IllegalStateException(
+                        "El precio de '" + producto.getNombre() + "' cambió durante la venta. "
+                        + "Limpia el carrito y vuelve a agregar los productos para confirmar el nuevo total.");
+            }
             try {
                 int subtotal = Math.multiplyExact(
                         producto.getPrecioVenta(), item.getCantidad());

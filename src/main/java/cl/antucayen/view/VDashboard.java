@@ -47,7 +47,7 @@ public class VDashboard extends JPanel {
     private void initComponents() {
         setLayout(new BorderLayout(0, 16));
         setBackground(FONDO);
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
         // ---------- Título ----------
         JPanel panelTitulo = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -113,7 +113,7 @@ public class VDashboard extends JPanel {
         panelContenido.add(Box.createRigidArea(new Dimension(0, 16)));
         panelContenido.add(panelTop5);
 
-        add(panelTitulo,   BorderLayout.NORTH);
+        // El título y subtítulo se presentan en la cabecera común de VPrincipal.
         add(panelContenido, BorderLayout.CENTER);
     }
 

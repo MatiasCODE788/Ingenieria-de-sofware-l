@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.EstiloAntucayen;
+
 import cl.antucayen.model.entity.ErrorImportacion;
 import cl.antucayen.model.entity.Factura;
 import cl.antucayen.model.entity.ItemFactura;
@@ -30,6 +32,7 @@ public class VProcesamientoFactura extends JDialog {
     public VProcesamientoFactura(JFrame parent) {
         super(parent, "Procesamiento de Factura", true);
         initComponents();
+        EstiloAntucayen.aplicar(this);
     }
 
     private void initComponents() {

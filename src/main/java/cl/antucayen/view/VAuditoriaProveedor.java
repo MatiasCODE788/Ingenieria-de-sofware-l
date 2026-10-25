@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.EstiloAntucayen;
+
 import cl.antucayen.model.entity.AuditoriaProveedor;
 import cl.antucayen.view.components.ComponentesSwing;
 
@@ -29,6 +31,7 @@ public class VAuditoriaProveedor extends JDialog {
         setSize(980, 520);
         setLocationRelativeTo(owner);
         construir(nombreProveedor, auditorias);
+        EstiloAntucayen.aplicar(this);
     }
 
     private void construir(String nombreProveedor, List<AuditoriaProveedor> auditorias) {

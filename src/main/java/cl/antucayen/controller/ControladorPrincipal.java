@@ -1,6 +1,7 @@
 package cl.antucayen.controller;
 
 import cl.antucayen.security.Autorizacion;
+import cl.antucayen.security.ControlInactividadSesion;
 import cl.antucayen.security.SesionActual;
 import cl.antucayen.view.*;
 
@@ -9,6 +10,7 @@ import javax.swing.JOptionPane;
 public class ControladorPrincipal {
 
     private final VPrincipal vista;
+    private final ControlInactividadSesion controlInactividad;
 
     // Se cachea para que el carrito y los pagos en curso no se pierdan al cambiar de módulo y volver.
     private VVentas panelVentas;
@@ -16,6 +18,12 @@ public class ControladorPrincipal {
 
     public ControladorPrincipal(VPrincipal vista) {
         this.vista = vista;
+        controlInactividad = new ControlInactividadSesion(vista, this::expirarSesion);
+        vista.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override public void windowClosed(java.awt.event.WindowEvent e) {
+                controlInactividad.detener();
+            }
+        });
         iniciarEventos();
         if (SesionActual.esAdministrador()) {
             mostrarDashboard();
@@ -26,6 +34,7 @@ public class ControladorPrincipal {
         } else {
             throw new SecurityException("Perfil de usuario no autorizado");
         }
+        controlInactividad.iniciar();
     }
 
     private void iniciarEventos() {
@@ -148,16 +157,43 @@ public class ControladorPrincipal {
         }
     }
 
+    private void expirarSesion() {
+        volverAlLogin(true);
+    }
+
+    private void volverAlLogin(boolean porInactividad) {
+        controlInactividad.detener();
+        SesionActual.cerrar();
+        // Los diálogos modales o auxiliares también pueden contener datos
+        // de la sesión anterior: cerrarlos antes de reabrir el acceso.
+        cerrarVentanasDeSesion();
+        vista.dispose();
+        VLogin login = new VLogin();
+        new ControladorLogin(login);
+        login.setVisible(true);
+        if (porInactividad) {
+            JOptionPane.showMessageDialog(login,
+                    "La sesión se cerró después de "
+                            + ControlInactividadSesion.minutosConfigurados()
+                            + " minutos de inactividad. Inicia sesión nuevamente.",
+                    "Sesión expirada", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void cerrarVentanasDeSesion() {
+        // También cierra ventanas sin owner (p. ej. algunos diálogos de factura).
+        // El nuevo login se crea DESPUÉS de liberar todas las vistas anteriores.
+        for (java.awt.Window ventana : java.awt.Window.getWindows()) {
+            if (ventana != vista && ventana.isDisplayable()) ventana.dispose();
+        }
+    }
+
     private void cerrarSesion() {
         int confirm = JOptionPane.showConfirmDialog(
                 vista, "¿Estás seguro que deseas cerrar sesión?",
                 "Cerrar sesión", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            SesionActual.cerrar();
-            vista.dispose();
-            VLogin login = new VLogin();
-            new ControladorLogin(login);
-            login.setVisible(true);
+            volverAlLogin(false);
         }
     }
 }
