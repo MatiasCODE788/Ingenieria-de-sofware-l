@@ -1,251 +1,263 @@
 package cl.antucayen.view;
 
+import cl.antucayen.security.ControlInactividadSesion;
 import cl.antucayen.util.GestorTemas;
 import cl.antucayen.util.Tema;
+import cl.antucayen.view.components.EstiloAntucayen;
+import cl.antucayen.view.components.IconoNavegacion;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.*;
 
+/** Acceso con composición ilustración + formulario, manteniendo el flujo de autenticación. */
 public class VLogin extends JFrame {
-
-    private JTextField     txtUsername;
+    private JTextField txtUsername;
     private JPasswordField txtPassword;
-    private JButton        btnIngresar;
-    private JLabel         lblError;
-    private Runnable        onTemaCambiado;
-
-    private Tema tema = GestorTemas.getInstancia().getTema();
+    private JButton btnIngresar;
+    private JButton btnConfigurarConexion;
+    private JLabel lblError;
+    private Runnable onTemaCambiado;
+    private final Tema tema = GestorTemas.getInstancia().getTema();
 
     public VLogin() {
+        EstiloAntucayen.iniciar();
         initComponents();
     }
 
     private void initComponents() {
-        setTitle("Minimarket Antucayen — Iniciar Sesión");
+        setTitle("Sistema Antucayen — Inicio de sesión");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setMinimumSize(new Dimension(720, 540));
+        setSize(1100, 700);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(600, 500));
         setLocationRelativeTo(null);
-        setResizable(true);
+        setLayout(new BorderLayout());
 
-        // Panel exterior con gradiente según el tema
-        JPanel panelExterior = new JPanel(new GridBagLayout()) {
-            @Override
-            protected void paintComponent(Graphics g) {
+        JPanel barra = new JPanel(new FlowLayout(FlowLayout.LEFT, 13, 13));
+        barra.setPreferredSize(new Dimension(0, 54));
+        barra.setBackground(EstiloAntucayen.cabecera());
+        barra.setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 0));
+        barra.add(new JLabel(new IconoNavegacion("cart", Color.WHITE, 21)));
+        JLabel encabezado = new JLabel("Sistema Antucayen");
+        encabezado.setFont(new Font("Dialog", Font.BOLD, 15));
+        encabezado.setForeground(Color.WHITE);
+        barra.add(encabezado);
+        add(barra, BorderLayout.NORTH);
+
+        JPanel fondo = new JPanel(new GridBagLayout()) {
+            @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                GradientPaint gp = new GradientPaint(
-                        0, 0,                   tema.gradienteInicio,
-                        getWidth(), getHeight(), tema.gradienteFin
-                );
-                g2.setPaint(gp);
-                g2.fillRect(0, 0, getWidth(), getHeight());
+                Graphics2D p = (Graphics2D)g.create();
+                Color inicio = tema == Tema.AZUL_CORPORATIVO ? new Color(248, 250, 254) : tema.areaFondo;
+                p.setPaint(new GradientPaint(0, 0, inicio, getWidth(), getHeight(),
+                        new Color(229, 237, 250)));
+                p.fillRect(0, 0, getWidth(), getHeight());
+                p.dispose();
             }
         };
-        panelExterior.setOpaque(true);
-        panelExterior.setLayout(new BorderLayout());
+        JPanel tarjeta = new JPanel(new GridLayout(1, 2));
+        tarjeta.setBackground(Color.WHITE);
+        tarjeta.setPreferredSize(new Dimension(860, 465));
+        tarjeta.setBorder(BorderFactory.createLineBorder(EstiloAntucayen.BORDER));
+        tarjeta.add(new IlustracionTienda());
 
-        JPanel centro = new JPanel(new GridBagLayout());
-        centro.setOpaque(false);
+        JPanel formulario = new JPanel(new GridBagLayout());
+        formulario.setBackground(Color.WHITE);
+        formulario.setBorder(BorderFactory.createEmptyBorder(25, 32, 20, 32));
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(0, 0, 0, 0);
 
-        // Tarjeta blanca centrada
-        JPanel card = new JPanel(new GridBagLayout());
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(203, 213, 225), 1),
-                BorderFactory.createEmptyBorder(36, 40, 36, 40)
-        ));
-        card.setPreferredSize(new Dimension(420, 480));
+        c.gridy = 0;
+        JLabel titulo = new JLabel("Sistema Antucayen");
+        titulo.setFont(new Font("Dialog", Font.BOLD, 24));
+        titulo.setForeground(EstiloAntucayen.TEXT);
+        formulario.add(titulo, c);
+        c.gridy++;
+        c.insets = new Insets(4, 0, 23, 0);
+        JLabel sub = new JLabel("Plataforma de gestión para Minimarket Antucayen.");
+        sub.setFont(new Font("Dialog", Font.PLAIN, 11));
+        sub.setForeground(EstiloAntucayen.MUTED);
+        formulario.add(sub, c);
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill      = GridBagConstraints.HORIZONTAL;
-        gbc.weightx   = 1.0;
-        gbc.gridwidth = 1;
-        gbc.insets    = new Insets(5, 0, 5, 0);
-
-        // Logo + nombre
-        JPanel panelLogo = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        panelLogo.setBackground(Color.WHITE);
-
-        JPanel iconBox = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(tema.colorAcento);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Arial", Font.PLAIN, 18));
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString("A", (getWidth() - fm.stringWidth("A")) / 2,
-                        (getHeight() + fm.getAscent()) / 2 - 2);
-            }
-        };
-        iconBox.setPreferredSize(new Dimension(40, 40));
-        iconBox.setOpaque(false);
-
-        JPanel panelNombreLogo = new JPanel();
-        panelNombreLogo.setBackground(Color.WHITE);
-        panelNombreLogo.setLayout(new BoxLayout(panelNombreLogo, BoxLayout.Y_AXIS));
-        JLabel lblNombre = new JLabel("Antucayen");
-        lblNombre.setFont(new Font("Arial", Font.BOLD, 18));
-        lblNombre.setForeground(tema.colorPrimario);
-        JLabel lblSistema = new JLabel("Sistema de gestión");
-        lblSistema.setFont(new Font("Arial", Font.PLAIN, 11));
-        lblSistema.setForeground(new Color(107, 114, 128));
-        panelNombreLogo.add(lblNombre);
-        panelNombreLogo.add(lblSistema);
-
-        panelLogo.add(iconBox);
-        panelLogo.add(Box.createHorizontalStrut(10));
-        panelLogo.add(panelNombreLogo);
-
-        gbc.gridx = 0; gbc.gridy = 0;
-        card.add(panelLogo, gbc);
-
-        // Subtítulo
-        JLabel lblSubtitulo = new JLabel("Gestión de inventario y facturas del minimarket");
-        lblSubtitulo.setFont(new Font("Arial", Font.PLAIN, 12));
-        lblSubtitulo.setForeground(new Color(107, 114, 128));
-        gbc.gridy = 1;
-        gbc.insets = new Insets(2, 0, 16, 0);
-        card.add(lblSubtitulo, gbc);
-
-        // Label USUARIO
-        JLabel lblUser = new JLabel("USUARIO");
-        lblUser.setFont(new Font("Arial", Font.BOLD, 11));
-        lblUser.setForeground(new Color(107, 114, 128));
-        gbc.gridy = 2;
-        gbc.insets = new Insets(5, 0, 3, 0);
-        card.add(lblUser, gbc);
-
-        // Campo usuario
+        c.gridy++; c.insets = new Insets(0, 0, 5, 0);
+        formulario.add(etiqueta("Usuario"), c);
         txtUsername = new JTextField();
-        txtUsername.setFont(new Font("Arial", Font.PLAIN, 14));
-        txtUsername.setForeground(new Color(30, 41, 59));
-        txtUsername.setBackground(new Color(248, 250, 252));
-        txtUsername.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(203, 213, 225), 1),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)
-        ));
-        txtUsername.setPreferredSize(new Dimension(0, 42));
-        gbc.gridy = 3;
-        gbc.insets = new Insets(0, 0, 4, 0);
-        card.add(txtUsername, gbc);
+        txtUsername.setPreferredSize(new Dimension(0, 40));
+        txtUsername.putClientProperty("JTextField.placeholderText", "Ingresa tu usuario");
+        c.gridy++; c.insets = new Insets(0, 0, 15, 0);
+        formulario.add(txtUsername, c);
 
-        // Label CONTRASEÑA
-        JLabel lblPass = new JLabel("CONTRASEÑA");
-        lblPass.setFont(new Font("Arial", Font.BOLD, 11));
-        lblPass.setForeground(new Color(107, 114, 128));
-        gbc.gridy = 4;
-        gbc.insets = new Insets(10, 0, 3, 0);
-        card.add(lblPass, gbc);
-
-        // Campo contraseña
+        c.gridy++; c.insets = new Insets(0, 0, 5, 0);
+        formulario.add(etiqueta("Contraseña"), c);
         txtPassword = new JPasswordField();
-        txtPassword.setFont(new Font("Arial", Font.PLAIN, 14));
-        txtPassword.setForeground(new Color(30, 41, 59));
-        txtPassword.setBackground(new Color(248, 250, 252));
-        txtPassword.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(203, 213, 225), 1),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)
-        ));
-        txtPassword.setPreferredSize(new Dimension(0, 42));
-        gbc.gridy = 5;
-        gbc.insets = new Insets(0, 0, 4, 0);
-        card.add(txtPassword, gbc);
-
-        // Botón ingresar
-        btnIngresar = new JButton("Ingresar al sistema");
-        btnIngresar.setFont(new Font("Arial", Font.BOLD, 14));
-        btnIngresar.setBackground(tema.colorPrimario);
-        btnIngresar.setForeground(Color.WHITE);
-        btnIngresar.setFocusPainted(false);
-        btnIngresar.setBorderPainted(false);
-        btnIngresar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnIngresar.setPreferredSize(new Dimension(0, 44));
-        btnIngresar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                btnIngresar.setBackground(tema.colorPrimarioHover);
-            }
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                btnIngresar.setBackground(tema.colorPrimario);
-            }
+        txtPassword.setPreferredSize(new Dimension(0, 40));
+        txtPassword.putClientProperty("JTextField.placeholderText", "Ingresa tu contraseña");
+        char ecoOriginal = txtPassword.getEchoChar();
+        JButton mostrar = new JButton("Mostrar contraseña");
+        mostrar.setFont(new Font("Dialog", Font.PLAIN, 10));
+        mostrar.setForeground(EstiloAntucayen.primario());
+        mostrar.setBorderPainted(false);
+        mostrar.setContentAreaFilled(false);
+        mostrar.setFocusPainted(false);
+        mostrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        mostrar.addActionListener(e -> {
+            boolean oculto = txtPassword.getEchoChar() == ecoOriginal;
+            txtPassword.setEchoChar(oculto ? (char)0 : ecoOriginal);
+            mostrar.setText(oculto ? "Ocultar contraseña" : "Mostrar contraseña");
         });
-        gbc.gridy = 6;
-        gbc.insets = new Insets(16, 0, 6, 0);
-        card.add(btnIngresar, gbc);
+        JPanel password = new JPanel(new BorderLayout());
+        password.setOpaque(false);
+        password.add(txtPassword, BorderLayout.CENTER);
+        c.gridy++; c.insets = new Insets(0, 0, 2, 0);
+        formulario.add(password, c);
+        c.gridy++; c.insets = new Insets(0, 0, 14, 0);
+        formulario.add(mostrar, c);
 
-        // Label error
-        lblError = new JLabel("", SwingConstants.LEFT);
-        lblError.setFont(new Font("Arial", Font.PLAIN, 12));
+        btnIngresar = new JButton("Ingresar");
+        btnIngresar.setFont(new Font("Dialog", Font.BOLD, 13));
+        btnIngresar.setBackground(EstiloAntucayen.primario());
+        btnIngresar.setForeground(Color.WHITE);
+        btnIngresar.setPreferredSize(new Dimension(0, 42));
+        btnIngresar.setFocusPainted(false);
+        btnIngresar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        c.gridy++; c.insets = new Insets(0, 0, 5, 0);
+        formulario.add(btnIngresar, c);
+
+        btnConfigurarConexion = new JButton("Configurar conexión a la base de datos (Wi-Fi/LAN)");
+        btnConfigurarConexion.setFont(new Font("Dialog", Font.PLAIN, 11));
+        btnConfigurarConexion.setForeground(EstiloAntucayen.primario());
+        btnConfigurarConexion.setContentAreaFilled(false);
+        btnConfigurarConexion.setFocusPainted(false);
+        btnConfigurarConexion.setBorderPainted(false);
+        btnConfigurarConexion.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        c.gridy++; c.insets = new Insets(2, 0, 4, 0);
+        formulario.add(btnConfigurarConexion, c);
+
+        lblError = new JLabel(" ");
         lblError.setForeground(new Color(185, 28, 28));
+        lblError.setFont(new Font("Dialog", Font.PLAIN, 11));
         lblError.setVisible(false);
-        gbc.gridy = 7;
-        gbc.insets = new Insets(4, 0, 0, 0);
-        card.add(lblError, gbc);
+        c.gridy++; c.insets = new Insets(3, 0, 7, 0);
+        formulario.add(lblError, c);
 
-        // Nota sesión
-        JLabel lblNota = new JLabel("La sesión expira tras 30 min de inactividad.");
-        lblNota.setFont(new Font("Arial", Font.PLAIN, 11));
-        lblNota.setForeground(new Color(148, 163, 184));
-        gbc.gridy = 8;
-        gbc.insets = new Insets(8, 0, 0, 0);
-        card.add(lblNota, gbc);
+        JPanel nota = new JPanel(new FlowLayout(FlowLayout.LEFT, 7, 4));
+        nota.setBackground(EstiloAntucayen.BACKGROUND);
+        JLabel aviso = new JLabel("La sesión expira tras " +
+                ControlInactividadSesion.minutosConfigurados() + " min de inactividad.");
+        aviso.setForeground(EstiloAntucayen.MUTED);
+        aviso.setFont(new Font("Dialog", Font.PLAIN, 10));
+        nota.add(new JLabel(new IconoNavegacion("settings", EstiloAntucayen.MUTED, 15)));
+        nota.add(aviso);
+        c.gridy++; c.insets = new Insets(2, 0, 0, 0);
+        formulario.add(nota, c);
 
-        centro.add(card);
-        panelExterior.add(centro, BorderLayout.CENTER);
-        panelExterior.add(crearSelectorDeTemas(), BorderLayout.SOUTH);
-
-        add(panelExterior);
-
-        // Enter activa el botón de ingresar, sin importar en qué campo esté el foco
+        tarjeta.add(formulario);
+        fondo.add(tarjeta);
+        add(fondo, BorderLayout.CENTER);
+        add(crearSelectorDeTemas(), BorderLayout.SOUTH);
         getRootPane().setDefaultButton(btnIngresar);
     }
 
-    /** Franja inferior con 5 círculos de color para elegir el tema del sistema. */
+    private JLabel etiqueta(String texto) {
+        JLabel lbl = new JLabel(texto);
+        lbl.setFont(new Font("Dialog", Font.BOLD, 12));
+        lbl.setForeground(EstiloAntucayen.TEXT);
+        return lbl;
+    }
+
     private JPanel crearSelectorDeTemas() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 14));
-        panel.setOpaque(false);
-
-        JLabel lbl = new JLabel("Tema:  ");
-        lbl.setForeground(Color.WHITE);
-        lbl.setFont(new Font("Arial", Font.PLAIN, 12));
-        panel.add(lbl);
-
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 9, 7));
+        panel.setBackground(new Color(236, 243, 252));
+        JLabel label = new JLabel("Tema visual:");
+        label.setForeground(EstiloAntucayen.MUTED);
+        panel.add(label);
         for (Tema opcion : Tema.values()) {
             JButton swatch = new JButton();
             swatch.setToolTipText(opcion.getNombre());
-            swatch.setPreferredSize(new Dimension(24, 24));
+            swatch.setPreferredSize(new Dimension(23, 23));
             swatch.setBackground(opcion.colorPrimario);
             swatch.setBorder(BorderFactory.createLineBorder(
-                    opcion == tema ? Color.WHITE : new Color(255, 255, 255, 80),
-                    opcion == tema ? 3 : 1));
+                    opcion == tema ? EstiloAntucayen.TEXT : EstiloAntucayen.BORDER,
+                    opcion == tema ? 2 : 1));
             swatch.setFocusPainted(false);
-            swatch.setCursor(new Cursor(Cursor.HAND_CURSOR));
             swatch.addActionListener(e -> {
                 GestorTemas.getInstancia().setTema(opcion);
-                if (onTemaCambiado != null) {
-                    onTemaCambiado.run();
-                }
+                if (onTemaCambiado != null) onTemaCambiado.run();
             });
             panel.add(swatch);
         }
         return panel;
     }
 
-    public String  getUsername()    { return txtUsername.getText().trim(); }
-    public String  getPassword()    { return new String(txtPassword.getPassword()); }
+    private static final class IlustracionTienda extends JPanel {
+        IlustracionTienda() { setBackground(new Color(232, 240, 252)); }
+        @Override protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D p = (Graphics2D)g.create();
+            p.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            p.scale(getWidth() / 420.0, getHeight() / 465.0);
+            p.setPaint(new GradientPaint(0, 0, new Color(248, 251, 255), 0, 465, new Color(209, 226, 248)));
+            p.fillRect(0, 0, 420, 465);
+            p.setColor(new Color(207, 222, 240));
+            p.fill(new Ellipse2D.Double(35, 85, 135, 42));
+            p.fill(new Ellipse2D.Double(260, 60, 110, 38));
+            p.setColor(new Color(194, 211, 233));
+            p.fillRect(0, 385, 420, 80);
+            p.setColor(new Color(176, 200, 229));
+            p.fillRoundRect(63, 146, 295, 250, 8, 8);
+            p.setColor(new Color(248, 251, 255));
+            p.fillRoundRect(76, 135, 270, 241, 4, 4);
+            p.setColor(new Color(29, 92, 186));
+            p.fillRect(76, 169, 270, 8);
+            p.setColor(new Color(219, 230, 247));
+            p.fillRoundRect(123, 153, 181, 54, 6, 6);
+            p.setColor(new Color(19, 82, 178));
+            p.setFont(new Font("Dialog", Font.BOLD, 21));
+            p.drawString("MINIMARKET", 145, 176);
+            p.setFont(new Font("Dialog", Font.BOLD, 18));
+            p.drawString("ANTUCAYEN", 145, 197);
+            p.draw(new Line2D.Double(123, 207, 306, 207));
+            // Toldo de lona azul y blanca.
+            p.setColor(new Color(12, 73, 169));
+            p.fill(new Polygon(new int[]{69, 353, 370, 55}, new int[]{214, 214, 258, 258}, 4));
+            for (int i=0; i<6; i++) {
+                p.setColor(i%2 == 0 ? new Color(248, 252, 255) : new Color(55, 122, 217));
+                p.fill(new Polygon(new int[]{73+i*47, 118+i*47, 120+i*47, 70+i*47},
+                        new int[]{217, 217, 252, 252}, 4));
+            }
+            p.setColor(new Color(22, 70, 140));
+            p.fillRect(76, 258, 270, 7);
+            // Vidrieras y acceso, sin recursos externos ni fuentes de iconos.
+            p.setColor(new Color(42, 106, 185));
+            p.fillRect(95, 273, 120, 103);
+            p.fillRect(230, 273, 100, 103);
+            p.setColor(new Color(173, 212, 242));
+            p.fillRect(102, 280, 106, 89);
+            p.fillRect(237, 280, 86, 89);
+            p.setColor(new Color(42, 106, 185));
+            p.setStroke(new BasicStroke(4f));
+            p.drawLine(155, 280, 155, 367); p.drawLine(102, 320, 208, 320);
+            p.drawLine(280, 280, 280, 369);
+            p.setColor(new Color(244, 249, 255));
+            for (int i=0;i<4;i++) {
+                p.fillRoundRect(108 + (i%2)*50, 288 + (i/2)*41, 28, 28, 4, 4);
+            }
+            // Carrito de compra ilustrado a un lado.
+            p.setColor(new Color(41, 107, 181));
+            p.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            p.drawLine(31, 349, 44, 349); p.drawLine(44, 349, 52, 376);
+            p.drawLine(52, 376, 79, 376); p.drawLine(49, 353, 84, 353); p.drawLine(84, 353, 80, 369);
+            p.fillOval(54, 381, 7, 7); p.fillOval(76, 381, 7, 7);
+            p.dispose();
+        }
+    }
+
+    public String getUsername() { return txtUsername.getText().trim(); }
+    public String getPassword() { return new String(txtPassword.getPassword()); }
     public JButton getBtnIngresar() { return btnIngresar; }
-
-    public void setOnTemaCambiado(Runnable onTemaCambiado) {
-        this.onTemaCambiado = onTemaCambiado;
-    }
-
-    public void mostrarError(String msg) {
-        lblError.setText(msg);
-        lblError.setVisible(true);
-    }
+    public JButton getBtnConfigurarConexion() { return btnConfigurarConexion; }
+    public void setOnTemaCambiado(Runnable onTemaCambiado) { this.onTemaCambiado = onTemaCambiado; }
+    public void mostrarError(String msg) { lblError.setText(msg); lblError.setVisible(true); }
 }

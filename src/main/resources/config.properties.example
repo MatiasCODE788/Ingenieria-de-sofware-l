@@ -1,10 +1,12 @@
-# Copia este archivo como config.properties en esta misma carpeta.
-# También puedes omitirlo y usar las variables de entorno ANTUCAYEN_DB_*.
-
-db.host=127.0.0.1
+# Solo PLANTILLA. No se incluye un archivo config.properties con credenciales en el JAR.
+# La opción "Configurar conexión" en el inicio de sesión guarda la configuración
+# específica para el PC en ~/.antucayen/config.properties.
+# Usar UNA IP fija/reservada para el computador administrador, NO la del cajero.
+# EJEMPLO: reemplazar 192.168.100.10 por la IP real del servidor.
+db.host=192.168.100.10
 db.port=3306
 db.nombre=minimarket
 db.usuario=antucayen_app
-db.contrasena=CAMBIAR_ESTA_CONTRASENA
-# true solo si tu servidor MariaDB está configurado para SSL/TLS.
+db.contrasena=CAMBIAR_CONTRASENA
+# Configurar TLS en el servidor y clientes antes de activar.
 db.ssl=false

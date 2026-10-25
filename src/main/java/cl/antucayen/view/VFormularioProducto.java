@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.EstiloAntucayen;
+
 import cl.antucayen.model.domain.EstadoProducto;
 import cl.antucayen.model.entity.Proveedor;
 
@@ -32,6 +34,7 @@ public class VFormularioProducto extends JDialog {
         super(parent, modoEdicion ? "Editar Producto" : "Nuevo Producto", true);
         this.modoEdicion = modoEdicion;
         initComponents();
+        EstiloAntucayen.aplicar(this);
     }
 
     private void initComponents() {

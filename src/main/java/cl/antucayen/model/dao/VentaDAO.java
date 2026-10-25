@@ -23,17 +23,18 @@ public class VentaDAO {
     public int insertarPagada(Venta v) throws SQLException {
         String sql = """
                 INSERT INTO venta
-                (fecha_confirmacion, id_usuario, medio_pago, monto_total,
-                 monto_recibido, vuelto, estado)
-                VALUES (CURRENT_TIMESTAMP,?,?,?,?,?,'Pagada')
+                (fecha_inicio, fecha_confirmacion, id_usuario, medio_pago,
+                 monto_total, monto_recibido, vuelto, estado)
+                VALUES (?,CURRENT_TIMESTAMP,?,?,?,?,?,'Pagada')
                 """;
         try (PreparedStatement ps = getConexion().prepareStatement(
                 sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, v.getIdUsuario());
-            ps.setString(2, v.getMedioPago());
-            ps.setInt(3, v.getMontoTotal());
-            ps.setInt(4, v.getMontoRecibido());
-            ps.setInt(5, v.getVuelto());
+            ps.setTimestamp(1, Timestamp.valueOf(v.getFechaInicio()));
+            ps.setInt(2, v.getIdUsuario());
+            ps.setString(3, v.getMedioPago());
+            ps.setInt(4, v.getMontoTotal());
+            ps.setInt(5, v.getMontoRecibido());
+            ps.setInt(6, v.getVuelto());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) return keys.getInt(1);

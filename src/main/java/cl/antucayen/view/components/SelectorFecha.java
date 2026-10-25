@@ -40,6 +40,47 @@ public final class SelectorFecha {
         dialogo.setVisible(true);
     }
 
+    /** Campo de fecha con un botón compacto e icono dibujado en Swing.
+     * Mantiene el JTextField original y su formato para no cambiar el contrato con controladores.
+     */
+    public static JPanel crearCampoConCalendario(JTextField campo, DateTimeFormatter formatoCampo) {
+        JPanel contenedor = new JPanel(new BorderLayout(3, 0));
+        contenedor.setOpaque(false);
+        JButton calendario = crearBotonCalendario();
+        calendario.addActionListener(e -> mostrar(contenedor, campo, formatoCampo));
+        contenedor.add(campo, BorderLayout.CENTER);
+        contenedor.add(calendario, BorderLayout.EAST);
+        return contenedor;
+    }
+
+    private static JButton crearBotonCalendario() {
+        JButton boton = new JButton(new Icon() {
+            @Override public int getIconWidth() { return 17; }
+            @Override public int getIconHeight() { return 17; }
+            @Override public void paintIcon(Component component, Graphics graphics, int x, int y) {
+                Graphics2D g = (Graphics2D) graphics.create();
+                try {
+                    g.setColor(component.isEnabled() ? new Color(55, 65, 81) : Color.GRAY);
+                    g.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g.drawRoundRect(x + 2, y + 3, 13, 12, 2, 2);
+                    g.drawLine(x + 2, y + 7, x + 15, y + 7);
+                    g.drawLine(x + 6, y + 1, x + 6, y + 5);
+                    g.drawLine(x + 11, y + 1, x + 11, y + 5);
+                    g.fillRect(x + 5, y + 9, 2, 2);
+                    g.fillRect(x + 9, y + 9, 2, 2);
+                    g.fillRect(x + 5, y + 12, 2, 2);
+                } finally { g.dispose(); }
+            }
+        });
+        boton.setToolTipText("Abrir calendario para seleccionar fecha");
+        boton.getAccessibleContext().setAccessibleName("Seleccionar fecha desde calendario");
+        boton.setFocusable(true);
+        boton.setFocusPainted(true);
+        boton.setMargin(new Insets(3, 5, 3, 5));
+        boton.setPreferredSize(new Dimension(31, 30));
+        return boton;
+    }
+
     private interface SeleccionFecha {
         void aceptar(LocalDate fecha);
     }

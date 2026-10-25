@@ -5,6 +5,8 @@ dist/
 
 # Runtime secrets
 src/main/resources/config.properties
+config.properties
+*.secret.properties
 
 # IntelliJ IDEA
 .idea/

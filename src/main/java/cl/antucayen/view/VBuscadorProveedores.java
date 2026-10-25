@@ -1,6 +1,7 @@
 package cl.antucayen.view;
 
 import cl.antucayen.view.components.ComponentesSwing;
+import cl.antucayen.view.components.EstiloAntucayen;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -56,9 +57,43 @@ public class VBuscadorProveedores extends JPanel {
         lblAyuda.setFont(new Font("Arial", Font.ITALIC, 12));
         lblAyuda.setForeground(new Color(107, 114, 128));
 
+        JPanel lista = new JPanel(new BorderLayout(0, 8));
+        lista.setOpaque(false);
+        lista.add(scroll, BorderLayout.CENTER);
+        lista.add(lblAyuda, BorderLayout.SOUTH);
+        JPanel equivalencias = new JPanel(new BorderLayout(0, 16));
+        equivalencias.setBackground(Color.WHITE);
+        equivalencias.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(EstiloAntucayen.BORDER),
+                BorderFactory.createEmptyBorder(18, 18, 18, 18)));
+        JLabel titulo = new JLabel("Equivalencias de productos");
+        titulo.setFont(new Font("Dialog", Font.BOLD, 15));
+        titulo.setForeground(EstiloAntucayen.TEXT);
+        equivalencias.add(titulo, BorderLayout.NORTH);
+        JTextArea descripcion = new JTextArea("Consulta y administra la relación entre los códigos internos "
+                + "de cada proveedor y el SKU del inventario. Selecciona un proveedor en la lista "
+                + "o abre el módulo de equivalencias para registrar, modificar y consultar sus códigos.");
+        descripcion.setFont(new Font("Dialog", Font.PLAIN, 13));
+        descripcion.setForeground(EstiloAntucayen.MUTED);
+        descripcion.setWrapStyleWord(true);
+        descripcion.setLineWrap(true);
+        descripcion.setEditable(false);
+        descripcion.setBackground(Color.WHITE);
+        equivalencias.add(descripcion, BorderLayout.CENTER);
+        JButton abrir = ComponentesSwing.crearBoton("Abrir equivalencias", EstiloAntucayen.primario());
+        abrir.addActionListener(e -> {
+            Window ventana = SwingUtilities.getWindowAncestor(this);
+            if (ventana instanceof VPrincipal principal && principal.getBtnEquivalencias().isVisible())
+                principal.getBtnEquivalencias().doClick();
+        });
+        equivalencias.add(abrir, BorderLayout.SOUTH);
+        JSplitPane divisor = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, lista, equivalencias);
+        divisor.setResizeWeight(0.62);
+        divisor.setDividerSize(12);
+        divisor.setBorder(null);
+        SwingUtilities.invokeLater(() -> divisor.setDividerLocation(0.62));
         add(barraTop, BorderLayout.NORTH);
-        add(scroll,   BorderLayout.CENTER);
-        add(lblAyuda, BorderLayout.SOUTH);
+        add(divisor, BorderLayout.CENTER);
     }
 
     public String  getTextoBusqueda()  { return txtBusqueda.getText().trim(); }

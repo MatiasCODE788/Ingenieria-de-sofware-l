@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.EstiloAntucayen;
+
 import cl.antucayen.model.domain.EstadoFactura;
 import cl.antucayen.model.domain.EstadoItemFactura;
 import cl.antucayen.model.entity.Factura;
@@ -38,6 +40,7 @@ public class VDetalleFactura extends JDialog {
     public VDetalleFactura(JFrame parent) {
         super(parent, "Detalle de Factura", true);
         initComponents();
+        EstiloAntucayen.aplicar(this);
     }
 
     private void initComponents() {

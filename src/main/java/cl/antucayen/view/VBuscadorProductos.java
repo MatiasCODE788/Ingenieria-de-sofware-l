@@ -1,6 +1,7 @@
 package cl.antucayen.view;
 
 import cl.antucayen.view.components.ComponentesSwing;
+import cl.antucayen.view.components.EstiloAntucayen;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -42,14 +43,20 @@ public class VBuscadorProductos extends JPanel {
         btnExportar.setPreferredSize(new Dimension(165, 32));
         btnHistorialProducto.setPreferredSize(new Dimension(155, 32));
 
-        barraTop.add(new JLabel("Buscar:"));
-        barraTop.add(txtBusqueda);
-        barraTop.add(cmbTipo);
-        barraTop.add(btnBuscar);
-        barraTop.add(Box.createHorizontalStrut(16));
-        barraTop.add(btnNuevo);
-        barraTop.add(btnExportar);
-        barraTop.add(btnHistorialProducto);
+        barraTop.setLayout(new BorderLayout(0, 2));
+        JPanel filtrosBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
+        filtrosBusqueda.setBackground(Color.WHITE);
+        filtrosBusqueda.add(new JLabel("Buscar:"));
+        filtrosBusqueda.add(txtBusqueda);
+        filtrosBusqueda.add(cmbTipo);
+        filtrosBusqueda.add(btnBuscar);
+        JPanel accionesBusqueda = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
+        accionesBusqueda.setBackground(Color.WHITE);
+        accionesBusqueda.add(btnNuevo);
+        accionesBusqueda.add(btnExportar);
+        accionesBusqueda.add(btnHistorialProducto);
+        barraTop.add(filtrosBusqueda, BorderLayout.NORTH);
+        barraTop.add(accionesBusqueda, BorderLayout.SOUTH);
 
         String[] cols = {"SKU", "Nombre", "Código de barras", "Unidad", "Precio unitario", "Stock", "Estado"};
         modeloTabla = new DefaultTableModel(cols, 0) {
@@ -71,9 +78,76 @@ public class VBuscadorProductos extends JPanel {
         lblAyuda.setForeground(new Color(107, 114, 128));
         lblAyuda.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
 
+        JPanel lista = new JPanel(new BorderLayout(0, 8));
+        lista.setOpaque(false);
+        lista.add(scroll, BorderLayout.CENTER);
+        lista.add(lblAyuda, BorderLayout.SOUTH);
+        JPanel detalle = crearFichaVistaPrevia();
+        JSplitPane divisor = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, lista, detalle);
+        divisor.setResizeWeight(0.60);
+        divisor.setDividerSize(12);
+        divisor.setBorder(null);
+        SwingUtilities.invokeLater(() -> divisor.setDividerLocation(0.60));
         add(barraTop, BorderLayout.NORTH);
-        add(scroll,   BorderLayout.CENTER);
-        add(lblAyuda, BorderLayout.SOUTH);
+        add(divisor, BorderLayout.CENTER);
+    }
+
+    /** Ficha consultiva sincronizada con la fila: la edición sigue en el diálogo original. */
+    private JPanel crearFichaVistaPrevia() {
+        JPanel panel = new JPanel(new BorderLayout(0, 14));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(EstiloAntucayen.BORDER),
+                BorderFactory.createEmptyBorder(16, 18, 16, 18)));
+        JLabel titulo = new JLabel("Ficha del producto");
+        titulo.setFont(new Font("Dialog", Font.BOLD, 14));
+        titulo.setForeground(EstiloAntucayen.TEXT);
+        panel.add(titulo, BorderLayout.NORTH);
+        String[] etiquetas = {"SKU", "Nombre del producto", "Código de barras", "Unidad de medida",
+                "Precio de venta", "Stock actual", "Estado"};
+        JLabel[] valores = new JLabel[etiquetas.length];
+        JPanel campos = new JPanel(new GridLayout(0, 1, 0, 5));
+        campos.setBackground(Color.WHITE);
+        for (int i=0;i<etiquetas.length;i++) {
+            JPanel campo = new JPanel(new BorderLayout(0, 2));
+            campo.setBackground(Color.WHITE);
+            JLabel etiqueta = new JLabel(etiquetas[i]);
+            etiqueta.setFont(new Font("Dialog", Font.BOLD, 11));
+            etiqueta.setForeground(EstiloAntucayen.TEXT);
+            valores[i] = new JLabel("—");
+            valores[i].setFont(new Font("Dialog", Font.PLAIN, 12));
+            valores[i].setForeground(EstiloAntucayen.MUTED);
+            valores[i].setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(EstiloAntucayen.BORDER),
+                    BorderFactory.createEmptyBorder(7, 9, 7, 9)));
+            campo.add(etiqueta, BorderLayout.NORTH);
+            campo.add(valores[i], BorderLayout.CENTER);
+            campos.add(campo);
+        }
+        panel.add(new JScrollPane(campos, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        JButton abrir = ComponentesSwing.crearBoton("Ver / editar ficha", EstiloAntucayen.primario());
+        abrir.setToolTipText("Abre la ficha existente del producto seleccionado");
+        abrir.addActionListener(e -> {
+            int fila = tblProductos.getSelectedRow();
+            if (fila < 0) { JOptionPane.showMessageDialog(this, "Selecciona un producto de la lista."); return; }
+            java.awt.event.MouseEvent doble = new java.awt.event.MouseEvent(tblProductos,
+                    java.awt.event.MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0,
+                    5, tblProductos.getCellRect(fila, 0, true).y + 5, 2, false);
+            for (java.awt.event.MouseListener listener : tblProductos.getMouseListeners())
+                listener.mouseClicked(doble);
+        });
+        tblProductos.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            int fila = tblProductos.getSelectedRow();
+            for (int i=0;i<valores.length;i++) {
+                Object valor = fila >= 0 ? tblProductos.getValueAt(fila, i) : null;
+                valores[i].setText(valor == null ? "—" : String.valueOf(valor));
+                valores[i].setToolTipText(valor == null ? null : String.valueOf(valor));
+            }
+        });
+        panel.add(abrir, BorderLayout.SOUTH);
+        return panel;
     }
 
     public String  getTextoBusqueda() { return txtBusqueda.getText().trim(); }

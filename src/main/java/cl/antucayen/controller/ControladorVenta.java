@@ -38,6 +38,7 @@ public class ControladorVenta {
     private final Timer temporizadorSugerencias = new Timer(120, e -> actualizarSugerencias());
     private SwingWorker<List<Producto>, Void> tareaSugerencias;
     private long versionBusqueda;
+    private java.time.LocalDateTime inicioVenta = java.time.LocalDateTime.now();
 
     public ControladorVenta(VVentas vista) {
         this.vista = vista;
@@ -53,6 +54,7 @@ public class ControladorVenta {
             // No se reserva un ID al abrir el POS. Solo se limpian borradores
             // heredados de versiones anteriores y se deja la operación en memoria.
             servicio.prepararPuntoVenta();
+            inicioVenta = java.time.LocalDateTime.now();
             vista.setVentaPendiente();
         } catch (SQLException | SecurityException ex) {
             vista.setVentaPendiente();
@@ -120,6 +122,7 @@ public class ControladorVenta {
         vista.getBtnLimpiarCarrito().addActionListener(e -> {
             vista.limpiarCarrito();
             vista.limpiarPagos();
+            inicioVenta = java.time.LocalDateTime.now();
             actualizarEstadoPago();
         });
 
@@ -322,7 +325,14 @@ public class ControladorVenta {
                 cantidad = p.getStockActual();
             }
             int precioUnit = (int) modelo.getValueAt(fila, 3);
-            modelo.setValueAt(precioUnit * cantidad, fila, 4);
+            try {
+                modelo.setValueAt(Math.multiplyExact(precioUnit, cantidad), fila, 4);
+            } catch (ArithmeticException ex) {
+                JOptionPane.showMessageDialog(vista,
+                        "El subtotal supera el monto máximo permitido; se restablece la cantidad a 1.");
+                modelo.setValueAt(1, fila, 2);
+                return;
+            }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
         }
@@ -330,20 +340,33 @@ public class ControladorVenta {
     }
 
     private void recalcularTotal() {
-        vista.actualizarTotal(totalCarritoActual());
+        try {
+            vista.actualizarTotal(totalCarritoActual());
+        } catch (ArithmeticException ex) {
+            vista.setTotalExcedido();
+        }
         actualizarEstadoPago();
     }
 
     private int totalCarritoActual() {
         DefaultTableModel modelo = vista.getModeloCarrito();
         int total = 0;
-        for (int i = 0; i < modelo.getRowCount(); i++) total += (int) modelo.getValueAt(i, 4);
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            total = Math.addExact(total, (int) modelo.getValueAt(i, 4));
+        }
         return total;
     }
 
     /** Llena el 100% del total en el medio de pago elegido y deja los demás en cero (pago único). */
     private void pagarTodoCon(String medio) {
-        int total = totalCarritoActual();
+        final int total;
+        try {
+            total = totalCarritoActual();
+        } catch (ArithmeticException ex) {
+            vista.setEstadoPagoInvalido("El total supera el rango permitido");
+            vista.setCobrarHabilitado(false);
+            return;
+        }
         vista.setMontoEfectivo(medio.equals("Efectivo") ? total : 0);
         vista.setMontoDebito(medio.equals("Débito") ? total : 0);
         vista.setMontoCredito(medio.equals("Crédito") ? total : 0);
@@ -355,10 +378,26 @@ public class ControladorVenta {
      * vuelto desde el efectivo recibido.
      */
     private void actualizarEstadoPago() {
-        int total = totalCarritoActual();
-        int efectivo = vista.getMontoEfectivo();
-        int debito = vista.getMontoDebito();
-        int credito = vista.getMontoCredito();
+        final int total;
+        try {
+            total = totalCarritoActual();
+        } catch (ArithmeticException ex) {
+            vista.setEstadoPagoInvalido("El total supera el rango permitido");
+            vista.setCobrarHabilitado(false);
+            return;
+        }
+        int efectivo;
+        int debito;
+        int credito;
+        try {
+            efectivo = vista.getMontoEfectivo();
+            debito = vista.getMontoDebito();
+            credito = vista.getMontoCredito();
+        } catch (IllegalArgumentException ex) {
+            vista.setEstadoPagoInvalido(ex.getMessage());
+            vista.setCobrarHabilitado(false);
+            return;
+        }
 
         int pagado;
         try {
@@ -392,7 +431,14 @@ public class ControladorVenta {
         }
     }
 
+    /** Confirma lo escrito en una celda ANTES de leer cantidades o totales. */
+    static boolean confirmarEdicionCarrito(JTable tabla) {
+        return !tabla.isEditing() || tabla.getCellEditor().stopCellEditing();
+    }
+
     private void cobrar() {
+        // El editor Swing no confirma automáticamente la celda al pulsar Cobrar.
+        if (!confirmarEdicionCarrito(vista.getTblCarrito())) return;
         DefaultTableModel modelo = vista.getModeloCarrito();
         if (modelo.getRowCount() == 0) {
             JOptionPane.showMessageDialog(null, "El carrito está vacío");
@@ -408,12 +454,25 @@ public class ControladorVenta {
             item.setSubtotal((int) modelo.getValueAt(i, 4));
             items.add(item);
         }
-        int total = items.stream().mapToInt(ItemVenta::getSubtotal).sum();
+        final int total;
+        try {
+            total = totalCarritoActual();
+        } catch (ArithmeticException ex) {
+            JOptionPane.showMessageDialog(vista,
+                    "El total supera el rango permitido; revisa las cantidades del carrito.");
+            return;
+        }
 
-        List<PagoVenta> pagos = construirPagos(
-                vista.getMontoEfectivo(),
-                vista.getMontoDebito(),
-                vista.getMontoCredito());
+        List<PagoVenta> pagos;
+        try {
+            pagos = construirPagos(
+                    vista.getMontoEfectivo(),
+                    vista.getMontoDebito(),
+                    vista.getMontoCredito());
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(vista, ex.getMessage());
+            return;
+        }
 
         if (pagos.isEmpty()) {
             JOptionPane.showMessageDialog(null, "Ingresa el monto pagado en al menos un medio de pago");
@@ -457,27 +516,42 @@ public class ControladorVenta {
                 "Confirmar venta", JOptionPane.YES_NO_OPTION);
         if (confirmar != JOptionPane.YES_OPTION) return;
 
+        // Separar el COMMIT del comprobante evita informar una venta fallida
+        // cuando la persistencia fue exitosa y solo falló su visualización.
+        final int idVenta;
         try {
-            int idVenta = servicio.registrar(pagos, items);
-            vista.limpiarCarrito();
-            vista.limpiarPagos();
-            actualizarEstadoPago();
-            cargarVentasDelDia();
+            idVenta = servicio.registrar(pagos, items, inicioVenta);
+        } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
+            JOptionPane.showMessageDialog(vista, ex.getMessage(),
+                    "No se pudo registrar la venta", JOptionPane.ERROR_MESSAGE);
+            return;
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(vista, "Error al registrar la venta: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-            // RF-72: el comprobante se genera automáticamente después del
-            // commit exitoso de la venta y se reconstruye desde la BD.
+        // Una vez que registrar() retorna, la transacción ya fue confirmada.
+        vista.limpiarCarrito();
+        vista.limpiarPagos();
+        inicioVenta = java.time.LocalDateTime.now();
+        vista.setVentaPendiente();
+        actualizarEstadoPago();
+        cargarVentasDelDia();
+
+        try {
             var comprobante = servicioComprobante.obtener(idVenta);
             java.awt.Window owner = SwingUtilities.getWindowAncestor(vista);
             VComprobanteVenta dialogo = new VComprobanteVenta(owner, comprobante);
             dialogo.setVisible(true);
-
-            // El siguiente cliente parte con una operación en memoria. El número
-            // de venta se asignará únicamente cuando el cobro se confirme.
-            vista.setVentaPendiente();
-        } catch (IllegalArgumentException | IllegalStateException | SecurityException ex) {
-            JOptionPane.showMessageDialog(null, ex.getMessage());
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, "Error al registrar la venta: " + ex.getMessage());
+        } catch (SQLException | IllegalArgumentException | IllegalStateException
+                 | SecurityException ex) {
+            JOptionPane.showMessageDialog(vista,
+                    "La venta #" + idVenta + " fue registrada correctamente, "
+                            + "pero no se pudo mostrar el comprobante: " + ex.getMessage()
+                            + "\nPuedes recuperarlo desde 'Ventas del día'.",
+                    "Venta registrada - comprobante no disponible",
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
 

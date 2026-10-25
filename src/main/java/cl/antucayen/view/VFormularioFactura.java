@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.EstiloAntucayen;
+
 import cl.antucayen.model.domain.EstadoItemFactura;
 import cl.antucayen.model.dto.ItemFacturaExtraido;
 import cl.antucayen.model.entity.Proveedor;
@@ -45,6 +47,7 @@ public class VFormularioFactura extends JDialog {
     public VFormularioFactura(JFrame parent) {
         super(parent, "Registrar Factura", true);
         initComponents();
+        EstiloAntucayen.aplicar(this);
     }
 
     private void initComponents() {
@@ -91,14 +94,7 @@ public class VFormularioFactura extends JDialog {
 
         txtFecha = crearCampo();
         txtFecha.setText(FORMATO_FECHA.format(LocalDate.now()));
-        JButton btnCalendario = new JButton("Calendario");
-        btnCalendario.setFont(new Font("Arial", Font.PLAIN, 12));
-        btnCalendario.setFocusPainted(false);
-        btnCalendario.addActionListener(e -> SelectorFecha.mostrar(this, txtFecha, FORMATO_FECHA));
-        JPanel panelFecha = new JPanel(new BorderLayout(6, 0));
-        panelFecha.setBackground(Color.WHITE);
-        panelFecha.add(txtFecha, BorderLayout.CENTER);
-        panelFecha.add(btnCalendario, BorderLayout.EAST);
+        JPanel panelFecha = SelectorFecha.crearCampoConCalendario(txtFecha, FORMATO_FECHA);
 
         cmbModalidad = new JComboBox<>(new String[]{"Ingreso manual", "Archivo digital (PDF/JPG/PNG)"});
         cmbModalidad.setPreferredSize(new Dimension(0, 32));

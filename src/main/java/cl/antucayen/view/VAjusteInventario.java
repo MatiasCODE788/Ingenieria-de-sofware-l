@@ -144,7 +144,31 @@ public class VAjusteInventario extends JPanel {
         lblEstado.setForeground(new Color(185, 28, 28));
         p.add(lblEstado, gbc);
 
-        return p;
+        JPanel contenedor = new JPanel(new BorderLayout(12, 0));
+        contenedor.setBackground(new Color(243, 244, 246));
+        contenedor.add(p, BorderLayout.CENTER);
+        JPanel ayuda = new JPanel(new BorderLayout(0, 10));
+        ayuda.setBackground(Color.WHITE);
+        ayuda.setPreferredSize(new Dimension(236, 0));
+        ayuda.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(226, 233, 244)),
+                BorderFactory.createEmptyBorder(20, 15, 20, 15)));
+        JLabel tituloAyuda = new JLabel("Instrucciones");
+        tituloAyuda.setForeground(new Color(18, 39, 77));
+        tituloAyuda.setFont(new Font("Dialog", Font.BOLD, 14));
+        ayuda.add(tituloAyuda, BorderLayout.NORTH);
+        JLabel textoAyuda = new JLabel("<html><body style='width:186px;line-height:1.5'>"
+                + "El archivo debe contener las columnas <b>SKU</b> y <b>cantidad</b>."
+                + "<br><br>No se permiten filas vacías."
+                + "<br><br>Los valores numéricos deben ser válidos."
+                + "<br><br>Se valida el SKU antes de modificar el stock."
+                + "<br><br>Revisa los resultados antes de confirmar el ajuste."
+                + "</body></html>");
+        textoAyuda.setForeground(new Color(106, 124, 153));
+        textoAyuda.setVerticalAlignment(SwingConstants.TOP);
+        ayuda.add(textoAyuda, BorderLayout.CENTER);
+        contenedor.add(ayuda, BorderLayout.EAST);
+        return contenedor;
     }
 
     private JPanel crearPaso2() {

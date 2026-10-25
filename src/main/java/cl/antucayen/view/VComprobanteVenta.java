@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.EstiloAntucayen;
+
 import cl.antucayen.model.entity.ComprobanteVenta;
 import cl.antucayen.model.entity.ItemVenta;
 import cl.antucayen.model.entity.PagoVenta;
@@ -31,6 +33,7 @@ public class VComprobanteVenta extends JDialog {
         super(owner, "Comprobante de venta #" + comprobante.venta().getIdVenta(), ModalityType.APPLICATION_MODAL);
         this.comprobante = comprobante;
         initComponents();
+        EstiloAntucayen.aplicar(this);
         cargarDatos();
     }
 

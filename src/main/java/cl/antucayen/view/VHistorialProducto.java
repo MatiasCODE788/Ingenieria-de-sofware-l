@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.EstiloAntucayen;
+
 import cl.antucayen.model.entity.MovimientoInventario;
 import cl.antucayen.model.entity.Producto;
 import cl.antucayen.view.components.ComponentesSwing;
@@ -54,5 +56,6 @@ public class VHistorialProducto extends JDialog {
         add(cabecera, BorderLayout.NORTH);
         add(new JScrollPane(tabla), BorderLayout.CENTER);
         add(sur, BorderLayout.SOUTH);
+        EstiloAntucayen.aplicar(this);
     }
 }

@@ -1,6 +1,6 @@
 # Minimarket Antucayen — Sistema de Gestión
 
-![Java 25](https://img.shields.io/badge/Java-25-orange)
+![Java 21](https://img.shields.io/badge/Java-21-orange)
 ![UI Swing + FlatLaf](https://img.shields.io/badge/UI-Swing%20%2B%20FlatLaf-blue)
 ![Base de datos MariaDB](https://img.shields.io/badge/BD-MariaDB-003545)
 ![Build Maven](https://img.shields.io/badge/build-Maven-C71A36)
@@ -62,7 +62,7 @@ Mantener un inventario confiable y trazable para el minimarket. Cada compra, ven
 - Contraseñas almacenadas con PBKDF2-HMAC-SHA256 (210.000 iteraciones y sal aleatoria de 16 bytes). Los hashes SHA-256 heredados se aceptan y se migran automáticamente a PBKDF2 tras un inicio de sesión correcto.
 - Verificación del esquema de la base de datos antes de autenticar: versión, tablas, columnas y catálogo de perfiles.
 - Pantalla inicial según el rol: Dashboard (Administrador), Productos (Bodeguero) o Punto de Venta (Cajero).
-- Cierre de sesión con confirmación.
+- Cierre de sesión con confirmación y expiración automática tras 30 minutos de inactividad por defecto (configurable con `-Dantucayen.sesion.inactividad.minutos=10`, por ejemplo).
 
 ### Dashboard
 
@@ -73,10 +73,10 @@ Disponible para el Administrador. Muestra las ventas de hoy (total y desglose po
 Disponible para Administrador y Cajero.
 
 - Búsqueda o escaneo por SKU, código de barras o nombre. Solo se pueden vender productos activos y con stock.
-- Carrito con cantidades editables y validación de stock disponible.
+- Carrito con cantidades editables y validación de stock disponible. La edición activa se confirma antes de cobrar.
 - Pago único (Efectivo, Débito o Crédito) o dividido entre varios medios, con cálculo en vivo de lo que falta o del vuelto. El vuelto solo puede provenir del efectivo recibido.
-- Confirmación atómica de la venta: bloquea los productos, revalida stock, estado y precio, aplica el precio vigente del producto, descuenta el stock y registra movimientos de tipo `Venta`.
-- Comprobante de venta automático, visualizable e imprimible.
+- Confirmación atómica de la venta: bloquea los productos, revalida stock, estado y precio, aplica el precio vigente del producto, descuenta el stock y registra movimientos de tipo `Venta`. La fecha de inicio real de la operación se conserva separada de la confirmación del cobro.
+- Comprobante de venta automático, visualizable e imprimible. Si la visualización falla después de registrar el cobro, el sistema informa que la venta sí fue confirmada y permite recuperar el comprobante.
 - Listado de ventas del día (el Cajero ve solo las suyas) y anulación de ventas pagadas con devolución de stock, reservada al Administrador.
 
 ### Productos y stock
@@ -265,7 +265,11 @@ Decisiones de diseño relevantes:
    mariadb -u root -p < database/Antucayen_Instalacion_Unica.sql
 ```
 
-3. **Prepara una cuenta de MariaDB para la aplicación.** El script no crea usuarios ni otorga permisos, y el repositorio no incluye otro script para hacerlo. La aplicación ejecuta sentencias `SELECT`, `INSERT`, `UPDATE` y `DELETE` sobre la base `minimarket` y consulta `information_schema` para validar el esquema, por lo que la cuenta debe tener esos permisos. El archivo de ejemplo usa el nombre `antucayen_app`.
+3. **Prepara la cuenta MariaDB para la aplicación.** El instalador SQL incluye
+   usuarios de desarrollo locales (`antucayen_app`), pero **no** crea un usuario
+   accesible desde la LAN. Para una instalación Wi-Fi en `192.168.100.x`, sigue
+   [INSTALACION_RED_WIFI_192.168.100.md](INSTALACION_RED_WIFI_192.168.100.md)
+   para agregar permisos de la subred sin perder los datos ya instalados.
 
 4. **Configura la conexión** con `config.properties` o con variables de entorno (ver [Configuración](#configuración)).
 
@@ -287,27 +291,21 @@ Decisiones de diseño relevantes:
 
 La conexión se puede definir de dos formas. Si una variable de entorno tiene valor, tiene prioridad sobre la propiedad equivalente del archivo.
 
-**Opción A: archivo `config.properties`.** Copia la plantilla en la misma carpeta y completa las credenciales:
+**Opción A (recomendada en Windows): botón de configuración.** En la pantalla de
+inicio de sesión usa **«Configurar conexión a la base de datos (Wi-Fi/LAN)»**.
+Escribe la IP **del administrador/servidor**, no la IP del cajero. La configuración
+se guarda en `~/.antucayen/config.properties`, por usuario de Windows, fuera del JAR.
+No es necesario recompilar para cambiar la IP. La nueva distribución **no incluye
+credenciales privadas dentro del JAR**. También se puede usar un archivo
+`config.properties` externo, tomando como guía `src/main/resources/config.properties.example`.
 
-```bash
-cp src/main/resources/config.properties.example src/main/resources/config.properties
-```
+Orden de búsqueda de archivos: `-Dantucayen.config=RUTA` >
+`~/.antucayen/config.properties` > `./config.properties` >
+`src/main/resources/config.properties` de desarrollo > classpath (si existe).
+Las variables de entorno prevalecen sobre todos los archivos.
 
-```cmd
-copy src\main\resources\config.properties.example src\main\resources\config.properties
-```
-
-```properties
-db.host=127.0.0.1
-db.port=3306
-db.nombre=minimarket
-db.usuario=antucayen_app
-db.contrasena=CAMBIAR_ESTA_CONTRASENA
-# true solo si tu servidor MariaDB está configurado para SSL/TLS.
-db.ssl=false
-```
-
-`config.properties` está excluido de Git en `.gitignore`. La aplicación lo lee desde el classpath, por lo que debe existir **antes** de compilar para quedar incluido en el JAR.
+**Importante:** el archivo contiene la contraseña de conexión a la base de datos:
+proteger con permisos de usuario y no subirlo al repositorio.
 
 **Opción B: variables de entorno.** Permiten ejecutar el JAR sin empaquetar credenciales:
 
@@ -341,14 +339,14 @@ Con estos valores la aplicación construye la URL `jdbc:mariadb://<host>:<port>/
 
 | Ruta | Contenido |
 |---|---|
-| `archivos/facturas/` | Copia de cada archivo digital adjunto a una factura. La carpeta se crea en el directorio desde el que se ejecuta la aplicación y la ruta absoluta se guarda en la base de datos. |
+| `archivos/facturas/` | Copia local de cada adjunto a una factura. **Aviso LAN:** la ruta absoluta se guarda en la BD, pero otros computadores no pueden acceder al archivo local sin una carpeta compartida o un servicio de archivos. |
 | `~/.antucayen/tema.properties` | Tema visual elegido, guardado en la carpeta personal del usuario del sistema operativo. |
 
 ## Base de datos
 
 ### Instalación del esquema
 
-El archivo `database/Antucayen_Instalacion_Unica.sql` es la única fuente del esquema. Crea la base `minimarket` (`utf8mb4`, colación `utf8mb4_spanish_ci`, tablas InnoDB) y carga datos de demostración. El repositorio no incluye migraciones incrementales.
+El archivo `database/Antucayen_Instalacion_Unica.sql` es la única fuente del esquema. Crea la base `minimarket` (`utf8mb4`, colación `utf8mb4_spanish_ci`, tablas InnoDB) y carga datos de demostración. El repositorio no incluye migraciones incrementales. **No volver a ejecutar este instalador en una BD en uso:** contiene `DROP DATABASE IF EXISTS minimarket` y borraría los datos. Para habilitar la LAN, usar exclusivamente los GRANT/CREATE USER que se indican en la guía Wi-Fi.
 
 
 ```bash
@@ -594,16 +592,21 @@ Las pruebas usan JUnit 5 y se ejecutan con Maven Surefire:
 mvn clean test
 ```
 
-El proyecto incluye 21 pruebas unitarias en 6 clases:
+El proyecto incluye 43 pruebas declaradas con `@Test` en 11 clases (incluidas las pruebas de regresión de esta revisión):
 
 | Clase | Pruebas | Qué verifica |
 |---|:---:|---|
 | `AutorizacionRBACTest` | 5 | Permisos de Cajero, Bodeguero y Administrador, y bloqueo de perfiles no reconocidos. |
 | `PasswordHasherTest` | 2 | Generación y verificación PBKDF2 y compatibilidad con hashes SHA-256 heredados. |
-| `ServicioVentaPagoTest` | 5 | Cálculo del vuelto: pago exacto, efectivo superior, pago mixto, sobrepago electrónico y pago insuficiente. |
-| `ServicioImportacionInventarioTest` | 6 | Lectura de CSV, encabezados válidos, filas vacías, límite de 10 MB y detección de duplicados. |
-| `ServicioExtraccionFacturaDigitalTest` | 2 | Interpretación de líneas de factura y conservación de ítems ilegibles como `No Procesado`. |
+| `ServicioVentaPagoTest` | 10 | Cálculo del vuelto: pago exacto, efectivo superior, pago mixto, sobrepago electrónico y pago insuficiente. |
+| `ServicioImportacionInventarioTest` | 7 | Lectura de CSV, encabezados válidos, filas vacías, límite de 10 MB y detección de duplicados. |
+| `ServicioExtraccionFacturaDigitalTest` | 9 | Interpretación de líneas de factura y conservación de ítems ilegibles como `No Procesado`. |
+| `EstadosDominioTest` | 2 | Estados de dominio de productos, facturas y ventas. |
+| `RolSistemaTest` | 2 | Conversión y reconocimiento de nombres de rol. |
 | `VAjusteInventarioTest` | 1 | Modalidad de ajuste sin valor por defecto y textos de los botones de la vista. |
+| `VVentasPagoTest` | 2 | Pagos válidos y rechazo de montos inválidos. |
+| `ControladorVentaEdicionTest` | 1 | Confirmación de la cantidad que continúa en edición. |
+| `ControlInactividadSesionTest` | 2 | Límite exacto de inactividad y tiempo configurable. |
 
 Las pruebas no abren conexiones a la base de datos, por lo que no requieren MariaDB ni `config.properties`. El repositorio no incluye pruebas de integración contra la base de datos.
 
@@ -624,18 +627,18 @@ El repositorio no incluye automatización de despliegue: no hay `Dockerfile`, pi
 
 - Versión del artefacto: `1.0-SNAPSHOT`. Versión del esquema de base de datos: `20260929`.
 - Todos los módulos del menú están implementados y conectados: Dashboard, Punto de Venta, Productos, Proveedores, Equivalencias, Facturas, Importar inventario, Historial, Reportes y Usuarios y permisos.
-- Cobertura de pruebas automatizadas limitada a 21 pruebas unitarias; no hay pruebas de integración.
+- Pruebas automatizadas con 43 casos declarados; no hay pruebas de integración en MariaDB.
 - No hay integración continua, contenedores ni instaladores.
 
 ### Limitaciones conocidas
 
-- La pantalla de inicio de sesión muestra el texto «La sesión expira tras 30 min de inactividad.», pero el código no implementa ninguna expiración de sesión por inactividad.
+- La expiración de sesión está implementada con 30 minutos de inactividad por defecto, configurable con `-Dantucayen.sesion.inactividad.minutos=N` (N entre 1 y 1440). Los datos aún no confirmados se descartan al expirar.
 - Si el esquema no coincide, el mensaje de `VerificadorEsquema` remite a `database/00_instalacion_completa.sql` y a scripts de `database/migrations/` que no existen en el repositorio. El único script disponible es `database/Antucayen_Instalacion_Unica.sql`.
 - No existe cambio ni restablecimiento de contraseña desde la aplicación, ni reactivación de usuarios desactivados.
-- Las tablas `log_archivo` y `auditoria_proveedor` se registran, pero no tienen pantalla de consulta. `ServicioAuditoriaArchivos.listarRecientes` existe sin una vista que lo utilice.
+- El Administrador puede consultar la bitácora de archivos desde el módulo «Auditoría de archivos». La auditoría de cambios de proveedores permanece almacenada en `auditoria_proveedor`.
 - El formulario de factura no captura el precio de compra: `precio_unitario_compra` se guarda siempre en 0.
-- Cada apertura del Punto de Venta crea una venta «En curso». Las que no se confirman permanecen en ese estado en la tabla `venta`; no se muestran en las ventas del día ni se suman a los totales.
-- El stock inicial indicado al crear un producto no genera un movimiento de inventario.
+- Abrir el Punto de Venta no reserva una venta ni consume números. El ID se crea al confirmar el cobro; la compatibilidad con borradores heredados permanece disponible.
+- El stock inicial ingresado al crear un producto se registra como movimiento de inventario.
 - Cada instancia usa una única conexión JDBC compartida; no hay pool de conexiones.
 - El OCR usa `eng` como idioma por defecto si no se define `ANTUCAYEN_OCR_LANG`.
 - La carpeta `.idea/` está versionada aunque figura en `.gitignore`, y la carpeta `archivos/` que genera la aplicación no está excluida de Git.

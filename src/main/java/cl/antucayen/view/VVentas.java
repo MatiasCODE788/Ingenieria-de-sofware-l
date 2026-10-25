@@ -441,6 +441,7 @@ public class VVentas extends JPanel {
     public JButton    getBtnCobrar()        { return btnCobrar; }
     public JButton    getBtnLimpiarCarrito(){ return btnLimpiarCarrito; }
     public DefaultTableModel getModeloCarrito() { return modeloCarrito; }
+    public JTable getTblCarrito() { return tblCarrito; }
 
     // --- Pago (único o dividido) ---
     public JTextField getTxtPagoEfectivo() { return txtPagoEfectivo; }
@@ -493,13 +494,19 @@ public class VVentas extends JPanel {
         lblRestante.setForeground(new Color(220, 38, 38));
     }
 
-    private int parseMonto(String texto) {
-        String limpio = texto.replaceAll("[^0-9]", "");
-        if (limpio.isEmpty()) return 0;
+    static int parseMonto(String texto) {
+        String entrada = texto == null ? "" : texto.trim();
+        if (entrada.isEmpty()) return 0;
+        // Acepta pesos enteros opcionalmente con puntos de miles; nunca cambia
+        // signos negativos ni textos inválidos por un importe positivo.
+        if (!entrada.matches("\\$?\\s*(?:[0-9]+|[0-9]{1,3}(?:\\.[0-9]{3})+)")) {
+            throw new IllegalArgumentException("Monto de pago inválido: ingresa pesos positivos");
+        }
+        String digitos = entrada.replace("$", "").replace(".", "").trim();
         try {
-            return Integer.parseInt(limpio);
+            return Integer.parseInt(digitos);
         } catch (NumberFormatException ex) {
-            return 0;
+            throw new IllegalArgumentException("Monto de pago fuera del rango permitido", ex);
         }
     }
 
@@ -512,6 +519,10 @@ public class VVentas extends JPanel {
 
     public void actualizarTotal(int total) {
         lblTotal.setText("Total: $" + formatearMonto(total));
+    }
+
+    public void setTotalExcedido() {
+        lblTotal.setText("Total fuera del rango admitido");
     }
 
     public JTable getTblVentasDia() { return tblVentasDia; }

@@ -1,5 +1,7 @@
 package cl.antucayen.view;
 
+import cl.antucayen.view.components.EstiloAntucayen;
+
 import cl.antucayen.view.components.ComponentesSwing;
 
 import javax.swing.*;
@@ -27,6 +29,7 @@ public class VFormularioProveedor extends JDialog {
     public VFormularioProveedor(JFrame parent, boolean modoEdicion) {
         super(parent, modoEdicion ? "Editar Proveedor" : "Nuevo Proveedor", true);
         initComponents(modoEdicion);
+        EstiloAntucayen.aplicar(this);
     }
 
     private void initComponents(boolean modoEdicion) {

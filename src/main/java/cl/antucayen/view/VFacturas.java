@@ -3,15 +3,19 @@ package cl.antucayen.view;
 import cl.antucayen.model.domain.EstadoFactura;
 import cl.antucayen.model.entity.Proveedor;
 import cl.antucayen.view.components.ComponentesSwing;
+import cl.antucayen.view.components.EstiloAntucayen;
+import cl.antucayen.view.components.SelectorFecha;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 import java.awt.*;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
 
 public class VFacturas extends JPanel {
 
+    private static final DateTimeFormatter FORMATO_FILTRO_FECHA = DateTimeFormatter.ofPattern("dd-MM-uuuu");
     private JTextField        txtFiltroNumero;
     private JComboBox<ProveedorItem> cmbFiltroProveedor;
     private JTextField        txtFiltroDesde;
@@ -55,20 +59,21 @@ public class VFacturas extends JPanel {
         btnBuscar.setPreferredSize(new Dimension(90, 32));
         btnLimpiar.setPreferredSize(new Dimension(90, 32));
 
-        barraTop.add(new JLabel("Número:"));
-        barraTop.add(txtFiltroNumero);
-        barraTop.add(new JLabel("Proveedor:"));
-        barraTop.add(cmbFiltroProveedor);
-        barraTop.add(new JLabel("Desde:"));
-        barraTop.add(txtFiltroDesde);
-        barraTop.add(new JLabel("Hasta:"));
-        barraTop.add(txtFiltroHasta);
-        barraTop.add(new JLabel("Estado:"));
-        barraTop.add(cmbFiltroEstado);
-        barraTop.add(btnBuscar);
-        barraTop.add(btnLimpiar);
-        barraTop.add(Box.createHorizontalStrut(16));
-        barraTop.add(btnNueva);
+        barraTop.setLayout(new BorderLayout(0, 1));
+        JPanel campos = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 5));
+        campos.setBackground(Color.WHITE);
+        campos.add(new JLabel("Número:")); campos.add(txtFiltroNumero);
+        campos.add(new JLabel("Proveedor:")); campos.add(cmbFiltroProveedor);
+        campos.add(new JLabel("Desde:"));
+        campos.add(SelectorFecha.crearCampoConCalendario(txtFiltroDesde, FORMATO_FILTRO_FECHA));
+        campos.add(new JLabel("Hasta:"));
+        campos.add(SelectorFecha.crearCampoConCalendario(txtFiltroHasta, FORMATO_FILTRO_FECHA));
+        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
+        acciones.setBackground(Color.WHITE);
+        acciones.add(new JLabel("Estado:")); acciones.add(cmbFiltroEstado);
+        acciones.add(btnBuscar); acciones.add(btnLimpiar); acciones.add(btnNueva);
+        barraTop.add(campos, BorderLayout.NORTH);
+        barraTop.add(acciones, BorderLayout.SOUTH);
 
         String[] cols = {"ID", "Número", "Fecha", "Proveedor", "Estado"};
         modeloTabla = new DefaultTableModel(cols, 0) {
@@ -86,9 +91,70 @@ public class VFacturas extends JPanel {
         lblAyuda.setFont(new Font("Arial", Font.ITALIC, 12));
         lblAyuda.setForeground(new Color(107, 114, 128));
 
+        JPanel listado = new JPanel(new BorderLayout(0, 8));
+        listado.setOpaque(false);
+        listado.add(scroll, BorderLayout.CENTER);
+        listado.add(lblAyuda, BorderLayout.SOUTH);
+        JSplitPane divisor = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, listado, crearResumenFactura());
+        divisor.setResizeWeight(0.62);
+        divisor.setDividerSize(12);
+        divisor.setBorder(null);
+        SwingUtilities.invokeLater(() -> divisor.setDividerLocation(0.62));
         add(barraTop, BorderLayout.NORTH);
-        add(scroll,   BorderLayout.CENTER);
-        add(lblAyuda, BorderLayout.SOUTH);
+        add(divisor, BorderLayout.CENTER);
+    }
+
+    private JPanel crearResumenFactura() {
+        JPanel panel = new JPanel(new BorderLayout(0, 16));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(EstiloAntucayen.BORDER),
+                BorderFactory.createEmptyBorder(18, 18, 18, 18)));
+        JLabel titulo = new JLabel("Detalle de la factura");
+        titulo.setFont(new Font("Dialog", Font.BOLD, 14));
+        titulo.setForeground(EstiloAntucayen.TEXT);
+        panel.add(titulo, BorderLayout.NORTH);
+        String[] campos = {"Número de factura", "Fecha de emisión", "Proveedor", "Estado"};
+        JLabel[] valores = new JLabel[4];
+        JPanel resumen = new JPanel(new GridLayout(0, 1, 0, 10));
+        resumen.setBackground(Color.WHITE);
+        for (int i=0;i<campos.length;i++) {
+            JPanel bloque = new JPanel(new BorderLayout(0, 4));
+            bloque.setBackground(Color.WHITE);
+            JLabel etiqueta = new JLabel(campos[i]);
+            etiqueta.setForeground(EstiloAntucayen.TEXT);
+            etiqueta.setFont(new Font("Dialog", Font.BOLD, 11));
+            valores[i] = new JLabel("—");
+            valores[i].setForeground(EstiloAntucayen.MUTED);
+            valores[i].setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(EstiloAntucayen.BORDER),
+                    BorderFactory.createEmptyBorder(8, 9, 8, 9)));
+            bloque.add(etiqueta, BorderLayout.NORTH);
+            bloque.add(valores[i], BorderLayout.CENTER);
+            resumen.add(bloque);
+        }
+        panel.add(resumen, BorderLayout.CENTER);
+        JButton detalle = ComponentesSwing.crearBoton("Ver factura completa", EstiloAntucayen.primario());
+        detalle.addActionListener(e -> {
+            int fila = tblFacturas.getSelectedRow();
+            if (fila < 0) { JOptionPane.showMessageDialog(this, "Selecciona una factura de la lista."); return; }
+            java.awt.event.MouseEvent doble = new java.awt.event.MouseEvent(tblFacturas,
+                    java.awt.event.MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0,
+                    5, tblFacturas.getCellRect(fila, 0, true).y + 5, 2, false);
+            for (java.awt.event.MouseListener listener : tblFacturas.getMouseListeners())
+                listener.mouseClicked(doble);
+        });
+        tblFacturas.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            int fila = tblFacturas.getSelectedRow();
+            int[] columnas = {1, 2, 3, 4};
+            for (int i=0;i<valores.length;i++) {
+                Object v = fila >= 0 ? tblFacturas.getValueAt(fila, columnas[i]) : null;
+                valores[i].setText(v == null ? "—" : String.valueOf(v));
+            }
+        });
+        panel.add(detalle, BorderLayout.SOUTH);
+        return panel;
     }
 
     private JTextField crearCampoFiltro(int ancho) {
