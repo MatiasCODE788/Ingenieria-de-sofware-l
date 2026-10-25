@@ -39,7 +39,7 @@ public class VPrincipal extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Cabecera continua a todo lo ancho, como en las referencias.
+        // Cabecera continua al total de lo ancho, como en las referencias.
         JPanel topbar = new JPanel(new BorderLayout());
         topbar.setBackground(EstiloAntucayen.cabecera());
         topbar.setPreferredSize(new Dimension(0, 54));
