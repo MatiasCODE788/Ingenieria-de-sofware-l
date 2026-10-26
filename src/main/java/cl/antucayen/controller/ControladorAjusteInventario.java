@@ -196,7 +196,6 @@ public class ControladorAjusteInventario {
             auditoriaArchivos.registrar(
                     nombre, "IMPORTACION", "DESCONOCIDO", "ERROR", detalle);
         } catch (Exception ignored) {
-            // El error principal de lectura no se reemplaza por un fallo de bitácora.
         }
     }
 
