@@ -1740,11 +1740,6 @@ INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 ('BEB-0157', 3),
 ('BEB-0158', 3),
 ('BEB-0159', 3),
-('DEMO-ABR-0001', 3),
-('DEMO-BEB-0001', 3),
-('DEMO-CON-0001', 3),
-('DEMO-LAC-0001', 3),
-('DEMO-SNK-0001', 3),
 ('LAC-0001', 3),
 ('LAC-0002', 3),
 ('LAC-0003', 3),
@@ -2469,12 +2464,6 @@ INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 ('CON-0035', 4),
 ('CON-0036', 4),
 ('CON-0037', 4),
-('DEMO-ABR-0001', 4),
-('DEMO-BEB-0001', 4),
-('DEMO-CON-0001', 4),
-('DEMO-HIG-0001', 4),
-('DEMO-LAC-0001', 4),
-('DEMO-SNK-0001', 4),
 ('FIA-0001', 4),
 ('FIA-0002', 4),
 ('FIA-0003', 4),
@@ -2903,7 +2892,6 @@ INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 
 -- Proveedor 5: Distribuidor Mayorista (Renca) (86 relaciones nuevas).
 INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
-('DEMO-HIG-0001', 5),
 ('HIG-0001', 5),
 ('HIG-0002', 5),
 ('HIG-0003', 5),
@@ -3033,7 +3021,6 @@ INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 ('BEB-0109', 6),
 ('BEB-0110', 6),
 ('BEB-0111', 6),
-('DEMO-BEB-0001', 6);
 
 -- Proveedor 7: CCU (42 relaciones nuevas).
 INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
@@ -3084,7 +3071,6 @@ INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 ('ABR-0199', 8),
 ('ABR-0200', 8),
-('DEMO-LAC-0001', 8),
 ('LAC-0011', 8),
 ('LAC-0012', 8),
 ('LAC-0013', 8),
@@ -3180,7 +3166,6 @@ INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 
 -- Proveedor 11: Evercrisp (Lay's) (15 relaciones nuevas).
 INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
-('DEMO-SNK-0001', 11),
 ('SNK-0084', 11),
 ('SNK-0085', 11),
 ('SNK-0086', 11),
@@ -3198,7 +3183,6 @@ INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 
 -- Proveedor 12: Colgate-Palmolive (12 relaciones nuevas).
 INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
-('DEMO-HIG-0001', 12),
 ('HIG-0027', 12),
 ('HIG-0028', 12),
 ('HIG-0029', 12),
