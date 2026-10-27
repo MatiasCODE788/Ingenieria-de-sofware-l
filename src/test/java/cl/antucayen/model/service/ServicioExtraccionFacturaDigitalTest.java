@@ -185,4 +185,76 @@ class ServicioExtraccionFacturaDigitalTest {
         assertEquals(LocalDate.of(2026, 10, 3), resultado.fechaEmision());
     }
 
+    @Test
+    void leeFacturaConColumnaUnidadYCodigoConSufijo() {
+        // Texto OCR real de una factura escaneada con columnas CODIGO, DETALLE,
+        // CANTIDAD, UNIDAD, VALOR UNITARIO, DESCUENTO y VALOR.
+        String texto = """
+                COMERCIALIZADORA Y DISTRIBUIDORA JAMA SPA
+                R.UT.: 76.361.671 - 5
+                FACTURA ELECTRONICA
+                N? 1316157
+                Fecha emisión: 09 de OCTUBRE de 2026 Ruta: 1856 Patente:
+                RUT: 76.384.579 - 1 Condición de pago: CONTADO Efectivo
+                Fono: Pague hasta: 09-10-2026
+                CODIGO DETALLE V.NTIDAD | UNIDAD | VALOR UNITARIO | DESCUENTO VALOR
+                3587 1 PK 3 Estuches Capuccino 15% (B2B) 1 PACK 7.179 1.077 6.102
+                4669 24 PK 6 Picada Carne Verde 3x62 grs 5% DCTO B2B ay PACK 7.174 1.794 5.380
+                2086 0 Chocolate SAHNE NUSS Barra 8x30x3g) il DSPL 17.113 17.113
+                2120 Café NESCAFE Tradición tarro 24 x 170 GRS i TARR 6.741 19.223
+                549 0 MAGGI Sopa Pollo Arroz Sobre 20x70g CL: 1 SOBR 502 2.510
+                888 0 MOROCHA Family Galleta 22x120g CL Ñ POTE 688 3.715
+                Fecha Vencimiento; 09 de OCTUBRE de 2026
+                NETO 124.257
+                1.V.A, (19%) 23.609
+                TOTAL 147.866
+                """;
+
+        var resultado = servicio.analizarTexto(texto);
+
+        assertEquals("1316157", resultado.numeroFactura());
+        assertEquals(LocalDate.of(2026, 10, 9), resultado.fechaEmision());
+        assertEquals(Integer.valueOf(147866), resultado.valorTotal());
+        var items = resultado.items();
+        assertEquals(6, items.size());
+        assertEquals("35871", items.get(0).codigoInterno());
+        assertEquals("PK 3 Estuches Capuccino 15% (B2B)", items.get(0).descripcion());
+        assertEquals(1, items.get(0).cantidad());
+        assertEquals(7179, items.get(0).precioUnitario());
+        assertEquals("466924", items.get(1).codigoInterno());
+        assertEquals("20860", items.get(2).codigoInterno());
+        assertEquals("Chocolate SAHNE NUSS Barra 8x30x3g)", items.get(2).descripcion());
+        assertEquals(17113, items.get(2).precioUnitario());
+        assertEquals("2120", items.get(3).codigoInterno());
+        assertEquals("5490", items.get(4).codigoInterno());
+        assertEquals("MAGGI Sopa Pollo Arroz Sobre 20x70g CL", items.get(4).descripcion());
+        assertEquals("8880", items.get(5).codigoInterno());
+        assertTrue(items.stream().noneMatch(i -> i.codigoInterno().toUpperCase().contains("VENC")
+                || i.codigoInterno().equalsIgnoreCase("Fecha")));
+    }
+
+    @Test
+    void unePrefijoDeCodigoAunqueLaCantidadSeaIlegible() {
+        String texto = """
+                CODIGO DETALLE CANTIDAD UNIDAD VALOR UNITARIO DESCUENTO VALOR
+                888 0 MOROCHA Family Galleta 22x120g CL a POTE 688 3.715
+                888 0 MOROCHA Family Galleta 22x120g CL ‘J POTE 688 3.715
+                888 0 MOROCHA Family Galleta 22x120g CL fi POTE 688 3.715
+                12345 3 Arroz grado uno UN 1.000 3.000
+                NETO 10.000
+                """;
+
+        var items = servicio.parsearLineas(texto);
+
+        assertEquals(2, items.size());
+        assertEquals("8880", items.get(0).codigoInterno());
+        assertEquals("MOROCHA Family Galleta 22x120g CL", items.get(0).descripcion());
+        assertEquals(1, items.get(0).cantidad());
+        assertEquals(688, items.get(0).precioUnitario());
+        assertEquals("12345", items.get(1).codigoInterno());
+        assertEquals(3, items.get(1).cantidad());
+        assertEquals("Arroz grado uno", items.get(1).descripcion());
+        assertEquals(1000, items.get(1).precioUnitario());
+    }
+
 }
