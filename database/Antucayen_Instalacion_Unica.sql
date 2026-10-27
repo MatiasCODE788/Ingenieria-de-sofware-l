@@ -3021,6 +3021,7 @@ INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
 ('BEB-0109', 6),
 ('BEB-0110', 6),
 ('BEB-0111', 6),
+('BEB-0112', 6);
 
 -- Proveedor 7: CCU (42 relaciones nuevas).
 INSERT INTO producto_proveedor (sku, id_proveedor) VALUES
