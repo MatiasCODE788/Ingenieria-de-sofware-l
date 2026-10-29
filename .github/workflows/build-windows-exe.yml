@@ -1,0 +1,74 @@
+name: Build Antucayen Windows EXE
+
+on:
+  push:
+    branches:
+      - facturas_pruebas
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build shaded JAR
+        shell: pwsh
+        run: mvn -B -DskipTests clean package
+
+      - name: Prepare jpackage input
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist\input | Out-Null
+          Copy-Item target\Antucayen-1.0-SNAPSHOT.jar dist\input\Antucayen.jar
+
+      - name: Create Windows application image
+        shell: pwsh
+        run: |
+          jpackage `
+            --type app-image `
+            --name Antucayen `
+            --input dist\input `
+            --main-jar Antucayen.jar `
+            --main-class cl.antucayen.Main `
+            --dest dist `
+            --app-version 1.0.0 `
+            --vendor "Grupo 20"
+
+      - name: Add support files
+        shell: pwsh
+        run: |
+          if (Test-Path "src\main\resources\config.properties.example") {
+            Copy-Item "src\main\resources\config.properties.example" "dist\Antucayen\config.properties.example"
+          }
+          if (Test-Path "database\Antucayen_Instalacion_Unica.sql") {
+            Copy-Item "database\Antucayen_Instalacion_Unica.sql" "dist\Antucayen\Antucayen_Instalacion_Unica.sql"
+          }
+          @"
+          ANTUCAYEN - WINDOWS
+
+          Ejecuta: Antucayen.exe
+
+          La aplicación incluye su propio runtime de Java 21.
+          Para conectarse a la base de datos, usa la opción de configuración de conexión
+          disponible en la pantalla de inicio de sesión.
+
+          Si necesitas instalar la base de datos desde cero, utiliza
+          Antucayen_Instalacion_Unica.sql si está incluido en esta carpeta.
+          "@ | Set-Content -Encoding UTF8 "dist\Antucayen\LEEME.txt"
+
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: Antucayen-Windows
+          path: dist/Antucayen
+          if-no-files-found: error
