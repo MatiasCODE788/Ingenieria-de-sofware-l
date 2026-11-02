@@ -12,7 +12,7 @@ import java.util.UUID;
 public class ServicioArchivoFactura {
 
     private static final long MAX_BYTES = 10L * 1024 * 1024;
-    private static final Set<String> EXTENSIONES = Set.of("pdf", "jpg", "jpeg", "png");
+    private static final Set<String> EXTENSIONES = Set.of("pdf");
 
     public void validar(File archivo) {
         if (archivo == null || !archivo.isFile()) {
@@ -26,7 +26,7 @@ public class ServicioArchivoFactura {
         }
         String extension = extension(archivo.getName());
         if (!EXTENSIONES.contains(extension)) {
-            throw new IllegalArgumentException("Formato no admitido. Usa PDF, JPG, JPEG o PNG");
+            throw new IllegalArgumentException("Formato no admitido. Usa PDF");
         }
     }
 
