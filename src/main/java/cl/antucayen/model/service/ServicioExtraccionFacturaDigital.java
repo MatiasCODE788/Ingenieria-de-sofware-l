@@ -82,23 +82,24 @@ public class ServicioExtraccionFacturaDigital {
             "FACTURA", "FOLIO", "RUT", "RAZON SOCIAL", "GIRO", "DIRECCION",
             "DOMICILIO", "COMUNA", "CIUDAD", "TELEFONO", "FONO", "CELULAR",
             "EMAIL", "CORREO", "FECHA EMISION", "FECHA DE EMISION", "VENCIMIENTO",
+            "FECHA VENCIMIENTO", "FECHA DE VENCIMIENTO", "PAGUE HASTA",
             "FORMA DE PAGO", "CONDICION DE PAGO", "ORDEN DE COMPRA", "GUIA DE DESPACHO",
             "SEÑOR(ES)", "SENOR(ES)", "CLIENTE", "VENDEDOR", "OBSERVACIONES",
             "TIMBRE ELECTRONICO", "SII.CL", "WWW."
     );
 
     private static final List<Pattern> PATRONES_FOLIO = List.of(
-            Pattern.compile("(?im)\\bFOLIO\\s*(?:N(?:RO|ÚMERO)?\\.?|N[°ºo]?)?\\s*[:#-]?\\s*([A-Z0-9-]{2,30})\\b"),
-            Pattern.compile("(?im)\\bFACTURA(?:\\s+ELECTR[ÓO]NICA)?\\s*(?:N(?:RO|ÚMERO)?\\.?|N[°ºo#]?)?\\s*[:#-]?\\s*([0-9]{1,20})\\b"),
-            Pattern.compile("(?im)\\bN[°º]\\s*[:#-]?\\s*([0-9]{1,20})\\b")
+            Pattern.compile("(?imu)\\bFOLIO\\s*(?:N(?:RO|ÚMERO)?\\.?|N[°ºo]?)?\\s*[:#-]?\\s*([A-Z0-9-]{2,30})\\b"),
+            Pattern.compile("(?imu)\\bFACTURA(?:\\s+ELECTR[ÓO]NICA)?\\s*(?:N(?:RO|ÚMERO)?\\.?|N[°ºo#?]?)?\\s*[:#-]?\\s*([0-9]{1,20})\\b"),
+            Pattern.compile("(?imu)\\bN[°º?]\\s*[:#-]?\\s*([0-9]{1,20})\\b")
     );
 
     /** Patrones de fecha de emisión, ordenados desde la etiqueta más específica al fallback "FECHA". */
     private static final List<Pattern> PATRONES_FECHA_EMISION = List.of(
-            Pattern.compile("(?im)^\\s*FECHA\\s+DE\\s+EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
-            Pattern.compile("(?im)^\\s*FECHA\\s+EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
-            Pattern.compile("(?im)^\\s*EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
-            Pattern.compile("(?im)^\\s*FECHA\\s*[:#-]?\\s*(\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b")
+            Pattern.compile("(?imu)^\\s*FECHA\\s+DE\\s+EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
+            Pattern.compile("(?imu)^\\s*FECHA\\s+EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
+            Pattern.compile("(?imu)^\\s*EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
+            Pattern.compile("(?imu)^\\s*FECHA\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b")
     );
 
     private static final List<DateTimeFormatter> FORMATOS_FECHA_EMISION = List.of(
@@ -124,6 +125,27 @@ public class ServicioExtraccionFacturaDigital {
                     .toFormatter()
                     .withResolverStyle(ResolverStyle.STRICT)
     );
+
+    /** Fecha con el mes escrito, por ejemplo "09 de OCTUBRE de 2026". */
+    private static final Pattern PATRON_FECHA_TEXTUAL = Pattern.compile(
+            "(?i)(?<![0-9])([0-3]?[0-9])\\s+DE\\s+(\\p{L}+)\\s+DEL?\\s+((?:19|20)[0-9]{2})(?![0-9])");
+
+    private static final List<String> MESES = List.of(
+            "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO",
+            "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE");
+
+    /**
+     * Unidades de medida de facturas con columna UNIDAD, por ejemplo
+     * "3587 1 PK 3 Estuches Capuccino 1 PACK 7.179 1.077 6.102".
+     */
+    private static final Set<String> UNIDADES = Set.of(
+            "PACK", "PAQ", "PAQUETE", "PQT", "DSPL", "DISPLAY", "DISP", "TARR", "TARRO",
+            "SOBR", "SOBRE", "BARR", "BARRA", "POTE", "UN", "UND", "UNI", "UNID", "UNIDAD",
+            "CAJA", "CJ", "CJA", "BOLSA", "BOL", "KG", "KGS", "LT", "LTS", "BOT", "BOTELLA",
+            "FCO", "FRASCO", "DOC", "DOCENA", "BLIS", "ROLLO");
+
+    /** Lecturas OCR habituales del número 1 en la columna de cantidad. */
+    private static final Pattern PATRON_UNO_OCR = Pattern.compile("(?iu)^(?:[il|!ñ]{1,2}|dl|ay)[.:;,]?$");
 
     private static final Pattern PATRON_TOTAL = Pattern.compile(
             "(?i)\\b(?:MONTO\\s+)?TOTAL(?:\\s+A\\s+PAGAR)?\\b");
@@ -340,6 +362,17 @@ public class ServicioExtraccionFacturaDigital {
     private LocalDate parsearFechaEmision(String valor) {
         if (valor == null || valor.isBlank()) return null;
         String fecha = valor.trim();
+        Matcher textual = PATRON_FECHA_TEXTUAL.matcher(fecha);
+        if (textual.matches()) {
+            String nombreMes = normalizarComparacion(textual.group(2));
+            int mes = "SETIEMBRE".equals(nombreMes) ? 9 : MESES.indexOf(nombreMes) + 1;
+            if (mes <= 0) return null;
+            try {
+                return LocalDate.of(Integer.parseInt(textual.group(3)), mes, Integer.parseInt(textual.group(1)));
+            } catch (java.time.DateTimeException ex) {
+                return null;
+            }
+        }
         for (DateTimeFormatter formato : FORMATOS_FECHA_EMISION) {
             try {
                 return LocalDate.parse(fecha, formato);
@@ -425,6 +458,14 @@ public class ServicioExtraccionFacturaDigital {
             String[] tokens = linea.split(" ");
             if (tokens.length < 2) continue;
 
+            if (seccionDetalleDetectada) {
+                ItemFacturaExtraido conUnidad = parsearFilaConUnidad(linea, tokens);
+                if (conUnidad != null) {
+                    resultado.add(conUnidad);
+                    continue;
+                }
+            }
+
             int indiceCodigo = detectarIndiceCodigo(tokens);
             if (indiceCodigo < 0) continue;
 
@@ -500,6 +541,108 @@ public class ServicioExtraccionFacturaDigital {
         return deduplicarItems(resultado);
     }
 
+    /**
+     * Fila con columna de unidad de medida: CODIGO DETALLE CANTIDAD UNIDAD
+     * VALOR_UNITARIO [DESCUENTO] VALOR. Muchos proveedores imprimen el código
+     * con un sufijo separado, como "3587 1" o "2086 0", y el OCR a veces lo
+     * lee junto, como "2120" para "212 0". Para que la equivalencia sea
+     * estable, el código se guarda siempre sin espacios: "35871", "20860".
+     * Devuelve null si la fila no tiene esa estructura, y se usa el parser general.
+     */
+    private ItemFacturaExtraido parsearFilaConUnidad(String linea, String[] tokens) {
+        if (tokens.length < 5) return null;
+
+        // Última unidad de medida seguida solo de montos.
+        int indiceUnidad = -1;
+        for (int i = tokens.length - 2; i >= 2; i--) {
+            String candidato = limpiarCodigo(tokens[i]);
+            if (candidato == null) continue;
+            candidato = candidato.replaceAll("\\.+$", "");
+            if (!UNIDADES.contains(normalizarComparacion(candidato))) continue;
+            boolean soloMontos = true;
+            for (int j = i + 1; j < tokens.length; j++) {
+                if (convertirNumero(tokens[j], j) == null) {
+                    soloMontos = false;
+                    break;
+                }
+            }
+            if (soloMontos) {
+                indiceUnidad = i;
+                break;
+            }
+        }
+        if (indiceUnidad < 0) return null;
+
+        // Si después de la "unidad" vienen cantidad, precio y subtotal, la palabra
+        // es parte de la descripción, como en "Arroz 1 kg 30 1.190 35.700".
+        if (detectarTripleCantidadPrecioSubtotal(detectarNumeros(tokens, indiceUnidad + 1)) != null) return null;
+
+        // Cantidad: token anterior a la unidad, aceptando lecturas OCR del 1.
+        String tokenCantidad = tokens[indiceUnidad - 1];
+        NumeroToken numeroCantidad = convertirNumero(tokenCantidad, indiceUnidad - 1);
+        int cantidad;
+        int finDescripcion = indiceUnidad - 1;
+        boolean cantidadAntesDeUnidad = true;
+        String sinPuntuacion = tokenCantidad.replaceAll("[^\\p{L}\\p{N}]", "");
+        if (esCantidadPlausible(numeroCantidad)) {
+            cantidad = (int) numeroCantidad.valor();
+        } else if (PATRON_UNO_OCR.matcher(tokenCantidad).matches()
+                || (sinPuntuacion.length() <= 2 && !sinPuntuacion.matches("\\d+"))) {
+            // Símbolo corto ilegible en la columna de cantidad: el OCR suele leer así el 1.
+            cantidad = 1;
+        } else if (tokens[1].matches("\\d{1,3}") && tokens[2].matches(".*\\p{L}.*")) {
+            // Formato CODIGO CANTIDAD DESCRIPCION UNIDAD PRECIO...: la cantidad va después del código.
+            cantidad = Integer.parseInt(tokens[1]);
+            if (cantidad <= 0) return null;
+            finDescripcion = indiceUnidad;
+            cantidadAntesDeUnidad = false;
+        } else {
+            return null;
+        }
+
+        // Código: número inicial más su sufijo numérico separado, o un código alfanumérico.
+        String codigo;
+        int inicioDescripcion;
+        String primero = limpiarCodigo(tokens[0]);
+        if (primero != null && primero.matches("\\d{2,15}")) {
+            if (!cantidadAntesDeUnidad) {
+                codigo = primero;
+                inicioDescripcion = 2;
+            } else if (tokens[1].matches("\\d{1,3}") && 2 < finDescripcion && tokens[2].matches(".*\\p{L}.*")) {
+                codigo = primero + tokens[1];
+                inicioDescripcion = 2;
+            } else {
+                codigo = primero;
+                inicioDescripcion = 1;
+            }
+        } else if (primero != null && esCodigoProductoFuerte(primero)) {
+            codigo = primero;
+            inicioDescripcion = 1;
+        } else {
+            return null;
+        }
+        if (!esCodigoPlausible(codigo) || inicioDescripcion >= finDescripcion) return null;
+        if (esLineaMetadata(linea, codigo, false)) return null;
+
+        StringBuilder descripcion = new StringBuilder();
+        for (int i = inicioDescripcion; i < finDescripcion; i++) {
+            if (descripcion.length() > 0) descripcion.append(' ');
+            descripcion.append(tokens[i]);
+        }
+        String textoDescripcion = descripcion.toString().replaceAll("[:;,]+$", "").trim();
+        if (textoDescripcion.isBlank()) return null;
+
+        NumeroToken precio = convertirNumero(tokens[indiceUnidad + 1], indiceUnidad + 1);
+        int precioUnitario = precio != null && precio.valor() <= Integer.MAX_VALUE ? (int) precio.valor() : 0;
+
+        return new ItemFacturaExtraido(
+                codigo,
+                textoDescripcion,
+                cantidad,
+                precioUnitario,
+                EstadoItemFactura.OBSERVADO.valorDb());
+    }
+
     private int encontrarCabeceraDetalle(List<String> lineas) {
         for (int i = 0; i < lineas.size(); i++) {
             if (esCabeceraDetalle(lineas.get(i))) return i;
@@ -510,6 +653,9 @@ public class ServicioExtraccionFacturaDigital {
     private boolean esCabeceraDetalle(String linea) {
         String normalizada = normalizarComparacion(linea);
         if (normalizada.isBlank()) return false;
+        // Una cabecera nunca comienza con un código que tenga dígitos; así una fila como
+        // "ABC-99 Producto con cantidad ilegible" no se confunde con la cabecera.
+        if (normalizada.split(" ")[0].matches(".*[0-9].*")) return false;
 
         int coincidencias = 0;
         boolean identificador = false;
@@ -555,7 +701,8 @@ public class ServicioExtraccionFacturaDigital {
             if (normalizada.equals(p)
                     || normalizada.startsWith(p + " ")
                     || normalizada.startsWith(p + ":")
-                    || normalizada.startsWith(p + "-")) {
+                    || normalizada.startsWith(p + "-")
+                    || normalizada.startsWith(p + ";")) {
                 return true;
             }
         }
@@ -574,6 +721,7 @@ public class ServicioExtraccionFacturaDigital {
         // fuerte puede contener una fecha (por ejemplo lote/vencimiento), por eso
         // solo se descarta automáticamente cuando no hay identidad de producto.
         if (!codigoFuerte && PATRON_FECHA.matcher(linea).find()) return true;
+        if (!codigoFuerte && PATRON_FECHA_TEXTUAL.matcher(linea).find()) return true;
 
         return false;
     }
