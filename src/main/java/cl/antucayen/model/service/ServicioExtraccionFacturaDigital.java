@@ -31,7 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Extracción local de datos de una factura desde PDF/JPG/PNG.
+ * Extracción local de datos de una factura desde PDF.
  *
  * <p>El servicio intenta primero aprovechar texto embebido en PDFs y usa OCR
  * cuando el documento es una imagen o cuando el texto embebido no entrega una

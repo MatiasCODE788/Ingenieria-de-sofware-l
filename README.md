@@ -100,7 +100,7 @@ Disponible para Administrador y Bodeguero.
 
 Disponible para Administrador y Bodeguero.
 
-- Registro con ingreso manual de ítems o desde un archivo digital (PDF, JPG, JPEG o PNG, máximo 10 MB), con vista previa y extracción de ítems. En los PDF se intenta primero el texto embebido y, si no se obtienen ítems, se aplica OCR página por página.
+- Registro con ingreso manual de ítems o desde un archivo digital (PDF máximo 10 MB), con vista previa y extracción de ítems. En los PDF se intenta primero el texto embebido y, si no se obtienen ítems, se aplica OCR página por página.
 - Control de duplicados por proveedor y número de factura.
 - Resolución automática del SKU de cada ítem mediante las equivalencias del proveedor. Cada ítem queda `Válido`, `Observado` o `No Procesado`, y la factura `Pendiente`, `Observada` o `Procesada`.
 - Procesamiento: ingresa al stock los ítems válidos, una sola vez por ítem, y permite reprocesar la factura después de corregir sus equivalencias. La corrección manual de la equivalencia de un ítem observado está reservada al Administrador.
@@ -511,7 +511,7 @@ El Administrador puede anular una venta haciendo doble clic sobre una venta «Pa
 1. Verifica que el proveedor exista y que tenga registradas las equivalencias de sus códigos: **Proveedores** → doble clic sobre el proveedor → «Equivalencias de códigos».
 2. Abre **Facturas** → «+ Nueva factura» (o **Procesar factura** en el menú) y completa proveedor, N° de factura, valor total, fecha de emisión y modalidad:
    - **Ingreso manual:** agrega cada ítem con «+ Agregar ítem» e indica código del proveedor, descripción y cantidad.
-   - **Archivo digital (PDF/JPG/PNG):** elige el archivo con «Seleccionar», revísalo con «Vista previa» y usa «Extraer ítems». Las líneas que no se pueden leer quedan como `No Procesado` y la grilla se puede corregir a mano.
+   - **Archivo digital (PDF):** elige el archivo con «Seleccionar», revísalo con «Vista previa» y usa «Extraer ítems». Las líneas que no se pueden leer quedan como `No Procesado` y la grilla se puede corregir a mano.
 3. Presiona «Guardar factura». El sistema resuelve los SKU con las equivalencias y muestra un resumen. En este paso no se modifica el stock.
 4. En el listado, haz doble clic sobre la factura y elige «Procesar Ítems». Al abrir esa ventana se ingresan al stock los ítems válidos; la factura queda `Procesada` si todos lo son, u `Observada` si quedan ítems pendientes.
 5. Para los ítems observados, el Administrador puede usar «Corregir equivalencia (Admin)» y luego «Reprocesar».
