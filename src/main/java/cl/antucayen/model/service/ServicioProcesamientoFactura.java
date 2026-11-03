@@ -329,6 +329,19 @@ public class ServicioProcesamientoFactura {
 
         for (ItemFactura item : items) {
 
+            // Sin cantidad, por ejemplo una fila ilegible o con cantidad
+            // fraccionaria que no se completó, el ítem no puede ingresar stock.
+            if (item.getCantidadFacturada() <= 0) {
+                resoluciones.add(
+                        new ResolucionItem(
+                                item,
+                                null,
+                                EstadoItemFactura.NO_PROCESADO.valorDb()
+                        )
+                );
+                continue;
+            }
+
             String codigo =
                     item.getCodigoInternoProveedor();
 

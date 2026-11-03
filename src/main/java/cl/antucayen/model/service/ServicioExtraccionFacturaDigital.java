@@ -3,18 +3,21 @@ package cl.antucayen.model.service;
 import cl.antucayen.model.domain.EstadoItemFactura;
 import cl.antucayen.model.dto.ItemFacturaExtraido;
 
+import net.sourceforge.tess4j.ITessAPI;
 import net.sourceforge.tess4j.Tesseract;
-import net.sourceforge.tess4j.TesseractException;
+import net.sourceforge.tess4j.Word;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 
-import javax.imageio.ImageIO;
 
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -31,7 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Extracción local de datos de una factura desde PDF.
+ * Extracción local de datos de una factura desde PDF/JPG/PNG.
  *
  * <p>El servicio intenta primero aprovechar texto embebido en PDFs y usa OCR
  * cuando el documento es una imagen o cuando el texto embebido no entrega una
@@ -55,7 +58,11 @@ public class ServicioExtraccionFacturaDigital {
         }
     }
 
-    private record NumeroToken(int indice, long valor, boolean entero) {
+    /** valor: parte entera; exacto: con decimales, por ejemplo 0,6 o 47.723,33. */
+    private record NumeroToken(int indice, long valor, boolean entero, double exacto) {
+        NumeroToken(int indice, long valor, boolean entero) {
+            this(indice, valor, entero, valor);
+        }
     }
 
     private record TriplePrecio(NumeroToken cantidad,
@@ -88,19 +95,28 @@ public class ServicioExtraccionFacturaDigital {
             "TIMBRE ELECTRONICO", "SII.CL", "WWW."
     );
 
+    /**
+     * El folio siempre tiene dígitos: así «FOLIO REFERENCIA» de la orden de
+     * compra no se toma como número de factura. Primero se busca el número
+     * junto a FACTURA, luego «NRO:» o «N°» y al final «FOLIO».
+     */
     private static final List<Pattern> PATRONES_FOLIO = List.of(
-            Pattern.compile("(?imu)\\bFOLIO\\s*(?:N(?:RO|ÚMERO)?\\.?|N[°ºo]?)?\\s*[:#-]?\\s*([A-Z0-9-]{2,30})\\b"),
-            Pattern.compile("(?imu)\\bFACTURA(?:\\s+ELECTR[ÓO]NICA)?\\s*(?:N(?:RO|ÚMERO)?\\.?|N[°ºo#?]?)?\\s*[:#-]?\\s*([0-9]{1,20})\\b"),
-            Pattern.compile("(?imu)\\bN[°º?]\\s*[:#-]?\\s*([0-9]{1,20})\\b")
+            Pattern.compile("(?imu)\\bFACTURA(?:\\s+ELECTR[ÓO]NICA)?\\s*(?:N(?:RO|ÚMERO)?\\.?|N[°ºo#?'’*]?)?\\s*[:#-]?\\s*([0-9]{1,20})\\b"),
+            Pattern.compile("(?imu)\\bN(?:RO|ÚMERO|UMERO)\\.?\\s*[:#-]?\\s*([0-9]{3,20})\\b"),
+            Pattern.compile("(?imu)\\bN[°º?'’*]\\s*[:#-]?\\s*([0-9]{1,20})\\b"),
+            Pattern.compile("(?imu)\\bFOLIO\\s*(?:N(?:RO|ÚMERO)?\\.?|N[°ºo]?)?\\s*[:#-]?\\s*([A-Z0-9-]*[0-9][A-Z0-9-]*)\\b")
     );
 
     /** Patrones de fecha de emisión, ordenados desde la etiqueta más específica al fallback "FECHA". */
     private static final List<Pattern> PATRONES_FECHA_EMISION = List.of(
-            Pattern.compile("(?imu)^\\s*FECHA\\s+DE\\s+EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
-            Pattern.compile("(?imu)^\\s*FECHA\\s+EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
+            Pattern.compile("(?imu)\\bFECHA\\s+DE\\s+EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
+            Pattern.compile("(?imu)\\bFECHA\\s+EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
             Pattern.compile("(?imu)^\\s*EMISI[ÓO]N\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b"),
             Pattern.compile("(?imu)^\\s*FECHA\\s*[:#-]?\\s*(\\d{1,2}\\s+DE\\s+\\p{L}+\\s+DEL?\\s+\\d{4}|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\d{4}[./-]\\d{1,2}[./-]\\d{1,2})\\b")
     );
+
+    private static final Pattern PATRON_ETIQUETA_EMISION = Pattern.compile("(?iu)\\bFECHA\\s+(?:DE\\s+)?EMISI[ÓO]N");
+    private static final Pattern PATRON_FECHA_SUELTA = Pattern.compile("\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}");
 
     private static final List<DateTimeFormatter> FORMATOS_FECHA_EMISION = List.of(
             DateTimeFormatter.ofPattern("d-M-uuuu").withResolverStyle(ResolverStyle.STRICT),
@@ -163,6 +179,11 @@ public class ServicioExtraccionFacturaDigital {
                     + "TOTAL A PAGAR|MONTO TOTAL|TOTAL EXENTO|EXENTO|DESCUENTO|RECARGO)"
                     + "(?:\\s|:|\\$|$).*");
 
+    /** Pie de la factura: monto en palabras, total de unidades, timbre y leyendas. */
+    private static final Pattern PATRON_FIN_DETALLE = Pattern.compile(
+            "^(?:SON\\s*:|TOTAL(?:\\s|:|\\$|$)|TOTAL UNIDADES|VALOR NETO|TIMBRE|ESTIMADO CLIENTE|"
+                    + "VERIFIQUE|ESTA FACTURA|RES\\.?\\s+\\d)");
+
     private static final Pattern PATRON_PERSONA_JURIDICA = Pattern.compile(
             "(?i)\\b(?:LTDA\\.?|LIMITADA|S\\.?P\\.?A\\.?|SPA|S\\.?A\\.?|SOCIEDAD|"
                     + "COMERCIAL|DISTRIBUIDORA|IMPORTADORA|EXPORTADORA|EMPRESA)\\b");
@@ -184,14 +205,19 @@ public class ServicioExtraccionFacturaDigital {
     public ResultadoExtraccion analizar(File archivo) throws IOException {
         archivos.validar(archivo);
         String ext = extension(archivo.getName());
-        String texto;
+        ResultadoExtraccion resultado;
         if ("pdf".equals(ext)) {
-            texto = extraerMejorTextoPdf(archivo);
+            resultado = analizarPdf(archivo);
         } else {
-            texto = ejecutarOcr(archivo);
+            BufferedImage imagen = PreprocesadorImagenFactura.leer(archivo);
+            Tesseract motor = crearTesseract();
+            try {
+                resultado = analizarImagen(imagen, motor);
+            } catch (Error ex) {
+                throw errorNativoOcr(ex);
+            }
         }
 
-        ResultadoExtraccion resultado = analizarTexto(texto);
         if (resultado.items().isEmpty()) {
             List<ItemFacturaExtraido> placeholder = List.of(new ItemFacturaExtraido(
                     null,
@@ -211,10 +237,14 @@ public class ServicioExtraccionFacturaDigital {
 
     /** Visible para pruebas unitarias del parser sin depender de OCR/Tesseract. */
     ResultadoExtraccion analizarTexto(String texto) {
+        return analizarTexto(texto, false);
+    }
+
+    ResultadoExtraccion analizarTexto(String texto, boolean desdeOcr) {
         String numero = extraerNumeroFactura(texto);
         LocalDate fechaEmision = extraerFechaEmision(texto);
         Integer total = extraerValorTotal(texto);
-        List<ItemFacturaExtraido> items = parsearLineas(texto);
+        List<ItemFacturaExtraido> items = parsearLineas(texto, desdeOcr);
         return new ResultadoExtraccion(numero, fechaEmision, total, items, texto);
     }
 
@@ -229,19 +259,16 @@ public class ServicioExtraccionFacturaDigital {
                 return new PDFRenderer(doc).renderImageWithDPI(0, 120);
             }
         }
-        BufferedImage imagen = ImageIO.read(archivo);
-        if (imagen == null) {
-            throw new IOException("No se pudo interpretar la imagen seleccionada");
-        }
-        return imagen;
+        return PreprocesadorImagenFactura.leer(archivo);
     }
 
     /**
      * Para PDF con texto embebido se evita OCR innecesario. Si el texto
-     * embebido es pobre, se ejecuta OCR y se elige la fuente que produjo más
-     * información útil (ítems + folio + fecha de emisión + total).
+     * embebido es pobre, por ejemplo en un PDF escaneado, cada página se lee
+     * como imagen y se elige la fuente que produjo más información útil
+     * (ítems + folio + fecha de emisión + total).
      */
-    private String extraerMejorTextoPdf(File archivo) throws IOException {
+    private ResultadoExtraccion analizarPdf(File archivo) throws IOException {
         try (PDDocument doc = Loader.loadPDF(archivo)) {
             String embebido = new PDFTextStripper().getText(doc);
             ResultadoExtraccion resultadoEmbebido = analizarTexto(embebido);
@@ -252,30 +279,177 @@ public class ServicioExtraccionFacturaDigital {
                     || resultadoEmbebido.valorTotal() != null);
 
             if (textoSuficiente && datosSuficientes) {
-                return embebido;
+                return resultadoEmbebido;
             }
 
             PDFRenderer renderer = new PDFRenderer(doc);
-            StringBuilder ocr = new StringBuilder();
-            Tesseract motor = crearTesseract();
+            boolean hayEmbebido = embebido != null && !embebido.isBlank();
+            Tesseract motor;
+            try {
+                motor = crearTesseract();
+            } catch (IOException ex) {
+                if (hayEmbebido) return resultadoEmbebido;
+                throw ex;
+            }
+            List<ResultadoExtraccion> paginas = new ArrayList<>();
             for (int i = 0; i < doc.getNumberOfPages(); i++) {
                 BufferedImage pagina = renderer.renderImageWithDPI(i, 220);
                 try {
-                    ocr.append(motor.doOCR(pagina)).append('\n');
-                } catch (TesseractException ex) {
-                    if (embebido != null && !embebido.isBlank()) {
-                        return embebido;
+                    paginas.add(analizarImagen(pagina, motor));
+                } catch (Error ex) {
+                    if (hayEmbebido && !(ex instanceof VirtualMachineError)) {
+                        return resultadoEmbebido;
                     }
-                    throw new IOException("No fue posible aplicar OCR al PDF: " + ex.getMessage(), ex);
+                    throw errorNativoOcr(ex);
                 }
             }
 
-            String textoOcr = ocr.toString();
-            ResultadoExtraccion resultadoOcr = analizarTexto(textoOcr);
-            return puntaje(resultadoOcr, textoOcr) > puntaje(resultadoEmbebido, embebido)
-                    ? textoOcr
-                    : embebido;
+            ResultadoExtraccion resultadoOcr = unirPaginas(paginas);
+            return puntaje(resultadoOcr, resultadoOcr.textoExtraido()) > puntaje(resultadoEmbebido, embebido)
+                    ? resultadoOcr
+                    : resultadoEmbebido;
         }
+    }
+
+    private ResultadoExtraccion unirPaginas(List<ResultadoExtraccion> paginas) {
+        String numero = null;
+        LocalDate fecha = null;
+        Integer total = null;
+        List<ItemFacturaExtraido> items = new ArrayList<>();
+        StringBuilder texto = new StringBuilder();
+        for (ResultadoExtraccion pagina : paginas) {
+            if (numero == null) numero = pagina.numeroFactura();
+            if (fecha == null) fecha = pagina.fechaEmision();
+            if (pagina.valorTotal() != null) total = pagina.valorTotal();
+            items.addAll(pagina.items());
+            texto.append(pagina.textoExtraido()).append('\n');
+        }
+        return new ResultadoExtraccion(numero, fecha, total, items, texto.toString());
+    }
+
+    /** Palabras reconocidas en una lectura OCR y el texto armado con ellas, línea por línea. */
+    private record LecturaOcr(List<ReconstructorTablaFactura.Palabra> palabras, String texto) {
+    }
+
+    /**
+     * Lee una foto o una página escaneada. Primero se hace una lectura de texto
+     * disperso, que reconoce mejor los números sueltos de cada columna; si la
+     * tabla no queda completa se hace una segunda lectura por líneas y se usa
+     * la que cuadre más filas. El detalle se arma con la posición de cada
+     * palabra (ReconstructorTablaFactura), no con el orden de las líneas,
+     * porque en una foto inclinada una fila de montos queda a la altura de la
+     * fila vecina. Si la tabla no se puede reconstruir, se usa el texto.
+     */
+    private ResultadoExtraccion analizarImagen(BufferedImage imagen, Tesseract motor) {
+        BufferedImage preparada = PreprocesadorImagenFactura.preparar(imagen);
+        LecturaOcr dispersa = leerPalabras(motor, preparada, 11);
+        ReconstructorTablaFactura.Resultado tabla = ReconstructorTablaFactura.reconstruir(dispersa.palabras());
+        LecturaOcr porLineas = null;
+        if (!tablaCompleta(tabla)) {
+            porLineas = leerPalabras(motor, preparada, 6);
+            ReconstructorTablaFactura.Resultado otra = ReconstructorTablaFactura.reconstruir(porLineas.palabras());
+            if (otra.filasVerificadas() > tabla.filasVerificadas()
+                    || (otra.filasVerificadas() == tabla.filasVerificadas() && otra.items().size() > tabla.items().size())) {
+                tabla = otra;
+            }
+        }
+
+        String texto = porLineas != null ? porLineas.texto() : dispersa.texto();
+        ResultadoExtraccion porTexto = analizarTexto(texto, true);
+        boolean faltanDatos = porTexto.numeroFactura() == null || porTexto.fechaEmision() == null
+                || porTexto.valorTotal() == null;
+        if (faltanDatos && porLineas == null) {
+            // La lectura por líneas suele recuperar el folio, la fecha o el total.
+            porLineas = leerPalabras(motor, preparada, 6);
+            ResultadoExtraccion otra = analizarTexto(porLineas.texto(), true);
+            porTexto = new ResultadoExtraccion(
+                    porTexto.numeroFactura() != null ? porTexto.numeroFactura() : otra.numeroFactura(),
+                    porTexto.fechaEmision() != null ? porTexto.fechaEmision() : otra.fechaEmision(),
+                    porTexto.valorTotal() != null ? porTexto.valorTotal() : otra.valorTotal(),
+                    porTexto.items(), texto + "\n" + porLineas.texto());
+            texto = porTexto.textoExtraido();
+        }
+        if (!tabla.confiable()) return porTexto;
+
+        List<ItemFacturaExtraido> items = marcarPorRevisar(tabla, extraerValorNeto(texto));
+        return new ResultadoExtraccion(porTexto.numeroFactura(), porTexto.fechaEmision(),
+                porTexto.valorTotal(), items, texto);
+    }
+
+    private static boolean tablaCompleta(ReconstructorTablaFactura.Resultado tabla) {
+        return tabla.confiable() && tabla.filasVerificadas() * 10 >= tabla.items().size() * 8;
+    }
+
+    /**
+     * Una fila que no cuadra con cantidad × precio = subtotal se marca para
+     * revisar, salvo que la suma de todas coincida con el neto de la factura.
+     */
+    static List<ItemFacturaExtraido> marcarPorRevisar(ReconstructorTablaFactura.Resultado tabla, Integer neto) {
+        boolean sumaCuadra = neto != null
+                && Math.abs(tabla.sumaSubtotales() - neto) <= Math.max(2, 0.002 * neto);
+        List<ItemFacturaExtraido> items = new ArrayList<>();
+        for (int i = 0; i < tabla.items().size(); i++) {
+            ItemFacturaExtraido item = tabla.items().get(i);
+            boolean verificada = i < tabla.verificadas().size() && tabla.verificadas().get(i);
+            if (sumaCuadra || verificada || !EstadoItemFactura.OBSERVADO.coincide(item.estado())) {
+                items.add(item);
+                continue;
+            }
+            String descripcion = item.descripcion() == null || item.descripcion().isBlank()
+                    ? "revisar cantidad y precio en la factura"
+                    : item.descripcion() + " · revisar cantidad y precio en la factura";
+            items.add(new ItemFacturaExtraido(item.codigoInterno(), descripcion,
+                    item.cantidad(), item.precioUnitario(), item.estado()));
+        }
+        return items;
+    }
+
+    private LecturaOcr leerPalabras(Tesseract motor, BufferedImage imagen, int modo) {
+        motor.setPageSegMode(modo);
+        List<Word> reconocidas = motor.getWords(imagen, ITessAPI.TessPageIteratorLevel.RIL_WORD);
+        List<ReconstructorTablaFactura.Palabra> palabras = new ArrayList<>();
+        if (reconocidas != null) {
+            for (Word w : reconocidas) {
+                String texto = w.getText() == null ? "" : w.getText().trim();
+                Rectangle caja = w.getBoundingBox();
+                if (texto.isEmpty() || caja == null) continue;
+                palabras.add(new ReconstructorTablaFactura.Palabra(texto, caja.x, caja.y, caja.width, caja.height));
+            }
+        }
+        return new LecturaOcr(palabras, lineasDesdePalabras(palabras));
+    }
+
+    /** Agrupa las palabras por altura, de izquierda a derecha, para leer folio, fecha y totales. */
+    static String lineasDesdePalabras(List<ReconstructorTablaFactura.Palabra> palabras) {
+        if (palabras.isEmpty()) return "";
+        List<ReconstructorTablaFactura.Palabra> ordenadas = new ArrayList<>(palabras);
+        ordenadas.sort(Comparator.comparingDouble(ReconstructorTablaFactura.Palabra::centroY));
+        double[] altos = ordenadas.stream().mapToDouble(ReconstructorTablaFactura.Palabra::alto).sorted().toArray();
+        double alto = Math.max(1, altos[altos.length / 2]);
+
+        StringBuilder texto = new StringBuilder();
+        List<ReconstructorTablaFactura.Palabra> linea = new ArrayList<>();
+        double centro = 0;
+        for (ReconstructorTablaFactura.Palabra p : ordenadas) {
+            if (!linea.isEmpty() && Math.abs(p.centroY() - centro) > 0.5 * alto) {
+                agregarLinea(texto, linea);
+                linea.clear();
+            }
+            linea.add(p);
+            centro = linea.stream().mapToDouble(ReconstructorTablaFactura.Palabra::centroY).average().orElse(p.centroY());
+        }
+        agregarLinea(texto, linea);
+        return texto.toString();
+    }
+
+    private static void agregarLinea(StringBuilder texto, List<ReconstructorTablaFactura.Palabra> linea) {
+        if (linea.isEmpty()) return;
+        linea.sort(Comparator.comparingInt(ReconstructorTablaFactura.Palabra::x));
+        for (int i = 0; i < linea.size(); i++) {
+            if (i > 0) texto.append(' ');
+            texto.append(linea.get(i).texto());
+        }
+        texto.append('\n');
     }
 
     private int puntaje(ResultadoExtraccion resultado, String texto) {
@@ -287,24 +461,54 @@ public class ServicioExtraccionFacturaDigital {
         return puntaje;
     }
 
-    private String ejecutarOcr(File archivo) throws IOException {
-        try {
-            return crearTesseract().doOCR(archivo);
-        } catch (TesseractException ex) {
-            throw new IOException(
-                    "No fue posible leer la imagen con OCR. Verifica la configuración de Tesseract/tessdata: "
-                            + ex.getMessage(), ex);
+    /**
+     * Traduce los errores de la librería nativa de Tesseract a un mensaje que el
+     * usuario pueda resolver. JNA informa con java.lang.Error, por ejemplo
+     * "Invalid memory access" cuando faltan los datos de idioma.
+     */
+    private IOException errorNativoOcr(Error ex) {
+        if (ex instanceof VirtualMachineError grave) {
+            throw grave;
         }
+        if (ex instanceof LinkageError) {
+            return new IOException("No se pudo cargar el motor OCR (Tesseract): " + ex.getMessage()
+                    + ". En Windows, instala «Microsoft Visual C++ Redistributable 2015-2022 (x64)» "
+                    + "o ingresa los ítems manualmente.", ex);
+        }
+        return new IOException("El motor OCR falló al leer el archivo: " + ex.getMessage()
+                + ". Revisa que la carpeta tessdata contenga el idioma configurado "
+                + "o ingresa los ítems manualmente.", ex);
     }
 
-    private Tesseract crearTesseract() {
-        Tesseract tesseract = new Tesseract();
-        String datapath = System.getenv("ANTUCAYEN_TESSDATA");
-        if (datapath != null && !datapath.isBlank()) {
-            tesseract.setDatapath(datapath.trim());
+    /**
+     * Crea el motor OCR. La carpeta de idiomas se busca en este orden: variable
+     * ANTUCAYEN_TESSDATA, propiedad -Dantucayen.tessdata (la usa la aplicación
+     * instalada), TESSDATA_PREFIX y carpetas «tessdata» junto a la aplicación o
+     * en el directorio de trabajo. El idioma es ANTUCAYEN_OCR_LANG,
+     * -Dantucayen.ocr.lang o, si no se indica, «spa» cuando está disponible.
+     */
+    private Tesseract crearTesseract() throws IOException {
+        Path datapath = resolverCarpetaTessdata();
+        if (datapath == null) {
+            throw new IOException("No se encontraron los datos de idioma del OCR (carpeta tessdata). "
+                    + "Instala la aplicación con su carpeta tessdata o define ANTUCAYEN_TESSDATA; "
+                    + "mientras tanto puedes ingresar los ítems manualmente.");
         }
-        String idioma = System.getenv("ANTUCAYEN_OCR_LANG");
-        tesseract.setLanguage(idioma == null || idioma.isBlank() ? "eng" : idioma.trim());
+        String idioma = resolverIdiomaOcr(datapath);
+        for (String parte : idioma.split("\\+")) {
+            Path modelo = datapath.resolve(parte.trim() + ".traineddata");
+            if (!Files.isRegularFile(modelo)) {
+                throw new IOException("Falta el archivo de idioma " + modelo
+                        + ". Copia " + parte.trim() + ".traineddata en esa carpeta "
+                        + "o ingresa los ítems manualmente.");
+            }
+        }
+
+        Tesseract tesseract = new Tesseract();
+        tesseract.setDatapath(datapath.toString());
+        tesseract.setLanguage(idioma);
+        // Las fotos no traen resolución; sin este dato Tesseract supone 70 ppp.
+        tesseract.setVariable("user_defined_dpi", "300");
 
         int psm = 3; // automático: más tolerante con tablas/documentos que PSM 6.
         String psmEntorno = System.getenv("ANTUCAYEN_OCR_PSM");
@@ -317,6 +521,90 @@ public class ServicioExtraccionFacturaDigital {
         }
         tesseract.setPageSegMode(psm);
         return tesseract;
+    }
+
+    /** Carpeta tessdata según la configuración del equipo y la ubicación de la aplicación. */
+    static Path resolverCarpetaTessdata() {
+        List<Path> candidatos = new ArrayList<>();
+        String prefijo = System.getenv("TESSDATA_PREFIX");
+        agregarRuta(candidatos, prefijo);
+        if (prefijo != null && !prefijo.isBlank()) {
+            agregarRuta(candidatos, prefijo.trim() + java.io.File.separator + "tessdata");
+        }
+        String lanzador = System.getProperty("jpackage.app-path");
+        if (lanzador != null && !lanzador.isBlank()) {
+            Path base = rutaSegura(lanzador);
+            if (base != null && base.getParent() != null) {
+                candidatos.add(base.getParent().resolve("app").resolve("tessdata"));
+                candidatos.add(base.getParent().resolve("tessdata"));
+            }
+        }
+        try {
+            Path ubicacion = Path.of(ServicioExtraccionFacturaDigital.class
+                    .getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (ubicacion.getParent() != null) {
+                candidatos.add(ubicacion.getParent().resolve("tessdata"));
+            }
+        } catch (Exception ignored) {
+            // Sin ubicación conocida del JAR se usan las demás alternativas.
+        }
+        String trabajo = System.getProperty("user.dir");
+        if (trabajo != null && !trabajo.isBlank()) {
+            Path directorio = rutaSegura(trabajo.trim());
+            if (directorio != null) candidatos.add(directorio.resolve("tessdata"));
+        }
+        return elegirCarpetaTessdata(System.getenv("ANTUCAYEN_TESSDATA"),
+                System.getProperty("antucayen.tessdata"), candidatos);
+    }
+
+    /**
+     * Una ruta configurada explícitamente se respeta aunque no exista, para que el
+     * error indique esa ruta; entre las ubicaciones automáticas se usa la primera
+     * carpeta existente.
+     */
+    static Path elegirCarpetaTessdata(String variableEntorno, String propiedad, List<Path> candidatos) {
+        for (String explicita : new String[]{variableEntorno, propiedad}) {
+            if (explicita != null && !explicita.isBlank()) {
+                Path ruta = rutaSegura(explicita.trim());
+                if (ruta != null) return ruta.toAbsolutePath().normalize();
+            }
+        }
+        for (Path candidato : candidatos) {
+            if (candidato != null && Files.isDirectory(candidato)) {
+                return candidato.toAbsolutePath().normalize();
+            }
+        }
+        return null;
+    }
+
+    static String resolverIdiomaOcr(Path datapath) {
+        for (String configurado : new String[]{System.getenv("ANTUCAYEN_OCR_LANG"),
+                System.getProperty("antucayen.ocr.lang")}) {
+            if (configurado != null && !configurado.isBlank()) return configurado.trim();
+        }
+        return idiomaPorDefecto(datapath);
+    }
+
+    /** Las facturas están en español: se usa «spa» si sus datos están instalados. */
+    static String idiomaPorDefecto(Path datapath) {
+        if (datapath != null && Files.isRegularFile(datapath.resolve("spa.traineddata"))) {
+            return "spa";
+        }
+        return "eng";
+    }
+
+    private static void agregarRuta(List<Path> destino, String ruta) {
+        if (ruta == null || ruta.isBlank()) return;
+        Path valor = rutaSegura(ruta.trim());
+        if (valor != null) destino.add(valor);
+    }
+
+    private static Path rutaSegura(String ruta) {
+        try {
+            return Path.of(ruta);
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 
     /** Parser de folio/número de factura. */
@@ -354,6 +642,17 @@ public class ServicioExtraccionFacturaDigital {
                 if (fecha != null) {
                     return fecha;
                 }
+            }
+        }
+        // En una foto la fecha puede quedar unas palabras después de la etiqueta,
+        // o en la línea siguiente; nunca se cruza la etiqueta de vencimiento.
+        Matcher etiqueta = PATRON_ETIQUETA_EMISION.matcher(texto);
+        while (etiqueta.find()) {
+            String siguiente = texto.substring(etiqueta.end(), Math.min(texto.length(), etiqueta.end() + 80));
+            Matcher fecha = PATRON_FECHA_SUELTA.matcher(siguiente);
+            if (fecha.find() && !normalizarComparacion(siguiente.substring(0, fecha.start())).contains("VENC")) {
+                LocalDate valor = parsearFechaEmision(fecha.group());
+                if (valor != null) return valor;
             }
         }
         return null;
@@ -395,6 +694,7 @@ public class ServicioExtraccionFacturaDigital {
             if (linea.isBlank()) continue;
             String normalizada = normalizarComparacion(linea);
             if (normalizada.contains("SUBTOTAL")
+                    || normalizada.contains("UNIDADES")
                     || normalizada.contains("TOTAL NETO")
                     || normalizada.contains("MONTO NETO")
                     || normalizada.matches(".*\\bIVA\\b.*")) {
@@ -413,6 +713,19 @@ public class ServicioExtraccionFacturaDigital {
         return null;
     }
 
+    /** Valor neto o subtotal de la factura, para comprobar la suma de los ítems leídos. */
+    Integer extraerValorNeto(String texto) {
+        if (texto == null || texto.isBlank()) return null;
+        Matcher m = Pattern.compile("(?i)\\b(?:VALOR\\s+NETO|MONTO\\s+NETO|TOTAL\\s+NETO|SUB\\s?TOTAL|NETO)\\b"
+                + "[^0-9\\n]{0,25}((?:[0-9]{1,3}(?:[.\\s][0-9]{3})+|[0-9]{4,12})(?:,[0-9]{1,2})?)").matcher(texto);
+        Integer neto = null;
+        while (m.find()) {
+            Integer monto = parseMontoClp(m.group(1));
+            if (monto != null && monto > 0) neto = monto;
+        }
+        return neto;
+    }
+
     /**
      * Parser de ítems con heurísticas para formatos comunes.
      *
@@ -427,6 +740,16 @@ public class ServicioExtraccionFacturaDigital {
      * </ol>
      */
     List<ItemFacturaExtraido> parsearLineas(String texto) {
+        return parsearLineas(texto, false);
+    }
+
+    /**
+     * desdeOcr: el texto viene de una foto. Si no se reconoce la cabecera del
+     * detalle, solo se acepta una fila cuando cantidad × precio = subtotal; así
+     * el timbre electrónico y los textos del pie, que el OCR lee como letras y
+     * números sueltos, no se convierten en productos.
+     */
+    List<ItemFacturaExtraido> parsearLineas(String texto, boolean desdeOcr) {
         List<ItemFacturaExtraido> resultado = new ArrayList<>();
         if (texto == null || texto.isBlank()) return resultado;
 
@@ -480,6 +803,11 @@ public class ServicioExtraccionFacturaDigital {
             NumeroToken precioUnitario = null;
 
             TriplePrecio triple = detectarTripleCantidadPrecioSubtotal(numeros);
+            if (desdeOcr && !seccionDetalleDetectada && triple == null) continue;
+            if (triple != null && !triple.cantidad().entero()) {
+                resultado.add(itemCantidadFraccionaria(tokens, indiceCodigo, codigo, triple));
+                continue;
+            }
             if (triple != null) {
                 cantidad = triple.cantidad();
                 precioUnitario = triple.precioUnitario();
@@ -539,6 +867,26 @@ public class ServicioExtraccionFacturaDigital {
                     EstadoItemFactura.OBSERVADO.valorDb()));
         }
         return deduplicarItems(resultado);
+    }
+
+    /**
+     * La base de datos guarda cantidades enteras. Una fila como «0,6 × 47.723,33
+     * = 28.634» se conserva con su código y precio, como No Procesado, para que
+     * el usuario indique cuántas unidades recibió.
+     */
+    private ItemFacturaExtraido itemCantidadFraccionaria(String[] tokens, int indiceCodigo,
+                                                         String codigo, TriplePrecio triple) {
+        String descripcion = construirDescripcion(tokens, indiceCodigo,
+                triple.cantidad().indice(), triple.precioUnitario().indice());
+        String cantidad = String.valueOf(triple.cantidad().exacto()).replace('.', ',');
+        String nota = "la factura indica " + cantidad + " unidades, ingresa la cantidad entera";
+        long precio = Math.round(triple.precioUnitario().exacto());
+        return new ItemFacturaExtraido(
+                codigo,
+                descripcion.isBlank() ? nota : descripcion + " · " + nota,
+                0,
+                precio <= Integer.MAX_VALUE ? (int) precio : 0,
+                EstadoItemFactura.NO_PROCESADO.valorDb());
     }
 
     /**
@@ -686,6 +1034,7 @@ public class ServicioExtraccionFacturaDigital {
         String normalizada = normalizarComparacion(linea);
         if (normalizada.isBlank()) return false;
         if (PATRON_RESUMEN_FINANCIERO.matcher(normalizada).matches()) return true;
+        if (PATRON_FIN_DETALLE.matcher(normalizada).find()) return true;
         return normalizada.matches("^[0-9]{1,2}%?\\s+IVA(?:\\s|:|$).*");
     }
 
@@ -824,12 +1173,15 @@ public class ServicioExtraccionFacturaDigital {
             NumeroToken q = numeros.get(i);
             NumeroToken pu = numeros.get(i + 1);
             NumeroToken sub = numeros.get(i + 2);
-            if (!q.entero() || q.valor() <= 0 || q.valor() > 1_000_000) continue;
-            if (pu.valor() <= 0 || sub.valor() <= 0) continue;
+            if (q.exacto() <= 0 || q.exacto() > 1_000_000) continue;
+            if (!q.entero() && q.exacto() > 1000) continue;
+            if (pu.exacto() <= 0 || sub.exacto() <= 0) continue;
 
-            double esperado = (double) q.valor() * (double) pu.valor();
-            double error = Math.abs(esperado - sub.valor()) / Math.max(1d, sub.valor());
-            if (error <= 0.03d || Math.abs(esperado - sub.valor()) <= 2d) {
+            double esperado = q.exacto() * pu.exacto();
+            double error = Math.abs(esperado - sub.exacto()) / Math.max(1d, sub.exacto());
+            // Una cantidad fraccionaria, como 0,6, solo se acepta si cuadra exacto.
+            double tolerancia = q.entero() ? 0.03d : 0.005d;
+            if (error <= tolerancia || Math.abs(esperado - sub.exacto()) <= 2d) {
                 candidatos.add(new TriplePrecio(q, pu, sub, error));
             }
         }
@@ -890,6 +1242,7 @@ public class ServicioExtraccionFacturaDigital {
 
         boolean entero = true;
         String normalizado;
+        String decimales = "";
 
         if (bruto.matches("\\d+")) {
             normalizado = bruto;
@@ -898,20 +1251,25 @@ public class ServicioExtraccionFacturaDigital {
         } else if (bruto.matches("\\d{1,3}(?:\\.\\d{3})+,\\d{1,2}")) {
             normalizado = bruto.substring(0, bruto.lastIndexOf(','))
                     .replace(".", "");
+            decimales = bruto.substring(bruto.lastIndexOf(',') + 1);
         } else if (bruto.matches("\\d{1,3}(?:,\\d{3})+\\.\\d{1,2}")) {
             normalizado = bruto.substring(0, bruto.lastIndexOf('.'))
                     .replace(",", "");
+            decimales = bruto.substring(bruto.lastIndexOf('.') + 1);
         } else if (bruto.matches("\\d+[.,]\\d{1,2}")) {
-            // Decimal típico de unidad/volumen (1.5 L); no sirve como cantidad entera.
+            // Decimal de unidad o volumen (1.5 L) o cantidad fraccionaria (0,6): no es entero.
             entero = false;
-            normalizado = bruto.substring(0, Math.max(bruto.lastIndexOf('.'), bruto.lastIndexOf(',')));
+            int separador = Math.max(bruto.lastIndexOf('.'), bruto.lastIndexOf(','));
+            normalizado = bruto.substring(0, separador);
+            decimales = bruto.substring(separador + 1);
         } else {
             return null;
         }
 
         try {
             long valor = Long.parseLong(normalizado);
-            return new NumeroToken(indice, valor, entero);
+            double exacto = decimales.isEmpty() ? valor : Double.parseDouble(valor + "." + decimales);
+            return new NumeroToken(indice, valor, entero, exacto);
         } catch (NumberFormatException ex) {
             return null;
         }
