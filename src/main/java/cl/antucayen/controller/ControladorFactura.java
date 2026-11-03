@@ -203,8 +203,11 @@ public class ControladorFactura {
         chooser.setDialogTitle("Seleccionar factura digital");
 
         chooser.setFileFilter(new FileNameExtensionFilter(
-                "Facturas PDF",
-                "pdf"
+                "Facturas PDF/JPG/PNG",
+                "pdf",
+                "jpg",
+                "jpeg",
+                "png"
         ));
 
         if (chooser.showOpenDialog(form) != JFileChooser.APPROVE_OPTION) return;
@@ -367,7 +370,7 @@ public class ControladorFactura {
             if (form.esModalidadDigital()) {
                 if (form.getArchivoSeleccionado() == null) {
                     throw new IllegalArgumentException(
-                            "En modalidad digital debes adjuntar un archivo PDF"
+                            "En modalidad digital debes adjuntar un archivo PDF, JPG o PNG"
                     );
                 }
 

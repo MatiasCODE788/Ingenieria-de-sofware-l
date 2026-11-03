@@ -197,6 +197,11 @@ Decisiones de diseño relevantes:
 .
 ├── database/
 │   └── Antucayen_Instalacion_Unica.sql    # Esquema completo y datos de demostración
+├── instalador/                            # Instalador para Windows (ver Despliegue)
+│   ├── Crear instalador.cmd               # Genera el paquete para el minimarket
+│   ├── CrearInstalador.java               # Lógica del generador: Maven + jpackage
+│   ├── nsis/                              # Fuente del asistente «Instalar Antucayen.exe»
+│   └── recursos/                          # Ícono, asistente compilado, idioma OCR y herramientas de BD
 ├── src/
 │   ├── main/
 │   │   ├── java/cl/antucayen/
@@ -332,8 +337,8 @@ Con estos valores la aplicación construye la URL `jdbc:mariadb://<host>:<port>/
 
 | Variable de entorno | Obligatoria | Descripción |
 |---|---|---|
-| `ANTUCAYEN_TESSDATA` | No | Ruta de la carpeta de datos de Tesseract (`tessdata`). Solo se aplica si está definida. |
-| `ANTUCAYEN_OCR_LANG` | No | Idioma que se entrega a Tesseract. Por defecto `eng`. |
+| `ANTUCAYEN_TESSDATA` | No | Ruta de la carpeta de datos de Tesseract (`tessdata`). Si no está definida se usa la propiedad `-Dantucayen.tessdata`, que fija la aplicación instalada, `TESSDATA_PREFIX` o una carpeta `tessdata` junto a la aplicación o en el directorio de trabajo. |
+| `ANTUCAYEN_OCR_LANG` | No | Idioma que se entrega a Tesseract. Si no está definida se usa `-Dantucayen.ocr.lang` o, por defecto, `spa` cuando `spa.traineddata` está en la carpeta `tessdata`, y si no, `eng`. |
 
 ### Archivos que genera la aplicación
 
@@ -612,7 +617,19 @@ Las pruebas no abren conexiones a la base de datos, por lo que no requieren Mari
 
 ## Despliegue
 
-El repositorio no incluye automatización de despliegue: no hay `Dockerfile`, pipelines de integración continua, instaladores ni scripts de arranque. El despliegue consiste en distribuir el JAR ejecutable a cada equipo.
+### Instalador para Windows
+
+La carpeta `instalador/` genera un paquete que se instala en el PC del minimarket sin instalar Java ni Tesseract: la aplicación lleva su propio Java, creado con `jpackage`, y el idioma español del OCR.
+
+1. **Generar el paquete**, en el PC de un integrante, con JDK 21 o superior: doble clic en `instalador/Crear instalador.cmd`. Compila con `mvn clean package`, o usa el JAR de `target` si no encuentra Maven, y deja el resultado en `instalador/salida/Antucayen_Instalador`, además de un `.zip`. Opciones: `--sin-pruebas` y `--usar-jar-existente`.
+2. **Instalar**: copiar la carpeta `Antucayen_Instalador` completa al PC del minimarket y ejecutar `Instalar Antucayen.exe`. Instala en `C:\Antucayen` sin permisos de administrador, pide la dirección y el puerto del servidor MariaDB, escribe `config.properties` en la carpeta de instalación y crea los accesos directos y el desinstalador. Al actualizar se conservan la configuración y `archivos/facturas`.
+3. **Base de datos**: en el PC servidor, la carpeta «Herramientas base de datos» trae scripts para crear la base, permitir la conexión desde la caja por la red 192.168.100.x, respaldar y restaurar. El paso a paso para el minimarket está en `instalador/recursos/LEEME.txt`.
+
+El asistente se compila con NSIS a partir de `instalador/nsis/instalador.nsi`; solo hay que recompilarlo si se modifica ese archivo.
+
+### Despliegue manual
+
+Sin el instalador, el despliegue consiste en distribuir el JAR ejecutable a cada equipo.
 
 1. **Base de datos.** Instala el esquema con `database/Antucayen_Instalacion_Unica.sql` en un servidor MariaDB accesible desde los equipos de trabajo y prepara la cuenta de la aplicación.
 2. **Artefacto.** Genera `target/Antucayen-1.0-SNAPSHOT.jar` con `mvn clean package`.
@@ -640,7 +657,7 @@ El repositorio no incluye automatización de despliegue: no hay `Dockerfile`, pi
 - Abrir el Punto de Venta no reserva una venta ni consume números. El ID se crea al confirmar el cobro; la compatibilidad con borradores heredados permanece disponible.
 - El stock inicial ingresado al crear un producto se registra como movimiento de inventario.
 - Cada instancia usa una única conexión JDBC compartida; no hay pool de conexiones.
-- El OCR usa `eng` como idioma por defecto si no se define `ANTUCAYEN_OCR_LANG`.
+- El OCR usa `spa` como idioma por defecto si `spa.traineddata` está disponible; si no, `eng`.
 - La carpeta `.idea/` está versionada aunque figura en `.gitignore`, y la carpeta `archivos/` que genera la aplicación no está excluida de Git.
 - El código hace referencia a identificadores de requisitos (`RF-xx`, `RN-xx`, `UR-xx`), pero el documento de requisitos no forma parte del repositorio.
 
@@ -653,7 +670,8 @@ El repositorio no incluye automatización de despliegue: no hay `Dockerfile`, pi
 | `La base de datos no corresponde a la versión actual` | El esquema instalado no coincide con el que espera la aplicación. | Respalda los datos y ejecuta `database/Antucayen_Instalacion_Unica.sql`. Ignora los nombres de archivo que sugiere el mensaje. |
 | `Usuario o contraseña incorrectos` | Credenciales erróneas, usuario desactivado o perfil no soportado. | Verifica la cuenta en «Usuarios y permisos» con un Administrador. |
 | `Acceso denegado: su perfil no tiene permisos para esta función` | El rol no tiene permiso para la acción. | Consulta [Roles y permisos](#roles-y-permisos). |
-| `No fue posible leer la imagen con OCR` | Tesseract o sus datos de idioma no están disponibles. | Configura `ANTUCAYEN_TESSDATA` y `ANTUCAYEN_OCR_LANG`, o ingresa los ítems manualmente. |
+| `No fue posible leer la imagen con OCR` o `No se encontraron los datos de idioma del OCR` | Tesseract o sus datos de idioma no están disponibles. | Usa la aplicación instalada con el instalador, que trae `tessdata`, o configura `ANTUCAYEN_TESSDATA` y `ANTUCAYEN_OCR_LANG`; también puedes ingresar los ítems manualmente. |
+| `No se pudo cargar el motor OCR (Tesseract)` | Falta el entorno de ejecución de Visual C++ que usa la librería nativa de Tesseract. | Instala «Microsoft Visual C++ Redistributable 2015-2022 (x64)». |
 | `Estructura inválida: faltan las columnas SKU o cantidad` | El archivo de importación no tiene los encabezados exigidos. | Usa la plantilla de «Descargar plantilla». |
 
 ## Licencia

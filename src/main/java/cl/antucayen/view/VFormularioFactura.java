@@ -96,8 +96,10 @@ public class VFormularioFactura extends JDialog {
         txtFecha.setText(FORMATO_FECHA.format(LocalDate.now()));
         JPanel panelFecha = SelectorFecha.crearCampoConCalendario(txtFecha, FORMATO_FECHA);
 
-        cmbModalidad = new JComboBox<>(new String[]{"Ingreso manual", "Archivo digital (PDF)"});
+        cmbModalidad = new JComboBox<>(new String[]{"Ingreso manual", "Archivo digital"});
         cmbModalidad.setPreferredSize(new Dimension(0, 32));
+        // La mayoría de las facturas se cargan desde una foto o un PDF.
+        cmbModalidad.setSelectedIndex(1);
         cmbModalidad.addActionListener(e -> actualizarModalidad());
         gbc.gridx = 0; gbc.gridy = 5; form.add(panelFecha, gbc);
         gbc.gridx = 1; form.add(cmbModalidad, gbc);
