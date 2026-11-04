@@ -3,6 +3,7 @@ package cl.antucayen.view;
 import cl.antucayen.view.components.EstiloAntucayen;
 
 import cl.antucayen.model.entity.ComprobanteVenta;
+import cl.antucayen.model.service.CalculadoraImpuestos;
 import cl.antucayen.model.entity.ItemVenta;
 import cl.antucayen.model.entity.PagoVenta;
 import cl.antucayen.model.entity.Venta;
@@ -98,7 +99,20 @@ public class VComprobanteVenta extends JDialog {
             });
         }
 
+        txtResumen.setText(construirResumen(comprobante));
+        txtResumen.setCaretPosition(0);
+    }
+
+    /**
+     * Resumen usado tanto por la vista previa como por la impresion.
+     * La venta persistida ya contiene el precio final (neto + IVA 19%).
+     * Se usa exactamente la misma calculadora del POS, sin sumar impuestos
+     * al monto cobrado y sin cambiar el esquema de base de datos.
+     */
+    static String construirResumen(ComprobanteVenta comprobante) {
         Venta venta = comprobante.venta();
+        CalculadoraImpuestos.Desglose desglose =
+                CalculadoraImpuestos.desglosar(venta.getMontoTotal());
         StringBuilder pagos = new StringBuilder();
         for (PagoVenta pago : comprobante.pagosAplicados()) {
             if (!pagos.isEmpty()) pagos.append("\n");
@@ -106,24 +120,24 @@ public class VComprobanteVenta extends JDialog {
                     .append(": $").append(formatear(pago.getMonto()));
         }
 
-        txtResumen.setText(
-                "Venta      : #" + venta.getIdVenta() + "\n" +
+        return "Venta      : #" + venta.getIdVenta() + "\n" +
                 "Fecha/hora : " + (venta.getFechaHora() == null ? "" : venta.getFechaHora().format(FECHA_HORA)) + "\n" +
                 "Cajero     : " + valor(venta.getNombreUsuario()) + "\n" +
                 "Estado     : " + venta.getEstado() + "\n" +
                 "----------------------------------------------\n" +
-                "TOTAL      : $" + formatear(venta.getMontoTotal()) + "\n" +
+                "MONTO NETO : $" + formatear(desglose.neto()) + "\n" +
+                "IVA (19%)  : $" + formatear(desglose.iva()) + "\n" +
+                "TOTAL      : $" + formatear(desglose.total()) + "\n" +
                 "RECIBIDO   : $" + formatear(comprobante.montoRecibido()) + "\n" +
                 "VUELTO     : $" + formatear(comprobante.vuelto()) + "\n" +
                 "Pagos aplicados:\n" + pagos + "\n" +
                 "----------------------------------------------\n" +
-                "Gracias por su compra.");
-        txtResumen.setCaretPosition(0);
+                "Gracias por su compra.";
     }
 
     private void imprimir() {
         try {
-            JTextArea impresion = new JTextArea(construirTextoImpresion());
+            JTextArea impresion = new JTextArea(construirTextoImpresion(comprobante));
             impresion.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 10));
             boolean enviado = impresion.print();
             if (!enviado) {
@@ -136,11 +150,11 @@ public class VComprobanteVenta extends JDialog {
         }
     }
 
-    private String construirTextoImpresion() {
+    static String construirTextoImpresion(ComprobanteVenta comprobante) {
         StringBuilder sb = new StringBuilder();
         sb.append("MINIMARKET ANTUCAYEN\n")
           .append("COMPROBANTE DE VENTA #").append(comprobante.venta().getIdVenta()).append("\n")
-          .append(txtResumen.getText()).append("\n\nDETALLE\n");
+          .append(construirResumen(comprobante)).append("\n\nDETALLE\n");
         for (ItemVenta item : comprobante.items()) {
             sb.append(item.getSku()).append(" | ")
               .append(valor(item.getNombreProducto())).append(" | ")
@@ -151,9 +165,9 @@ public class VComprobanteVenta extends JDialog {
         return sb.toString();
     }
 
-    private String formatear(int valor) {
+    private static String formatear(int valor) {
         return String.format("%,d", valor).replace(',', '.');
     }
 
-    private String valor(String texto) { return texto == null ? "" : texto; }
+    private static String valor(String texto) { return texto == null ? "" : texto; }
 }

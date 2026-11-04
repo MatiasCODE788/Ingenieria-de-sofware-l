@@ -35,7 +35,7 @@ public final class DialogoConexion {
         c.insets = new Insets(5, 5, 5, 5);
         c.gridx = 0;
         c.gridy = 0;
-        campos.add(new JLabel("IP del PC administrador:"), c);
+        campos.add(new JLabel("IP o nombre del servidor:"), c);
         c.gridx = 1; campos.add(host, c);
         c.gridx = 0; c.gridy++; campos.add(new JLabel("Puerto MariaDB:"), c);
         c.gridx = 1; campos.add(puerto, c);
@@ -50,7 +50,7 @@ public final class DialogoConexion {
 
         JPanel contenido = new JPanel(new BorderLayout(8, 9));
         contenido.add(new JLabel("<html>Todos los equipos apuntan a <b>una única IP del servidor</b>. "
-                + "Ejemplo: 192.168.100.10.<br/>"
+                + "Ejemplo: 192.168.1.10.<br/>"
                 + "No ingreses la IP de cada cajero. En el PC servidor también se puede usar localhost.</html>"),
                 BorderLayout.NORTH);
         contenido.add(campos, BorderLayout.CENTER);
@@ -59,7 +59,7 @@ public final class DialogoConexion {
 
         while (true) {
             int opcion = JOptionPane.showConfirmDialog(padre, contenido,
-                    "Configurar conexión a MariaDB (red 192.168.100.x)",
+                    "Configurar conexión a MariaDB",
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (opcion != JOptionPane.OK_OPTION) return;
 
