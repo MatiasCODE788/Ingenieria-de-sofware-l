@@ -18,6 +18,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
@@ -67,6 +69,7 @@ public class ControladorVenta {
     /** Se llama cada vez que se vuelve a mostrar este panel (sin perder el carrito ni los pagos). */
     public void alMostrar() {
         cargarVentasDelDia();
+        SwingUtilities.invokeLater(vista::enfocarBusqueda);
     }
 
     private void iniciarEventos() {
@@ -120,11 +123,16 @@ public class ControladorVenta {
         });
 
         vista.getBtnLimpiarCarrito().addActionListener(e -> {
+            if (!confirmarEdicionCarrito(vista.getTblCarrito())) return;
             vista.limpiarCarrito();
             vista.limpiarPagos();
             inicioVenta = java.time.LocalDateTime.now();
             actualizarEstadoPago();
+            vista.enfocarBusqueda();
         });
+        vista.getTblCarrito().getSelectionModel().addListSelectionListener(e ->
+                vista.getBtnQuitarProducto().setEnabled(vista.getTblCarrito().getSelectedRow() >= 0));
+        vista.getBtnQuitarProducto().addActionListener(e -> quitarProductoSeleccionado());
 
         vista.getBtnCobrar().addActionListener(e -> cobrar());
         vista.getBtnVerComprobante().addActionListener(e -> mostrarComprobanteSeleccionado());
@@ -133,6 +141,7 @@ public class ControladorVenta {
         vista.getBtnChipEfectivo().addActionListener(e -> pagarTodoCon("Efectivo"));
         vista.getBtnChipDebito().addActionListener(e -> pagarTodoCon("Débito"));
         vista.getBtnChipCredito().addActionListener(e -> pagarTodoCon("Crédito"));
+        vista.getBtnPagoMixto().addActionListener(e -> prepararPagoMixto());
         vista.getBtnLimpiarPagos().addActionListener(e -> {
             vista.limpiarPagos();
             actualizarEstadoPago();
@@ -154,11 +163,78 @@ public class ControladorVenta {
             }
         });
 
+        // WHEN_IN_FOCUSED_WINDOW evita depender del campo activo: las teclas
+        // funcionan en la búsqueda, en la tabla y en los campos de pago, pero
+        // sólo mientras el módulo POS es el panel visible.
+        registrarAtajo(KeyEvent.VK_F5, "vaciarCarrito", () -> vista.getBtnLimpiarCarrito().doClick());
+        registrarAtajo(KeyEvent.VK_F8, "pagoMixto", () -> vista.getBtnPagoMixto().doClick());
+        registrarAtajo(KeyEvent.VK_F9, "cobroTransbank", this::cobrarExactoTransbank);
+        registrarAtajo(KeyEvent.VK_F12, "cobroEfectivo", () -> cobrarExactoCon("Efectivo"));
+
         vista.getTblVentasDia().addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent e) {
                 if (e.getClickCount() == 2) intentarAnular();
             }
         });
+    }
+
+    private void registrarAtajo(int tecla, String nombre, Runnable accion) {
+        vista.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(tecla, 0), nombre);
+        vista.getActionMap().put(nombre, new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) { accion.run(); }
+        });
+    }
+
+    private void quitarProductoSeleccionado() {
+        // Confirma la cantidad si estaba siendo editada antes de quitar la fila.
+        if (!confirmarEdicionCarrito(vista.getTblCarrito())) return;
+        if (vista.quitarProductoSeleccionado()) {
+            recalcularTotal();
+            vista.enfocarBusqueda();
+        }
+    }
+
+    private void prepararPagoMixto() {
+        if (!confirmarEdicionCarrito(vista.getTblCarrito())) return;
+        if (vista.getModeloCarrito().getRowCount() == 0) {
+            JOptionPane.showMessageDialog(vista, "Agrega productos al carrito antes de preparar el pago");
+            vista.enfocarBusqueda();
+            return;
+        }
+        vista.ocultarSugerencias();
+        vista.limpiarPagos();
+        actualizarEstadoPago();
+        vista.getTxtPagoEfectivo().requestFocusInWindow();
+        vista.getTxtPagoEfectivo().selectAll();
+    }
+
+    /** Los atajos de cobro usan las mismas validaciones y confirmación que Cobrar. */
+    private boolean puedeIniciarCobroRapido() {
+        if (!confirmarEdicionCarrito(vista.getTblCarrito())) return false;
+        if (vista.getModeloCarrito().getRowCount() > 0) return true;
+        JOptionPane.showMessageDialog(vista, "Agrega productos al carrito antes de cobrar");
+        vista.enfocarBusqueda();
+        return false;
+    }
+
+    private void cobrarExactoCon(String medio) {
+        if (!puedeIniciarCobroRapido()) return;
+        pagarTodoCon(medio);
+        actualizarEstadoPago();
+        if (vista.getBtnCobrar().isEnabled()) cobrar();
+    }
+
+    private void cobrarExactoTransbank() {
+        if (!puedeIniciarCobroRapido()) return;
+        // En persistencia, Transbank se registra como Débito o Crédito.
+        // Evitar asumir uno de ellos permite mantener el detalle contable fiel.
+        Object[] opciones = {"Débito", "Crédito", "Cancelar"};
+        int opcion = JOptionPane.showOptionDialog(vista,
+                "¿Con qué tipo de tarjeta se realizará el pago exacto por Transbank?",
+                "Cobro Transbank", JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+        if (opcion == 0 || opcion == 1) cobrarExactoCon(opcion == 0 ? "Débito" : "Crédito");
     }
 
     private void programarSugerencias() {
@@ -553,6 +629,7 @@ public class ControladorVenta {
                     "Venta registrada - comprobante no disponible",
                     JOptionPane.WARNING_MESSAGE);
         }
+        SwingUtilities.invokeLater(vista::enfocarBusqueda);
     }
 
     private List<PagoVenta> construirPagos(int efectivo, int debito, int credito) {

@@ -238,16 +238,16 @@ public class DBConexion {
      */
     public static synchronized void guardarConfiguracion(Properties datos) throws IOException {
         String hostNuevo = datos.getProperty("db.host", "").trim();
-        boolean local = hostNuevo.equalsIgnoreCase("localhost") || hostNuevo.equals("127.0.0.1");
-        boolean lan = false;
-        if (hostNuevo.matches("192\\.168\\.100\\.[0-9]{1,3}")) {
-            int ultimo = Integer.parseInt(hostNuevo.substring(hostNuevo.lastIndexOf('.') + 1));
-            lan = ultimo >= 1 && ultimo <= 254;
-        }
-        if (!local && !lan) {
+        // El minimarket puede utilizar cualquier subred LAN o nombre de host.
+        // No admitimos caracteres especiales que alteren la estructura de la URL JDBC.
+        boolean hostValido = !hostNuevo.isBlank()
+                && hostNuevo.length() <= 253
+                && hostNuevo.matches("(?i)[a-z0-9][a-z0-9.-]*[a-z0-9]|(?i)[a-z0-9]")
+                && !hostNuevo.contains("..");
+        if (!hostValido) {
             throw new IllegalArgumentException(
-                    "Ingresa la IP del servidor 192.168.100.1 a 192.168.100.254 "
-                            + "(o localhost en el servidor).");
+                    "Ingresa la IP o el nombre del servidor MariaDB (por ejemplo, "
+                            + "192.168.1.10 o localhost).");
         }
         String puerto = datos.getProperty("db.port", "").trim();
         try {

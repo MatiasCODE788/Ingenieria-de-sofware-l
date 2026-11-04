@@ -143,10 +143,9 @@ public class ControladorPrincipal {
         if (panelVentas == null) {
             panelVentas = new VVentas();
             controladorVenta = new ControladorVenta(panelVentas);
-        } else {
-            controladorVenta.alMostrar();
         }
         vista.setContenido(panelVentas, "Punto de Venta");
+        controladorVenta.alMostrar();
     }
 
     private void ejecutarSeguro(Runnable accion) {

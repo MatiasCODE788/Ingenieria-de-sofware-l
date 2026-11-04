@@ -1,0 +1,6 @@
+Opcional: copia aqui spa.traineddata (y/o eng.traineddata) de Tesseract OCR
+ANTES de ejecutar CREAR_EJECUTABLE_WINDOWS.cmd. Esos archivos se copiaran
+al paquete para habilitar lectura de imagenes/PDF escaneados.
+Descargalos solo desde un origen oficial o verificado. No se incluyen en este ZIP.
+Si no se agregan, el POS, inventario y registro manual de facturas siguen funcionando.
+En Windows, OCR puede requerir Microsoft Visual C++ Redistributable x64.

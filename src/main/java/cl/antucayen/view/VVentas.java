@@ -1,12 +1,14 @@
 package cl.antucayen.view;
 
 import cl.antucayen.model.entity.Producto;
+import cl.antucayen.model.service.CalculadoraImpuestos;
 import cl.antucayen.view.components.ComponentesSwing;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
 import java.util.List;
 
 public class VVentas extends JPanel {
@@ -19,9 +21,12 @@ public class VVentas extends JPanel {
     private JTable            tblCarrito;
     private DefaultTableModel modeloCarrito;
     private JLabel            lblTotal;
+    private JLabel            lblNeto;
+    private JLabel            lblIva;
     private JLabel            lblEstadoVenta;
     private JButton           btnCobrar;
     private JButton           btnLimpiarCarrito;
+    private JButton           btnQuitarProducto;
 
     // Pago (único o dividido entre varios medios)
     private JTextField        txtPagoEfectivo;
@@ -31,6 +36,7 @@ public class VVentas extends JPanel {
     private JButton            btnChipDebito;
     private JButton            btnChipCredito;
     private JButton            btnLimpiarPagos;
+    private JButton            btnPagoMixto;
     private JLabel             lblRestante;
 
     private JTable            tblVentasDia;
@@ -38,7 +44,16 @@ public class VVentas extends JPanel {
     private JLabel            lblResumenDia;
     private JButton           btnVerComprobante;
 
-    public VVentas() { initComponents(); }
+    public VVentas() {
+        initComponents();
+        // También funciona al abrir el POS como pantalla inicial del Cajero,
+        // cuando el JFrame todavía no era visible al construir el panel.
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                SwingUtilities.invokeLater(this::enfocarBusqueda);
+            }
+        });
+    }
 
     private void initComponents() {
         setLayout(new BorderLayout(0, 0));
@@ -191,21 +206,39 @@ public class VVentas extends JPanel {
         panelCobro.setBackground(Color.WHITE);
         panelCobro.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
 
-        // Fila 1: Vaciar carrito ................................ Total: $X
+        // Fila 1: quitar producto / vaciar carrito ............... Total: $X
         JPanel filaTotal = new JPanel(new BorderLayout());
         filaTotal.setBackground(Color.WHITE);
 
         JPanel izqCobro = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
         izqCobro.setBackground(Color.WHITE);
-        btnLimpiarCarrito = ComponentesSwing.crearBoton("Vaciar carrito", new Color(107, 114, 128));
+        btnQuitarProducto = ComponentesSwing.crearBoton("Quitar seleccionado", new Color(220, 38, 38));
+        btnQuitarProducto.setToolTipText("Elimina únicamente la fila seleccionada del carrito");
+        btnQuitarProducto.setEnabled(false);
+        btnLimpiarCarrito = ComponentesSwing.crearBoton("Vaciar carrito (F5)", new Color(107, 114, 128));
+        izqCobro.add(btnQuitarProducto);
         izqCobro.add(btnLimpiarCarrito);
 
-        JPanel derTotal = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 6));
-        derTotal.setBackground(Color.WHITE);
-        lblTotal = new JLabel("Total: $0");
-        lblTotal.setFont(new Font("Arial", Font.BOLD, 24));
+        // Se muestra el IVA incluido en el precio de la base de datos,
+        // no se agrega un 19% adicional al total de los productos.
+        JPanel derTotal = new JPanel(new GridBagLayout());
+        derTotal.setBackground(new Color(248, 250, 252));
+        derTotal.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(226, 232, 240)),
+                BorderFactory.createEmptyBorder(8, 14, 8, 14)));
+        lblNeto = crearEtiquetaImpuesto("Monto neto: $0");
+        lblIva = crearEtiquetaImpuesto("IVA (19%): $0");
+        lblTotal = new JLabel("Total a pagar: $0");
+        lblTotal.setFont(new Font("Arial", Font.BOLD, 23));
         lblTotal.setForeground(new Color(5, 150, 105));
-        derTotal.add(lblTotal);
+
+        GridBagConstraints taxGbc = new GridBagConstraints();
+        taxGbc.gridx = 0;
+        taxGbc.anchor = GridBagConstraints.EAST;
+        taxGbc.insets = new Insets(1, 4, 1, 4);
+        taxGbc.gridy = 0; derTotal.add(lblNeto, taxGbc);
+        taxGbc.gridy = 1; derTotal.add(lblIva, taxGbc);
+        taxGbc.gridy = 2; derTotal.add(lblTotal, taxGbc);
 
         filaTotal.add(izqCobro,  BorderLayout.WEST);
         filaTotal.add(derTotal,  BorderLayout.EAST);
@@ -222,6 +255,13 @@ public class VVentas extends JPanel {
         p.add(panelCobro, BorderLayout.SOUTH);
 
         return p;
+    }
+
+    private JLabel crearEtiquetaImpuesto(String texto) {
+        JLabel etiqueta = new JLabel(texto);
+        etiqueta.setFont(new Font("Arial", Font.PLAIN, 13));
+        etiqueta.setForeground(new Color(71, 85, 105));
+        return etiqueta;
     }
 
     /** Panel de pago: permite pagar la totalidad con un solo medio o dividir el pago entre varios. */
@@ -246,11 +286,21 @@ public class VVentas extends JPanel {
         btnChipDebito   = ComponentesSwing.crearBoton("Débito",   new Color(37, 99, 235));
         btnChipCredito  = ComponentesSwing.crearBoton("Crédito",  new Color(147, 51, 234));
         btnLimpiarPagos = ComponentesSwing.crearBoton("Limpiar", new Color(156, 163, 175));
+        btnPagoMixto = ComponentesSwing.crearBoton("Pago mixto (F8)", new Color(75, 85, 99));
+        btnPagoMixto.setToolTipText("Prepara los campos para repartir el total entre varios medios de pago");
+        // ComponentesSwing asigna 160 px por defecto; tamaños compactos evitan
+        // que la fila de medios se corte en resoluciones pequeñas.
+        for (JButton boton : new JButton[]{btnChipEfectivo, btnChipDebito, btnChipCredito}) {
+            boton.setPreferredSize(new Dimension(100, 32));
+        }
+        btnLimpiarPagos.setPreferredSize(new Dimension(90, 32));
+        btnPagoMixto.setPreferredSize(new Dimension(145, 32));
         filaChips.add(lblAyudaChips);
         filaChips.add(btnChipEfectivo);
         filaChips.add(btnChipDebito);
         filaChips.add(btnChipCredito);
         filaChips.add(btnLimpiarPagos);
+        filaChips.add(btnPagoMixto);
 
         // Montos editables: permite dividir el pago entre varios medios
         JPanel filaMontos = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 4));
@@ -285,7 +335,14 @@ public class VVentas extends JPanel {
         derEstado.add(btnCobrar);
         filaEstado.add(derEstado, BorderLayout.EAST);
 
-        panel.add(lblTituloPago, BorderLayout.NORTH);
+        JPanel cabeceraPago = new JPanel(new BorderLayout(8, 0));
+        cabeceraPago.setOpaque(false);
+        cabeceraPago.add(lblTituloPago, BorderLayout.WEST);
+        JLabel ayudaAtajos = new JLabel("F9: Transbank exacto    |    F12: Efectivo exacto");
+        ayudaAtajos.setFont(new Font("Arial", Font.PLAIN, 11));
+        ayudaAtajos.setForeground(new Color(107, 114, 128));
+        cabeceraPago.add(ayudaAtajos, BorderLayout.EAST);
+        panel.add(cabeceraPago, BorderLayout.NORTH);
         JPanel centro = new JPanel();
         centro.setLayout(new BoxLayout(centro, BoxLayout.Y_AXIS));
         centro.setBackground(new Color(249, 250, 251));
@@ -368,6 +425,11 @@ public class VVentas extends JPanel {
         lblEstadoVenta.setForeground(new Color(37, 99, 235));
     }
 
+    /** Devuelve el foco al lector de códigos cuando el POS está visible. */
+    public void enfocarBusqueda() {
+        if (txtBusqueda.isShowing()) txtBusqueda.requestFocusInWindow();
+    }
+
     public String getTextoBusqueda() { return txtBusqueda.getText().trim(); }
     public void limpiarBusqueda() {
         txtBusqueda.setText("");
@@ -440,6 +502,15 @@ public class VVentas extends JPanel {
     public JButton    getBtnAgregar()       { return btnAgregar; }
     public JButton    getBtnCobrar()        { return btnCobrar; }
     public JButton    getBtnLimpiarCarrito(){ return btnLimpiarCarrito; }
+    public JButton    getBtnQuitarProducto(){ return btnQuitarProducto; }
+
+    /** Elimina el producto completo de la fila elegida; no altera las demás filas. */
+    public boolean quitarProductoSeleccionado() {
+        int filaVista = tblCarrito.getSelectedRow();
+        if (filaVista < 0) return false;
+        modeloCarrito.removeRow(tblCarrito.convertRowIndexToModel(filaVista));
+        return true;
+    }
     public DefaultTableModel getModeloCarrito() { return modeloCarrito; }
     public JTable getTblCarrito() { return tblCarrito; }
 
@@ -451,6 +522,7 @@ public class VVentas extends JPanel {
     public JButton    getBtnChipDebito()   { return btnChipDebito; }
     public JButton    getBtnChipCredito()  { return btnChipCredito; }
     public JButton    getBtnLimpiarPagos() { return btnLimpiarPagos; }
+    public JButton    getBtnPagoMixto()    { return btnPagoMixto; }
 
     public int getMontoEfectivo() { return parseMonto(txtPagoEfectivo.getText()); }
     public int getMontoDebito()   { return parseMonto(txtPagoDebito.getText()); }
@@ -518,10 +590,15 @@ public class VVentas extends JPanel {
     public void limpiarCarrito()                  { modeloCarrito.setRowCount(0); actualizarTotal(0); }
 
     public void actualizarTotal(int total) {
-        lblTotal.setText("Total: $" + formatearMonto(total));
+        var desglose = CalculadoraImpuestos.desglosar(total);
+        lblNeto.setText("Monto neto: $" + formatearMonto(desglose.neto()));
+        lblIva.setText("IVA (19%): $" + formatearMonto(desglose.iva()));
+        lblTotal.setText("Total a pagar: $" + formatearMonto(desglose.total()));
     }
 
     public void setTotalExcedido() {
+        lblNeto.setText("Monto neto: —");
+        lblIva.setText("IVA (19%): —");
         lblTotal.setText("Total fuera del rango admitido");
     }
 

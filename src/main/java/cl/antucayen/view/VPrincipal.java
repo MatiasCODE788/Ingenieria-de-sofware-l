@@ -5,8 +5,10 @@ import cl.antucayen.util.GestorTemas;
 import cl.antucayen.util.Tema;
 import cl.antucayen.view.components.EstiloAntucayen;
 import cl.antucayen.view.components.IconoNavegacion;
+import cl.antucayen.view.components.LogoAntucayen;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +17,14 @@ import java.util.List;
 public class VPrincipal extends JFrame {
     private JPanel panelContenido;
     private final List<JButton> botonesNavegacion = new ArrayList<>();
+    private final List<JPanel> seccionesMenu = new ArrayList<>();
+
+    // Paleta de navegación inspirada en el menú original del minimarket.
+    private static final Color SIDEBAR_FONDO = new Color(17, 24, 39);
+    private static final Color SIDEBAR_RESALTADO = new Color(36, 52, 76);
+    private static final Color SIDEBAR_TEXTO = new Color(192, 205, 228);
+    private static final Color SIDEBAR_TITULO = new Color(110, 132, 166);
+    private static final Color SIDEBAR_ACENTO = new Color(156, 194, 31);
     private JButton btnDashboard, btnVentas, btnProductos, btnProveedores, btnEquivalencias;
     private JButton btnFacturas, btnProcesarFactura, btnImportarInventario, btnHistorial;
     private JButton btnReportes, btnUsuarios, btnAuditoriaArchivos, btnCerrarSesion;
@@ -32,6 +42,7 @@ public class VPrincipal extends JFrame {
 
     private void initComponents() {
         setTitle("Sistema Antucayen — Minimarket Antucayen");
+        setIconImage(LogoAntucayen.imagen(64));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1040, 640));
         setSize(1360, 820);
@@ -44,9 +55,9 @@ public class VPrincipal extends JFrame {
         topbar.setBackground(EstiloAntucayen.cabecera());
         topbar.setPreferredSize(new Dimension(0, 54));
         topbar.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 22));
-        JPanel marca = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 15));
+        JPanel marca = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 9));
         marca.setOpaque(false);
-        marca.add(new JLabel(new IconoNavegacion("cart", Color.WHITE, 21)));
+        marca.add(new JLabel(LogoAntucayen.icono(34)));
         JLabel nombreSistema = new JLabel("Sistema Antucayen");
         nombreSistema.setForeground(Color.WHITE);
         nombreSistema.setFont(new Font("Dialog", Font.BOLD, 15));
@@ -77,64 +88,100 @@ public class VPrincipal extends JFrame {
         add(contenedor, BorderLayout.CENTER);
 
         JPanel sidebar = new JPanel(new BorderLayout());
-        sidebar.setPreferredSize(new Dimension(212, 0));
-        sidebar.setBackground(Color.WHITE);
-        sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, EstiloAntucayen.BORDER));
-        JPanel items = new JPanel();
-        items.setBackground(Color.WHITE);
-        items.setLayout(new BoxLayout(items, BoxLayout.Y_AXIS));
-        items.setBorder(BorderFactory.createEmptyBorder(15, 10, 10, 10));
+        sidebar.setPreferredSize(new Dimension(224, 0));
+        sidebar.setBackground(SIDEBAR_FONDO);
+        sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(33, 44, 65)));
 
-        btnDashboard = crearBotonMenu("Dashboard", "dashboard"); items.add(btnDashboard);
-        btnProductos = crearBotonMenu("Productos", "products"); items.add(btnProductos);
-        btnProveedores = crearBotonMenu("Proveedores", "suppliers"); items.add(btnProveedores);
-        btnEquivalencias = crearBotonMenu("Equivalencias", "suppliers"); items.add(btnEquivalencias);
-        btnFacturas = crearBotonMenu("Facturas", "facturas"); items.add(btnFacturas);
-        btnProcesarFactura = crearBotonMenu("Procesar factura", "facturas"); items.add(btnProcesarFactura);
-        btnImportarInventario = crearBotonMenu("Importación", "upload"); items.add(btnImportarInventario);
-        btnVentas = crearBotonMenu("Punto de Venta", "cart"); items.add(btnVentas);
-        btnHistorial = crearBotonMenu("Historial", "history"); items.add(btnHistorial);
-        btnReportes = crearBotonMenu("Reportes", "reports"); items.add(btnReportes);
-        btnUsuarios = crearBotonMenu("Usuarios", "users"); items.add(btnUsuarios);
-        btnAuditoriaArchivos = crearBotonMenu("Auditoría", "settings"); items.add(btnAuditoriaArchivos);
+        // Marca propia en vez del icono genérico de carrito.
+        JPanel cabeceraLateral = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 12));
+        cabeceraLateral.setBackground(SIDEBAR_FONDO);
+        cabeceraLateral.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(42, 52, 68)));
+        cabeceraLateral.add(new JLabel(LogoAntucayen.icono(43)));
+        JLabel nombreLateral = new JLabel("<html><b>Antucayen</b><br><span style='font-size:9px;color:#788DAE'>Minimarket</span></html>");
+        nombreLateral.setForeground(Color.WHITE);
+        nombreLateral.setFont(new Font("Dialog", Font.BOLD, 14));
+        cabeceraLateral.add(nombreLateral);
+        sidebar.add(cabeceraLateral, BorderLayout.NORTH);
+
+        JPanel items = new JPanel();
+        items.setBackground(SIDEBAR_FONDO);
+        items.setLayout(new BoxLayout(items, BoxLayout.Y_AXIS));
+        items.setBorder(BorderFactory.createEmptyBorder(5, 10, 3, 10));
+
+        // Las etiquetas de los módulos permanecen idénticas a las de la versión previa.
+        btnDashboard = crearBotonMenu("Dashboard", "dashboard");
+        btnVentas = crearBotonMenu("Punto de Venta", "cart");
+        btnProductos = crearBotonMenu("Productos", "products");
+        btnProveedores = crearBotonMenu("Proveedores", "suppliers");
+        btnEquivalencias = crearBotonMenu("Equivalencias", "suppliers");
+        btnFacturas = crearBotonMenu("Facturas", "facturas");
+        btnProcesarFactura = crearBotonMenu("Procesar factura", "facturas");
+        btnImportarInventario = crearBotonMenu("Importación", "upload");
+        btnHistorial = crearBotonMenu("Historial", "history");
+        btnReportes = crearBotonMenu("Reportes", "reports");
+        btnUsuarios = crearBotonMenu("Usuarios", "users");
+        btnAuditoriaArchivos = crearBotonMenu("Auditoría", "settings");
+
+        items.add(crearSeccionMenu("PRINCIPAL", btnDashboard, btnVentas));
+        items.add(crearSeccionMenu("INVENTARIO", btnProductos, btnProveedores, btnEquivalencias));
+        items.add(crearSeccionMenu("FACTURACIÓN", btnFacturas, btnProcesarFactura));
+        items.add(crearSeccionMenu("INVENTARIO MASIVO", btnImportarInventario));
+        items.add(crearSeccionMenu("ANÁLISIS", btnHistorial, btnReportes));
+        items.add(crearSeccionMenu("ADMINISTRACIÓN", btnUsuarios, btnAuditoriaArchivos));
 
         JScrollPane scrollMenu = new JScrollPane(items);
         scrollMenu.setBorder(null);
+        scrollMenu.setBackground(SIDEBAR_FONDO);
+        scrollMenu.getViewport().setBackground(SIDEBAR_FONDO);
         scrollMenu.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollMenu.getVerticalScrollBar().setUnitIncrement(15);
+        JScrollBar barraDesplazamiento = scrollMenu.getVerticalScrollBar();
+        barraDesplazamiento.setUnitIncrement(15);
+        barraDesplazamiento.setPreferredSize(new Dimension(8, 0));
+        barraDesplazamiento.setUI(new BasicScrollBarUI() {
+            @Override protected void configureScrollBarColors() {
+                thumbColor = new Color(68, 82, 105);
+                trackColor = SIDEBAR_FONDO;
+            }
+            @Override protected JButton createDecreaseButton(int orientation) { return botonScrollOculto(); }
+            @Override protected JButton createIncreaseButton(int orientation) { return botonScrollOculto(); }
+            private JButton botonScrollOculto() {
+                JButton boton = new JButton();
+                boton.setPreferredSize(new Dimension(0, 0));
+                boton.setMinimumSize(new Dimension(0, 0));
+                boton.setMaximumSize(new Dimension(0, 0));
+                return boton;
+            }
+        });
         sidebar.add(scrollMenu, BorderLayout.CENTER);
 
         JPanel pieMenu = new JPanel();
         pieMenu.setLayout(new BoxLayout(pieMenu, BoxLayout.Y_AXIS));
-        pieMenu.setBackground(Color.WHITE);
-        pieMenu.setBorder(BorderFactory.createEmptyBorder(14, 15, 15, 15));
-        JPanel logo = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 4));
-        logo.setBackground(EstiloAntucayen.BACKGROUND);
-        logo.setBorder(BorderFactory.createLineBorder(EstiloAntucayen.BORDER));
-        logo.add(new JLabel(new IconoNavegacion("cart", EstiloAntucayen.primario(), 27)));
-        JLabel logoTexto = new JLabel("<html><b>MINIMARKET</b><br>ANTUCAYEN</html>");
-        logoTexto.setForeground(EstiloAntucayen.primario());
-        logoTexto.setFont(new Font("Dialog", Font.BOLD, 11));
-        logo.add(logoTexto);
-        logo.setMaximumSize(new Dimension(186, 58));
-        logo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        pieMenu.add(logo);
+        pieMenu.setBackground(SIDEBAR_FONDO);
+        pieMenu.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(42, 52, 68)),
+                BorderFactory.createEmptyBorder(7, 15, 14, 15)));
         JLabel version = new JLabel("Versión 1.0.0", SwingConstants.CENTER);
         version.setFont(new Font("Dialog", Font.PLAIN, 10));
-        version.setForeground(EstiloAntucayen.MUTED);
+        version.setForeground(SIDEBAR_TITULO);
         version.setAlignmentX(Component.CENTER_ALIGNMENT);
         version.setBorder(BorderFactory.createEmptyBorder(7, 0, 8, 0));
         pieMenu.add(version);
         JButton btnTema = new JButton("Cambiar tema");
-        btnTema.setIcon(new IconoNavegacion("settings", EstiloAntucayen.MUTED, 15));
-        btnTema.setForeground(EstiloAntucayen.MUTED);
+        btnTema.setIcon(new IconoNavegacion("settings", SIDEBAR_TEXTO, 15));
+        btnTema.setForeground(SIDEBAR_TEXTO);
+        btnTema.setBackground(SIDEBAR_FONDO);
+        btnTema.setBorderPainted(false);
+        btnTema.setFocusPainted(false);
         btnTema.setFont(new Font("Dialog", Font.PLAIN, 11));
         btnTema.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnTema.setMaximumSize(new Dimension(186, 29));
         btnTema.addActionListener(e -> mostrarSelectorDeTemas());
         pieMenu.add(btnTema);
         btnCerrarSesion = new JButton("Cerrar sesión");
-        btnCerrarSesion.setForeground(new Color(183, 38, 52));
+        btnCerrarSesion.setForeground(new Color(255, 157, 164));
+        btnCerrarSesion.setBackground(SIDEBAR_FONDO);
+        btnCerrarSesion.setBorderPainted(false);
+        btnCerrarSesion.setFocusPainted(false);
         btnCerrarSesion.setFont(new Font("Dialog", Font.BOLD, 11));
         btnCerrarSesion.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnCerrarSesion.setMaximumSize(new Dimension(186, 29));
@@ -154,28 +201,51 @@ public class VPrincipal extends JFrame {
                 (nombres.length > 1 ? Character.toUpperCase(nombres[1].charAt(0)) : ' ')).trim();
     }
 
+    /** Secciones independientes: se ocultan si el perfil no puede acceder a ningún módulo. */
+    private JPanel crearSeccionMenu(String titulo, JButton... modulos) {
+        JPanel seccion = new JPanel();
+        seccion.setBackground(SIDEBAR_FONDO);
+        seccion.setLayout(new BoxLayout(seccion, BoxLayout.Y_AXIS));
+        seccion.setAlignmentX(Component.LEFT_ALIGNMENT);
+        seccion.setMaximumSize(new Dimension(Integer.MAX_VALUE, 37 * (modulos.length + 1)));
+        JLabel encabezado = new JLabel(titulo);
+        encabezado.setFont(new Font("Dialog", Font.BOLD, 10));
+        encabezado.setForeground(SIDEBAR_TITULO);
+        encabezado.setAlignmentX(Component.LEFT_ALIGNMENT);
+        encabezado.setBorder(BorderFactory.createEmptyBorder(15, 13, 5, 0));
+        encabezado.setMaximumSize(new Dimension(Integer.MAX_VALUE, 37));
+        seccion.add(encabezado);
+        for (JButton btn : modulos) seccion.add(btn);
+        seccion.putClientProperty("modulos", modulos);
+        seccionesMenu.add(seccion);
+        return seccion;
+    }
+
     private JButton crearBotonMenu(String texto, String icono) {
-        JButton btn = new JButton(texto, new IconoNavegacion(icono, EstiloAntucayen.MUTED, 17));
+        JButton btn = new JButton(texto, new IconoNavegacion(icono, SIDEBAR_TEXTO, 17));
         btn.putClientProperty("navIcon", icono);
         btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setIconTextGap(12);
+        btn.setIconTextGap(11);
         btn.setFont(new Font("Dialog", Font.PLAIN, 12));
-        btn.setForeground(EstiloAntucayen.MUTED);
-        btn.setBackground(Color.WHITE);
+        btn.setForeground(SIDEBAR_TEXTO);
+        btn.setBackground(SIDEBAR_FONDO);
         btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        btn.setPreferredSize(new Dimension(190, 40));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 37));
+        btn.setPreferredSize(new Dimension(202, 37));
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setBorder(BorderFactory.createEmptyBorder(9, 12, 9, 6));
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 4));
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseEntered(java.awt.event.MouseEvent e) {
-                if (!Boolean.TRUE.equals(btn.getClientProperty("seleccionado"))) btn.setBackground(EstiloAntucayen.BACKGROUND);
+                if (!Boolean.TRUE.equals(btn.getClientProperty("seleccionado")))
+                    btn.setBackground(SIDEBAR_RESALTADO);
             }
             @Override public void mouseExited(java.awt.event.MouseEvent e) {
-                if (!Boolean.TRUE.equals(btn.getClientProperty("seleccionado"))) btn.setBackground(Color.WHITE);
+                if (!Boolean.TRUE.equals(btn.getClientProperty("seleccionado")))
+                    btn.setBackground(SIDEBAR_FONDO);
             }
         });
         botonesNavegacion.add(btn);
@@ -200,11 +270,11 @@ public class VPrincipal extends JFrame {
         for (JButton b : botonesNavegacion) {
             boolean marcado = b == elegido;
             b.putClientProperty("seleccionado", marcado);
-            b.setBackground(marcado ? EstiloAntucayen.PALE : Color.WHITE);
-            b.setForeground(marcado ? EstiloAntucayen.primario() : EstiloAntucayen.MUTED);
+            b.setBackground(marcado ? SIDEBAR_RESALTADO : SIDEBAR_FONDO);
+            b.setForeground(marcado ? Color.WHITE : SIDEBAR_TEXTO);
             b.setFont(new Font("Dialog", marcado ? Font.BOLD : Font.PLAIN, 12));
             b.setIcon(new IconoNavegacion((String)b.getClientProperty("navIcon"),
-                    marcado ? EstiloAntucayen.primario() : EstiloAntucayen.MUTED, 17));
+                    marcado ? SIDEBAR_ACENTO : SIDEBAR_TEXTO, 17));
         }
     }
 
@@ -225,6 +295,19 @@ public class VPrincipal extends JFrame {
         btnReportes.setVisible(valido);
         btnUsuarios.setVisible(admin);
         btnAuditoriaArchivos.setVisible(admin);
+
+        // No mostrar categorías vacías cuando un rol tiene acceso restringido.
+        for (JPanel seccion : seccionesMenu) {
+            JButton[] modulos = (JButton[]) seccion.getClientProperty("modulos");
+            boolean contieneVisibles = false;
+            for (JButton modulo : modulos) {
+                if (modulo.isVisible()) {
+                    contieneVisibles = true;
+                    break;
+                }
+            }
+            seccion.setVisible(contieneVisibles);
+        }
     }
 
     private void mostrarSelectorDeTemas() {

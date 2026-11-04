@@ -1,5 +1,8 @@
 # Minimarket Antucayen — Sistema de Gestión
 
+> **Versión distribuible para Windows:** para generar `Antucayen.exe` y el instalador del minimarket sigue [`GUIA_INSTALACION_CLIENTE.md`](GUIA_INSTALACION_CLIENTE.md) y ejecuta `CREAR_EJECUTABLE_WINDOWS.cmd`. Las instrucciones antiguas sobre una carpeta `instalador/` no corresponden al paquete actual.
+
+
 ![Java 21](https://img.shields.io/badge/Java-21-orange)
 ![UI Swing + FlatLaf](https://img.shields.io/badge/UI-Swing%20%2B%20FlatLaf-blue)
 ![Base de datos MariaDB](https://img.shields.io/badge/BD-MariaDB-003545)
@@ -72,9 +75,10 @@ Disponible para el Administrador. Muestra las ventas de hoy (total y desglose po
 
 Disponible para Administrador y Cajero.
 
-- Búsqueda o escaneo por SKU, código de barras o nombre. Solo se pueden vender productos activos y con stock.
-- Carrito con cantidades editables y validación de stock disponible. La edición activa se confirma antes de cobrar.
+- Búsqueda o escaneo por SKU, código de barras o nombre. La barra de búsqueda recibe el foco automáticamente al abrir o volver al POS y tras completar una venta; solo se pueden vender productos activos y con stock.
+- Carrito con cantidades editables y validación de stock disponible. La edición activa se confirma antes de cobrar. «Quitar seleccionado» elimina únicamente el producto (fila completa) escogido, sin vaciar el resto del carrito.
 - Pago único (Efectivo, Débito o Crédito) o dividido entre varios medios, con cálculo en vivo de lo que falta o del vuelto. El vuelto solo puede provenir del efectivo recibido.
+- Atajos dentro del POS: **F5** vacía el carrito y los montos de pago; **F8** prepara un pago mixto (limpia los montos y enfoca el campo Efectivo para distribuir los importes); **F9** prepara el monto exacto por Transbank (se elige Débito o Crédito); **F12** prepara el pago exacto en Efectivo. F9 y F12 llevan a la confirmación habitual del cobro; no registran la venta sin confirmarla. F9 solo registra el medio de pago elegido: no se comunica con el dispositivo Transbank.
 - Confirmación atómica de la venta: bloquea los productos, revalida stock, estado y precio, aplica el precio vigente del producto, descuenta el stock y registra movimientos de tipo `Venta`. La fecha de inicio real de la operación se conserva separada de la confirmación del cobro.
 - Comprobante de venta automático, visualizable e imprimible. Si la visualización falla después de registrar el cobro, el sistema informa que la venta sí fue confirmada y permite recuperar el comprobante.
 - Listado de ventas del día (el Cajero ve solo las suyas) y anulación de ventas pagadas con devolución de stock, reservada al Administrador.
