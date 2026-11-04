@@ -369,7 +369,11 @@ public class ServicioExtraccionFacturaDigital {
                     porTexto.items(), texto + "\n" + porLineas.texto());
             texto = porTexto.textoExtraido();
         }
-        if (!tabla.confiable()) return porTexto;
+        // En una factura sin códigos la lectura por texto toma la primera palabra
+        // del nombre como código; la tabla por posición, aunque no cuadre entera,
+        // conserva el nombre completo y marca para revisar las filas dudosas.
+        boolean usarTabla = tabla.confiable() || (tabla.sinCodigo() && tabla.items().size() >= 2);
+        if (!usarTabla) return porTexto;
 
         List<ItemFacturaExtraido> items = marcarPorRevisar(tabla, extraerValorNeto(texto));
         return new ResultadoExtraccion(porTexto.numeroFactura(), porTexto.fechaEmision(),
