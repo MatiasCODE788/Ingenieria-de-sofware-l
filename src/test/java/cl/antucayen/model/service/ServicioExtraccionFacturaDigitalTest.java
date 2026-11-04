@@ -2,10 +2,14 @@ package cl.antucayen.model.service;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ServicioExtraccionFacturaDigitalTest {
@@ -255,6 +259,152 @@ class ServicioExtraccionFacturaDigitalTest {
         assertEquals(3, items.get(1).cantidad());
         assertEquals("Arroz grado uno", items.get(1).descripcion());
         assertEquals(1000, items.get(1).precioUnitario());
+    }
+
+    @Test
+    void usaEspanolCuandoLaCarpetaTessdataLoIncluye() throws Exception {
+        Path carpeta = Files.createTempDirectory("tessdata");
+        try {
+            assertEquals("eng", ServicioExtraccionFacturaDigital.idiomaPorDefecto(carpeta));
+            Files.writeString(carpeta.resolve("spa.traineddata"), "modelo");
+            assertEquals("spa", ServicioExtraccionFacturaDigital.idiomaPorDefecto(carpeta));
+            assertEquals("eng", ServicioExtraccionFacturaDigital.idiomaPorDefecto(null));
+        } finally {
+            Files.deleteIfExists(carpeta.resolve("spa.traineddata"));
+            Files.deleteIfExists(carpeta);
+        }
+    }
+
+    @Test
+    void eligeLaCarpetaTessdataConfiguradaOLaPrimeraExistente() throws Exception {
+        Path existente = Files.createTempDirectory("tessdata");
+        Path inexistente = existente.resolve("no-existe");
+        try {
+            // La variable de entorno y la propiedad tienen prioridad, en ese orden.
+            assertEquals(inexistente.toAbsolutePath().normalize(),
+                    ServicioExtraccionFacturaDigital.elegirCarpetaTessdata(
+                            inexistente.toString(), existente.toString(), List.of(existente)));
+            assertEquals(existente.toAbsolutePath().normalize(),
+                    ServicioExtraccionFacturaDigital.elegirCarpetaTessdata(
+                            " ", existente.toString(), List.of()));
+            // Sin configuración se usa la primera ubicación automática que exista.
+            assertEquals(existente.toAbsolutePath().normalize(),
+                    ServicioExtraccionFacturaDigital.elegirCarpetaTessdata(
+                            null, null, List.of(inexistente, existente)));
+            assertNull(ServicioExtraccionFacturaDigital.elegirCarpetaTessdata(
+                    null, "", List.of(inexistente)));
+        } finally {
+            Files.deleteIfExists(existente);
+        }
+    }
+
+
+    @Test
+    void elFolioDeLaOrdenDeCompraNoEsElNumeroDeFactura() {
+        String texto = """
+                BAT Chile S.A. FACTURA ELECTRONICA
+                Giro: Venta al por mayor NRO: 17464361
+                DOCUMENTO DE REFERENCIA FOLIO REFERENCIA FECHA REFERENCIA
+                ORDEN DE COMPRA 2610201014409734 20-10-2026
+                """;
+
+        assertEquals("17464361", servicio.extraerNumeroFactura(texto));
+    }
+
+    @Test
+    void leeLaFechaDeEmisionAunqueNoInicieLaLinea() {
+        String texto = """
+                SEÑOR(ES): COMERCIALIZADORA EJEMPLO LIMITADA FECHA EMISION: 21-10-2026
+                DIRECCION: AV CENTRAL 273 FECHA VENCIMIENTO: 28-10-2026
+                """;
+
+        assertEquals(LocalDate.of(2026, 10, 21), servicio.extraerFechaEmision(texto));
+    }
+
+    @Test
+    void laFechaDeVencimientoNoSeTomaComoEmision() {
+        String texto = """
+                FECHA EMISION:
+                FECHA VENCIMIENTO: 28-10-2026
+                """;
+
+        assertNull(servicio.extraerFechaEmision(texto));
+    }
+
+    @Test
+    void elTotalDeUnidadesNoEsElTotalDeLaFactura() {
+        String texto = """
+                TOTAL UNIDADES 37.4 VALOR NETO 1.419.504
+                I.V.A.(19 %) 269.707
+                TOTAL 1.707.283
+                """;
+
+        assertEquals(1707283, servicio.extraerValorTotal(texto));
+        assertEquals(1419504, servicio.extraerValorNeto(texto));
+    }
+
+    @Test
+    void unaCantidadFraccionariaQuedaNoProcesadaConSuPrecio() {
+        String texto = """
+                CODIGO DESCRIPCION CANTIDAD P.UNITARIO VALOR A PAGAR
+                10215542 5318 Kent Boost Up 20s 6.100 0,6 47.723,33 28.634
+                10206091 5288 Kent White UP 20 LEP 5.800 1 45.375 45.375
+                SON: UN MILLON
+                """;
+
+        var items = servicio.parsearLineas(texto);
+
+        assertEquals(2, items.size());
+        assertEquals("No Procesado", items.get(0).estado());
+        assertEquals(0, items.get(0).cantidad());
+        assertEquals(47723, items.get(0).precioUnitario());
+        assertTrue(items.get(0).descripcion().contains("0,6"));
+        assertEquals(1, items.get(1).cantidad());
+        assertEquals(45375, items.get(1).precioUnitario());
+    }
+
+    @Test
+    void enUnaFotoSinCabeceraElTimbreNoSeConvierteEnProducto() {
+        String texto = """
+                PALIO AT IA eL DA e e a somtemanto de Ibeas pora vender
+                AE7 te ASA ad $ 4 An, e mo encontrandose facultado 20
+                MATA de AVABY A SA if Para 972800 36 44 44
+                10206091 5288 Kent White UP 20 LEP 5.800 1 45.375 45.375
+                """;
+
+        var items = servicio.parsearLineas(texto, true);
+
+        assertEquals(1, items.size());
+        assertEquals("10206091", items.get(0).codigoInterno());
+    }
+
+    @Test
+    void marcaParaRevisarLasFilasQueNoCuadranSalvoQueLaSumaCoincidaConElNeto() {
+        var tabla = new ReconstructorTablaFactura.Resultado(List.of(
+                new cl.antucayen.model.dto.ItemFacturaExtraido("A-1", "Producto uno", 2, 100, "Observado"),
+                new cl.antucayen.model.dto.ItemFacturaExtraido("B-2", "Producto dos", 7, 50, "Observado")),
+                List.of(true, false), 1, 550);
+
+        var conNetoDistinto = ServicioExtraccionFacturaDigital.marcarPorRevisar(tabla, 999);
+        var conNetoIgual = ServicioExtraccionFacturaDigital.marcarPorRevisar(tabla, 550);
+
+        assertEquals("Producto uno", conNetoDistinto.get(0).descripcion());
+        assertTrue(conNetoDistinto.get(1).descripcion().contains("revisar"));
+        assertEquals("Producto dos", conNetoIgual.get(1).descripcion());
+    }
+
+    @Test
+    void armaLineasDeTextoConLasPalabrasDelOcr() {
+        var palabras = List.of(
+                new ReconstructorTablaFactura.Palabra("21-10-2026", 900, 102, 160, 22),
+                new ReconstructorTablaFactura.Palabra("FECHA", 500, 100, 90, 22),
+                new ReconstructorTablaFactura.Palabra("EMISION:", 600, 101, 130, 22),
+                new ReconstructorTablaFactura.Palabra("TOTAL", 500, 300, 90, 22),
+                new ReconstructorTablaFactura.Palabra("67.687", 900, 303, 100, 22));
+
+        String texto = ServicioExtraccionFacturaDigital.lineasDesdePalabras(palabras);
+
+        assertEquals("FECHA EMISION: 21-10-2026\nTOTAL 67.687\n", texto);
     }
 
 }
