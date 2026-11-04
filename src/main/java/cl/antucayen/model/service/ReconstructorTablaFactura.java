@@ -40,7 +40,12 @@ final class ReconstructorTablaFactura {
 
     /** Resultado de la reconstrucción: ítems y cuántos cuadran con cantidad × precio = subtotal. */
     record Resultado(List<ItemFacturaExtraido> items, List<Boolean> verificadas,
-                     int filasVerificadas, long sumaSubtotales) {
+                     int filasVerificadas, long sumaSubtotales, boolean sinCodigo) {
+        Resultado(List<ItemFacturaExtraido> items, List<Boolean> verificadas,
+                  int filasVerificadas, long sumaSubtotales) {
+            this(items, verificadas, filasVerificadas, sumaSubtotales, false);
+        }
+
         static Resultado vacio() { return new Resultado(List.of(), List.of(), 0, 0); }
 
         /** La tabla es confiable si al menos dos filas, y la mitad de ellas, cuadran. */
@@ -77,6 +82,24 @@ final class ReconstructorTablaFactura {
 
         double inicioTabla = finCabecera(palabras, altoTipico);
         List<Palabra> codigos = columnaDeCodigos(palabras, inicioTabla, altoTipico, anchoPagina);
+        // Factura sin columna de códigos, como la de un distribuidor pequeño que
+        // solo escribe el nombre del producto: cada fila parte con la primera
+        // palabra del nombre, alineada a la izquierda bajo la cabecera.
+        // Si casi no hay códigos, los pocos que aparecen suelen ser números
+        // sueltos del pie, como la orden de compra, y no una columna.
+        boolean sinCodigo = false;
+        if (codigos.size() < 4) {
+            // En una foto la palabra «ITEM» de la cabecera suele leerse mal;
+            // basta con que estén «CANTIDAD» y otra columna de montos.
+            double cabecera = inicioTabla > 0 ? inicioTabla : cabeceraDeMontos(palabras, altoTipico);
+            List<Palabra> nombres = cabecera > 0
+                    ? columnaDeNombres(palabras, cabecera, altoTipico, anchoPagina) : List.of();
+            if (nombres.size() >= 2 && nombres.size() > 2 * codigos.size()) {
+                codigos = nombres;
+                inicioTabla = cabecera;
+                sinCodigo = true;
+            }
+        }
         if (codigos.size() < 2) return Resultado.vacio();
 
         double paso = pasoEntreFilas(codigos, altoTipico);
@@ -90,7 +113,11 @@ final class ReconstructorTablaFactura {
         double ultima = codigos.get(n - 1).centroY();
         double desde = Math.max(inicioTabla, primera - 1.6 * paso);
         double hasta = Math.min(finTabla - 0.3 * altoTipico, ultima + 1.6 * paso);
-        int bordeCodigos = codigos.stream().mapToInt(Palabra::derecha).max().orElse(0);
+        // Sin códigos, la primera palabra del nombre tiene largo variable: el
+        // resto del nombre empieza justo después de la más corta.
+        int bordeCodigos = sinCodigo
+                ? codigos.stream().mapToInt(Palabra::derecha).min().orElse(0)
+                : codigos.stream().mapToInt(Palabra::derecha).max().orElse(0);
 
         List<Palabra> cuerpo = new ArrayList<>();
         for (Palabra p : palabras) {
@@ -115,7 +142,9 @@ final class ReconstructorTablaFactura {
         }
         if (columnasValores.size() < 2) return Resultado.vacio();
 
-        codigos = agregarFilasSinCodigo(codigos, cuerpo, limiteDescripcion, paso, altoTipico);
+        if (!sinCodigo) {
+            codigos = agregarFilasSinCodigo(codigos, cuerpo, limiteDescripcion, paso, altoTipico);
+        }
         n = codigos.size();
 
         // Valores de cada columna asignados a las filas por su orden.
@@ -158,6 +187,13 @@ final class ReconstructorTablaFactura {
             String codigo = limpiarCodigo(codigos.get(i).texto());
             if (codigo.isEmpty()) codigo = "";
             String descripcion = unirDescripcion(descripciones.get(i));
+            if (sinCodigo) {
+                // El nombre completo hace de código del proveedor, así la
+                // equivalencia con el SKU se registra una vez por producto.
+                descripcion = unirDescripcion(List.of(new Palabra(codigos.get(i).texto() + " " + descripcion,
+                        0, 0, 1, 1)));
+                codigo = codigoDesdeNombre(descripcion);
+            }
             Double q = roles[0] < 0 ? null : valores.get(roles[0])[i];
             Double p = valores.get(roles[1])[i];
             Double s = valores.get(roles[2])[i];
@@ -187,7 +223,7 @@ final class ReconstructorTablaFactura {
                         EstadoItemFactura.OBSERVADO.valorDb()));
             }
         }
-        return new Resultado(items, verificacion, verificadas, suma);
+        return new Resultado(items, verificacion, verificadas, suma, sinCodigo);
     }
 
     // ------------------------------------------------------------------ filas
@@ -329,6 +365,62 @@ final class ReconstructorTablaFactura {
             if (corrida.size() >= 2 && corrida.size() >= 0.7 * mayor) return corrida;
         }
         return List.of();
+    }
+
+    /**
+     * Filas de una factura sin códigos: la primera palabra de cada línea bajo
+     * la cabecera, cuando varias líneas parten a la misma distancia del borde.
+     * Las líneas que siguen un nombre largo, como «(12 unidades)», parten más
+     * a la derecha y quedan como parte de la descripción.
+     */
+    private static List<Palabra> columnaDeNombres(List<Palabra> palabras, double inicio,
+                                                  double alto, int anchoPagina) {
+        List<Palabra> candidatos = new ArrayList<>();
+        for (Palabra p : palabras) {
+            if (p.centroY() <= inicio || p.x() > 0.4 * anchoPagina) continue;
+            if (!p.texto().matches("\\p{L}{2,}.*")) continue;
+            if (FIN_DETALLE.contains(normalizar(p.texto()))) continue;
+            boolean primeraDeLaLinea = true;
+            for (Palabra otra : palabras) {
+                if (otra != p && otra.x() < p.x() - 0.5 * alto
+                        && Math.abs(otra.centroY() - p.centroY()) < 0.6 * alto
+                        && otra.texto().matches(".*[\\p{L}\\p{N}].*")) {
+                    primeraDeLaLinea = false;
+                    break;
+                }
+            }
+            if (primeraDeLaLinea) candidatos.add(p);
+        }
+        if (candidatos.size() < 2) return List.of();
+        candidatos.sort(Comparator.comparingInt(Palabra::x));
+        double tolerancia = Math.max(1.5 * alto, 0.008 * anchoPagina);
+
+        List<Palabra> mejor = List.of();
+        List<Palabra> actual = new ArrayList<>();
+        for (int i = 0; i <= candidatos.size(); i++) {
+            Palabra p = i < candidatos.size() ? candidatos.get(i) : null;
+            if (p == null || (!actual.isEmpty() && p.x() - actual.get(actual.size() - 1).x() > tolerancia)) {
+                List<Palabra> corrida = corridaMasLarga(unaPorFila(actual, alto), alto);
+                if (corrida.size() > mejor.size()) mejor = corrida;
+                actual = new ArrayList<>();
+            }
+            if (p != null) actual.add(p);
+        }
+        return mejor.size() >= 2 ? mejor : List.of();
+    }
+
+    /** Código del proveedor para un producto sin código: su nombre en mayúsculas, hasta 50 letras. */
+    static String codigoDesdeNombre(String nombre) {
+        if (nombre == null) return "";
+        String limpio = Normalizer.normalize(nombre, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toUpperCase(Locale.ROOT)
+                .replaceAll("[^A-Z0-9()]+", " ")
+                .trim()
+                .replaceAll(" +", " ");
+        if (limpio.length() <= 50) return limpio;
+        int corte = limpio.lastIndexOf(' ', 50);
+        return limpio.substring(0, corte > 20 ? corte : 50).trim();
     }
 
     /** Tramo más largo de filas seguidas, sin saltos grandes como el que separa la cabecera del detalle. */
@@ -816,14 +908,46 @@ final class ReconstructorTablaFactura {
         return 0;
     }
 
+    /** Borde inferior de una línea con «CANTIDAD» y otro título de montos, o 0 si no hay. */
+    private static double cabeceraDeMontos(List<Palabra> palabras, double alto) {
+        for (Palabra base : palabras) {
+            if (!coincide(normalizar(base.texto()), Set.of("CANTIDAD", "CANT"))) continue;
+            double fondo = base.y() + base.alto();
+            boolean otra = false;
+            for (Palabra p : palabras) {
+                if (p == base || Math.abs(p.centroY() - base.centroY()) > 1.5 * alto) continue;
+                String n = normalizar(p.texto());
+                if (coincide(n, CABECERA_DATOS) && !coincide(n, Set.of("CANTIDAD", "CANT"))) {
+                    otra = true;
+                    fondo = Math.max(fondo, p.y() + p.alto());
+                }
+            }
+            if (otra) return fondo;
+        }
+        return 0;
+    }
+
     /** Altura de la primera palabra de cierre (totales, timbre, pie) bajo la primera fila. */
     private static double finDetalle(List<Palabra> palabras, double primeraFila, double alto) {
         double fin = Double.MAX_VALUE;
         for (Palabra p : palabras) {
             if (p.centroY() <= primeraFila + 0.5 * alto) continue;
-            if (FIN_DETALLE.contains(normalizar(p.texto()))) fin = Math.min(fin, p.y());
+            if (!FIN_DETALLE.contains(normalizar(p.texto()))) continue;
+            // «(12 unidades)» o «6 unidades» es parte del nombre de un producto, no el pie.
+            if (vieneDespuesDeUnNumero(palabras, p, alto)) continue;
+            fin = Math.min(fin, p.y());
         }
         return fin;
+    }
+
+    private static boolean vieneDespuesDeUnNumero(List<Palabra> palabras, Palabra p, double alto) {
+        Palabra anterior = null;
+        for (Palabra otra : palabras) {
+            if (otra == p || otra.derecha() > p.x() + 0.3 * alto || p.x() - otra.derecha() > 1.5 * alto) continue;
+            if (Math.abs(otra.centroY() - p.centroY()) > 0.6 * alto) continue;
+            if (anterior == null || otra.derecha() > anterior.derecha()) anterior = otra;
+        }
+        return anterior != null && anterior.texto().matches("[(\\[]?\\d{1,4}[.,]?");
     }
 
     private static boolean coincide(String palabra, Set<String> claves) {

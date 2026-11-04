@@ -336,6 +336,9 @@ public class ControladorFactura {
         long noProcesados = resultado.items().stream()
                 .filter(i -> EstadoItemFactura.NO_PROCESADO.coincide(i.estado()))
                 .count();
+        long porRevisar = resultado.items().stream()
+                .filter(i -> i.descripcion() != null && i.descripcion().contains(NOTA_ANALISIS))
+                .count();
         String folio = resultado.numeroFactura() == null
                 ? "No detectado" : resultado.numeroFactura();
         String fecha = resultado.fechaEmision() == null
@@ -353,7 +356,25 @@ public class ControladorFactura {
                         + (noProcesados > 0
                         ? "\nLos registros no legibles quedan marcados como No Procesado."
                         : "")
+                        + (porRevisar > 0
+                        ? "\n" + porRevisar + " ítem(s) tienen una nota en la descripción: completa la cantidad "
+                        + "o revísala con la factura en la mano. La nota se quita sola al guardar."
+                        : "")
                         + "\n\nRevisa los valores antes de guardar; todos los campos siguen siendo editables.");
+    }
+
+    /** Separador de las notas que agrega el lector de facturas a la descripción. */
+    private static final String NOTA_ANALISIS = " · ";
+
+    /** Las notas del análisis, como «revisar cantidad», no se guardan con el ítem. */
+    static String quitarNotaDeAnalisis(String descripcion) {
+        if (descripcion == null) return "";
+        int nota = descripcion.indexOf(NOTA_ANALISIS);
+        if (nota < 0) return descripcion;
+        String resto = descripcion.substring(nota + NOTA_ANALISIS.length());
+        boolean esNota = resto.contains("revisar") || resto.contains("ingresa la cantidad")
+                || resto.contains("ilegible");
+        return esNota ? descripcion.substring(0, nota).trim() : descripcion;
     }
 
     private record PreviewFactura(ImageIcon icono,
@@ -577,6 +598,7 @@ public class ControladorFactura {
                     codigo.isBlank() ? null : codigo
             );
 
+            descripcion = quitarNotaDeAnalisis(descripcion);
             item.setDescripcion(
                     descripcion.isBlank() ? null : descripcion
             );

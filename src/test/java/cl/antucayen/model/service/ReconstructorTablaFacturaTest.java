@@ -218,4 +218,81 @@ class ReconstructorTablaFacturaTest {
         assertTrue(resultado.items().isEmpty());
         assertFalse(resultado.confiable());
     }
+
+    /**
+     * Factura de un distribuidor que no imprime códigos: la fila parte con el
+     * nombre del producto y algunos nombres siguen en una segunda línea. La
+     * palabra «ITEM» de la cabecera viene mal leída y al pie hay números sueltos.
+     */
+    private static List<ReconstructorTablaFactura.Palabra> facturaSinCodigos() {
+        List<ReconstructorTablaFactura.Palabra> palabras = new ArrayList<>();
+        agregar(palabras, "TEM", 150, 1180);
+        agregar(palabras, "VALOR", 1400, 1220);
+        agregar(palabras, "UNITARIO", 1540, 1220);
+        agregar(palabras, "CANTIDAD", 1750, 1220);
+        agregar(palabras, "SUBTOTAL", 2080, 1220);
+        String[][] filas = {
+                {"RAZA GATO PESCADO - 10K", "15,546", "2", "31,092"},
+                {"MASTER CAT SALMON - 20K", "33,193", "2", "66,386"},
+                {"FIT FORMULA GATO - 10K", "20,588", "1", "20,588"},
+                {"CAJA POUCH WHISKAS CARNE", "5,546", "2", "11,092"},
+                {"CAJA POUCH PEDIGREE CACHORRO", "5,546", "1", "5,546"}};
+        int y = 1260;
+        for (String[] f : filas) {
+            int x = 157;
+            for (String palabra : f[0].split(" ")) {
+                agregar(palabras, palabra, x, y);
+                x += palabra.length() * 16 + 18;
+            }
+            if (f[0].startsWith("CAJA")) {
+                // El resto del nombre queda en la línea de abajo, más a la derecha.
+                agregar(palabras, "(12", 600, y + 18);
+                agregar(palabras, "unidades)", 660, y + 18);
+            }
+            agregarDerecha(palabras, f[1], 1700, y);
+            agregarDerecha(palabras, f[2], 1900, y);
+            agregarDerecha(palabras, f[3], 2240, y);
+            y += 56;
+        }
+        agregar(palabras, "Referencias", 97, y + 200);
+        agregar(palabras, "30117", 640, y + 260);
+        agregar(palabras, "30117", 1560, y + 285);
+        agregar(palabras, "NETO", 1610, y + 400);
+        agregarDerecha(palabras, "134.704", 2240, y + 400);
+        return palabras;
+    }
+
+    @Test
+    void enUnaFacturaSinCodigosElNombreCompletoHaceDeCodigo() {
+        var resultado = ReconstructorTablaFactura.reconstruir(facturaSinCodigos());
+
+        assertTrue(resultado.sinCodigo());
+        assertEquals(5, resultado.items().size());
+        assertEquals(5, resultado.filasVerificadas());
+        ItemFacturaExtraido primera = resultado.items().get(0);
+        assertEquals("RAZA GATO PESCADO 10K", primera.codigoInterno());
+        assertEquals("RAZA GATO PESCADO 10K", primera.descripcion());
+        assertEquals(2, primera.cantidad());
+        assertEquals(15546, primera.precioUnitario());
+        ItemFacturaExtraido caja = resultado.items().get(3);
+        assertEquals("CAJA POUCH WHISKAS CARNE (12 UNIDADES)", caja.codigoInterno());
+        assertEquals(2, caja.cantidad());
+        assertEquals(5546, caja.precioUnitario());
+        assertEquals(1, resultado.items().get(4).cantidad());
+    }
+
+    @Test
+    void elCodigoDesdeElNombreQuitaTildesYSeLimitaA50Letras() {
+        assertEquals("FIT FORMULA ADULTO RAZAS PEQUENAS 10K",
+                ReconstructorTablaFactura.codigoDesdeNombre("FIT FORMULA ADULTO RAZAS PEQUEÑAS - 10K"));
+        String largo = ReconstructorTablaFactura.codigoDesdeNombre(
+                "ALIMENTO PERRO ADULTO RAZA MEDIANA SABOR CARNE Y VEGETALES BOLSA 15 KG");
+        assertTrue(largo.length() <= 50);
+        assertTrue(largo.startsWith("ALIMENTO PERRO ADULTO"));
+    }
+
+    @Test
+    void unaFacturaConCodigosNoSeLeeComoSinCodigos() {
+        assertFalse(ReconstructorTablaFactura.reconstruir(tabla(FILAS, 0)).sinCodigo());
+    }
 }

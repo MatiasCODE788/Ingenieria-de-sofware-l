@@ -51,7 +51,7 @@ public class VFormularioFactura extends JDialog {
     }
 
     private void initComponents() {
-        setSize(860, 720);
+        setSize(1000, 720);
         setLocationRelativeTo(getParent());
         setResizable(true);
         setMinimumSize(new Dimension(780, 650));
@@ -155,6 +155,23 @@ public class VFormularioFactura extends JDialog {
             }
         };
         tblItems = ComponentesSwing.crearTabla(modeloItems);
+        // La descripción se lleva la mayor parte del ancho para que se lea el producto.
+        int[] anchos = {110, 470, 70, 110, 100};
+        for (int i = 0; i < anchos.length; i++) {
+            tblItems.getColumnModel().getColumn(i).setPreferredWidth(anchos[i]);
+        }
+        tblItems.getColumnModel().getColumn(2).setMaxWidth(110);
+        // Si una descripción no cabe, se ve completa al dejar el mouse encima.
+        tblItems.getColumnModel().getColumn(1).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable tabla, Object valor, boolean seleccionada,
+                                                           boolean foco, int fila, int columna) {
+                Component c = super.getTableCellRendererComponent(tabla, valor, seleccionada, foco, fila, columna);
+                String texto = valor == null ? "" : valor.toString();
+                setToolTipText(texto.isBlank() ? null : texto);
+                return c;
+            }
+        });
         JScrollPane scrollItems = new JScrollPane(tblItems);
         scrollItems.setPreferredSize(new Dimension(0, 260));
         panelItems.add(topItems, BorderLayout.NORTH);
