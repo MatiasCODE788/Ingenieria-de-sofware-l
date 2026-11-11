@@ -1,0 +1,21 @@
+<mxfile host="app.diagrams.net" agent="draw.io" version="24.7.17" type="device" compressed="false">
+  <diagram id="uc-cu-30" name="CU-30 Rechazando importación por estructura inválida">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="640" math="0" shadow="0">
+      <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="CU-30 — Rechazando importación por estructura inválida" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#18324C;" vertex="1" parent="1"><mxGeometry x="40" y="28" width="1120" height="44" as="geometry"/></mxCell>
+    <mxCell id="sub" value="Sistema Antucayen · Incremento 1 · RF-33 · Ajuste de inventario" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontColor=#48647D;" vertex="1" parent="1"><mxGeometry x="40" y="76" width="1120" height="28" as="geometry"/></mxCell>
+    <mxCell id="system" value="Sistema de Gestión de Inventario y Facturas — Antucayen" style="swimlane;html=0;startSize=34;rounded=1;container=1;collapsible=0;recursiveResize=0;whiteSpace=wrap;fillColor=#F8FAFD;swimlaneFillColor=#FFFFFF;strokeColor=#A8BED0;fontSize=14;fontStyle=1;fontColor=#254762;" vertex="1" parent="1"><mxGeometry x="260" y="140" width="820" height="380" as="geometry"/></mxCell>
+    <mxCell id="core" value="CU-30  Rechazando importación por estructura inválida" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#4F83B0;strokeWidth=2;fontSize=13;fontStyle=1;fontColor=#18324C;" vertex="1" parent="1"><mxGeometry x="500" y="324" width="340" height="100" as="geometry"/></mxCell>
+    <mxCell id="nt0" value="CU-29  Validando columnas requeridas en importación" style="ellipse;whiteSpace=wrap;html=1;fillColor=#F3F6FA;strokeColor=#7A93AB;dashed=1;fontSize=11;fontColor=#254762;" vertex="1" parent="1"><mxGeometry x="550" y="204" width="240" height="80" as="geometry"/></mxCell>
+    <mxCell id="e1" value="«extend»" style="edgeStyle=none;html=1;dashed=1;endArrow=open;endSize=10;strokeColor=#48647D;fontSize=11;fontColor=#254762;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="core" target="nt0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
+    <mxCell id="actor_0" value="Administrador" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;fontSize=13;fontColor=#18324C;strokeColor=#254762;fillColor=#ffffff;" vertex="1" parent="1"><mxGeometry x="100" y="264" width="60" height="90" as="geometry"/></mxCell>
+    <mxCell id="e2" value="" style="edgeStyle=none;html=1;endArrow=none;strokeColor=#254762;strokeWidth=1.5;" edge="1" parent="1" source="actor_0" target="core"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
+    <mxCell id="actor_1" value="Bodeguero" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;fontSize=13;fontColor=#18324C;strokeColor=#254762;fillColor=#ffffff;" vertex="1" parent="1"><mxGeometry x="100" y="394" width="60" height="90" as="geometry"/></mxCell>
+    <mxCell id="e3" value="" style="edgeStyle=none;html=1;endArrow=none;strokeColor=#254762;strokeWidth=1.5;" edge="1" parent="1" source="actor_1" target="core"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
+    <mxCell id="footer" value="Fuente: Tabla 2.3, casos de uso incluidos, y Tabla 2.39, relaciones UML, del documento del Incremento 1." style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#6B7C8C;" vertex="1" parent="1"><mxGeometry x="260" y="550" width="820" height="26" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
