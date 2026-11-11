@@ -5,6 +5,7 @@ import cl.antucayen.util.GestorTemas;
 import cl.antucayen.util.Tema;
 import cl.antucayen.view.components.EstiloAntucayen;
 import cl.antucayen.view.components.IconoNavegacion;
+import cl.antucayen.view.components.LogoAntucayen;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,6 +28,7 @@ public class VLogin extends JFrame {
 
     private void initComponents() {
         setTitle("Sistema Antucayen — Inicio de sesión");
+        setIconImage(LogoAntucayen.imagen(64));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(720, 540));
         setSize(1100, 700);
@@ -34,11 +36,11 @@ public class VLogin extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        JPanel barra = new JPanel(new FlowLayout(FlowLayout.LEFT, 13, 13));
+        JPanel barra = new JPanel(new FlowLayout(FlowLayout.LEFT, 13, 9));
         barra.setPreferredSize(new Dimension(0, 54));
         barra.setBackground(EstiloAntucayen.cabecera());
         barra.setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 0));
-        barra.add(new JLabel(new IconoNavegacion("cart", Color.WHITE, 21)));
+        barra.add(new JLabel(LogoAntucayen.icono(34)));
         JLabel encabezado = new JLabel("Sistema Antucayen");
         encabezado.setFont(new Font("Dialog", Font.BOLD, 15));
         encabezado.setForeground(Color.WHITE);

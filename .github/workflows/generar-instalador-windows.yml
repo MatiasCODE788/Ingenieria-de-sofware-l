@@ -1,0 +1,82 @@
+name: Generar instalador Antucayen (Windows)
+
+# Ejecucion manual desde Actions -> Run workflow.
+# No incluye ni instala la base de datos ni emite boletas electronicas del SII.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    name: Compilar y empaquetar Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 50
+
+    steps:
+      - name: Obtener codigo fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21 y Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          architecture: x64
+          cache: maven
+
+      - name: Verificar herramientas
+        shell: pwsh
+        run: |
+          java -version
+          javac -version
+          jpackage --version
+          mvn -version
+          if ($LASTEXITCODE -ne 0) { throw 'No esta disponible Maven.' }
+
+      - name: Instalar Inno Setup 6 para generar instalador EXE
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'No se pudo instalar Inno Setup.' }
+
+      - name: Compilar, probar y crear EXE e instalador
+        shell: pwsh
+        run: |
+          & ./despliegue-windows/Generar-Windows.ps1
+          if (-not (Test-Path './dist/Antucayen-Instalador-Windows-x64.exe')) {
+            throw 'No se genero el instalador de Windows.'
+          }
+          if (-not (Test-Path './dist/Antucayen-Portable-Windows-x64.zip')) {
+            throw 'No se genero el ejecutable portable.'
+          }
+
+      - name: Publicar instalador para descargar
+        uses: actions/upload-artifact@v4
+        with:
+          name: Antucayen-Instalador-Windows-x64
+          path: dist/Antucayen-Instalador-Windows-x64.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publicar version portable para descargar
+        uses: actions/upload-artifact@v4
+        with:
+          name: Antucayen-Portable-Windows-x64
+          path: dist/Antucayen-Portable-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Resumen
+        shell: pwsh
+        run: |
+          @'
+          ## Antucayen para Windows
+          Descarga los archivos desde la seccion **Artifacts** de esta ejecucion:
+          - **Antucayen-Instalador-Windows-x64**: contiene el instalador EXE para Windows.
+          - **Antucayen-Portable-Windows-x64**: contiene el ZIP de la aplicacion portable.
+
+          Antes de instalar en el minimarket, revisa `GUIA_INSTALACION_CLIENTE.md`.
+          Esta version no emite boletas electronicas del SII ni instala MariaDB.
+          '@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append

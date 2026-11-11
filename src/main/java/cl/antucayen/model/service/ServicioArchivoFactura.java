@@ -36,7 +36,7 @@ public class ServicioArchivoFactura {
      */
     public String guardarCopia(File origen) throws IOException {
         validar(origen);
-        Path directorio = Path.of("archivos", "facturas").toAbsolutePath().normalize();
+        Path directorio = directorioFacturas();
         Files.createDirectories(directorio);
 
         String extension = extension(origen.getName());
@@ -54,13 +54,22 @@ public class ServicioArchivoFactura {
     public void eliminarCopiaSilenciosamente(String ruta) {
         if (ruta == null || ruta.isBlank()) return;
         try {
-            Path directorio = Path.of("archivos", "facturas").toAbsolutePath().normalize();
+            Path directorio = directorioFacturas();
             Path archivo = Path.of(ruta).toAbsolutePath().normalize();
             if (archivo.startsWith(directorio)) Files.deleteIfExists(archivo);
         } catch (IOException ignored) {
             // La falla al limpiar un adjunto que nunca quedó registrado no debe
             // ocultar la excepción original de la operación de negocio.
         }
+    }
+
+    /**
+     * Evita escribir dentro de la carpeta de instalación (que puede ser de solo lectura).
+     * Las rutas de facturas ya existentes en la BD permanecen intactas y siguen siendo legibles.
+     */
+    private Path directorioFacturas() {
+        return Path.of(System.getProperty("user.home", "."),
+                ".antucayen", "archivos", "facturas").toAbsolutePath().normalize();
     }
 
     private String extension(String nombre) {
