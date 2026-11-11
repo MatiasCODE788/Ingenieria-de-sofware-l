@@ -1,0 +1,17 @@
+<mxfile host="app.diagrams.net" agent="draw.io" version="24.7.17" type="device" compressed="false">
+  <diagram id="d0-organigrama" name="Organigrama Minimarket AntuCayen">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="520" math="0" shadow="0">
+      <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="ttl" value="Organigrama Minimarket AntuCayen" style="text;html=1;align=center;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#18324C;" vertex="1" parent="1"><mxGeometry x="40" y="18" width="920" height="36" as="geometry"/></mxCell>
+    <mxCell id="v1" value="Administrador / Dueño" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#1F5FAF;strokeColor=#154A8A;fontColor=#FFFFFF;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="360" y="110" width="280" height="70" as="geometry"/></mxCell>
+    <mxCell id="v2" value="Bodeguero&lt;br&gt;&lt;font style=&quot;font-size:12px;font-weight:normal&quot;&gt;Encargado de inventario y abastecimiento&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#5B9BD5;strokeColor=#3F7FBF;fontColor=#FFFFFF;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="130" y="290" width="300" height="80" as="geometry"/></mxCell>
+    <mxCell id="v3" value="Cajero&lt;br&gt;&lt;font style=&quot;font-size:12px;font-weight:normal&quot;&gt;Vendedor&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#7FB0E0;strokeColor=#5B9BD5;fontColor=#FFFFFF;fontSize=15;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="570" y="290" width="300" height="80" as="geometry"/></mxCell>
+    <mxCell id="e4" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;endArrow=none;strokeColor=#44546A;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="v1" target="v2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
+    <mxCell id="e5" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;endArrow=none;strokeColor=#44546A;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="v1" target="v3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
+    <mxCell id="src" value="Fuente: organigrama original de la Figura 2.1 y descripción de cargos de la sección 2.5 del Documento 0." style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#6B7C8C;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="460" width="920" height="22" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
