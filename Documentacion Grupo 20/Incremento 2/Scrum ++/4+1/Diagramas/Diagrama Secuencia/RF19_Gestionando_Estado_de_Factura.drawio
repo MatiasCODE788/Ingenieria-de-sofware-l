@@ -1,0 +1,207 @@
+<mxfile host="app.diagrams.net" agent="draw.io">
+  <diagram id="rf19" name="DS-RF19 - Gestionando Estado de Factura">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="2150" pageHeight="733" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ttl" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;" value="DS-RF19 - Gestionando Estado de Factura" vertex="1">
+          <mxGeometry height="24" width="2070" x="20" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="sub" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;" value="CU-42 | RF-19" vertex="1">
+          <mxGeometry height="18" width="2070" x="20" y="27" as="geometry" />
+        </mxCell>
+        <mxCell id="p0" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;fontSize=18;" value="Adm. / Bodeguero" vertex="1">
+          <mxGeometry height="94" width="60" x="105" y="-44" as="geometry" />
+        </mxCell>
+        <mxCell id="life0" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135" y="78" as="sourcePoint" />
+            <mxPoint x="135" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="VDetalleFactura" vertex="1">
+          <mxGeometry height="28" width="230" x="280" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life1" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="395" y="78" as="sourcePoint" />
+            <mxPoint x="395" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="ControladorFactura" vertex="1">
+          <mxGeometry height="28" width="230" x="540" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life2" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="655" y="78" as="sourcePoint" />
+            <mxPoint x="655" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="ServicioFactura" vertex="1">
+          <mxGeometry height="28" width="230" x="800" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life3" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="915" y="78" as="sourcePoint" />
+            <mxPoint x="915" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="ServicioInventario" vertex="1">
+          <mxGeometry height="28" width="230" x="1060" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life4" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1175" y="78" as="sourcePoint" />
+            <mxPoint x="1175" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="C_MariaDB" vertex="1">
+          <mxGeometry height="28" width="230" x="1320" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life5" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1435" y="78" as="sourcePoint" />
+            <mxPoint x="1435" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="movimiento_inventario" vertex="1">
+          <mxGeometry height="28" width="230" x="1580" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life6" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1695" y="78" as="sourcePoint" />
+            <mxPoint x="1695" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="factura" vertex="1">
+          <mxGeometry height="28" width="230" x="1840" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life7" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1955" y="78" as="sourcePoint" />
+            <mxPoint x="1955" y="673" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="1. clic en botón &quot;Marcar Procesada&quot; (factura previamente registrada en estado Pendiente)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="135" y="100" as="sourcePoint" />
+            <mxPoint x="395" y="100" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="2. cambiarEstado(idFactura, EstadoFactura.PROCESADA.valorDb(), detalle)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="123" as="sourcePoint" />
+            <mxPoint x="655" y="123" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="3. cambiarEstado(idFactura, nuevoEstado)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="153" as="sourcePoint" />
+            <mxPoint x="915" y="153" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="4. buscarPorIdParaActualizar(idFactura) + listarPorFactura(idFactura): valida que todos los ítems estén Válidos">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="183" as="sourcePoint" />
+            <mxPoint x="915" y="183" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="5. registrarIngresoPorCompra(item.getSku(), item.getCantidadFacturada(), idFactura, item.getIdItem())  [por cada ItemFactura]">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="213" as="sourcePoint" />
+            <mxPoint x="1175" y="213" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="6. INSERT INTO movimiento_inventario (sku, id_usuario, id_item_factura, tipo_movimiento, stock_anterior, cantidad_aplicada, stock_resultante, vigente) VALUES (...)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="243" as="sourcePoint" />
+            <mxPoint x="1435" y="243" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="7. cursor.execute(query)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1435" y="273" as="sourcePoint" />
+            <mxPoint x="1695" y="273" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m8" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="8. return: cursor_result">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1695" y="303" as="sourcePoint" />
+            <mxPoint x="1435" y="303" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m9" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="9. movimiento insertado: id_item_factura queda como vínculo permanente entre la factura y el movimiento de stock">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1435" y="333" as="sourcePoint" />
+            <mxPoint x="1175" y="333" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m10" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="10. ingreso de stock aplicado">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1175" y="363" as="sourcePoint" />
+            <mxPoint x="915" y="363" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m11" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="11. actualizarEstado(idFactura, &quot;Procesada&quot;)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="393" as="sourcePoint" />
+            <mxPoint x="1435" y="393" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m12" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="12. cursor.execute(query)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1435" y="423" as="sourcePoint" />
+            <mxPoint x="1955" y="423" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m13" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="13. return: cursor_result">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1955" y="453" as="sourcePoint" />
+            <mxPoint x="1435" y="453" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m14" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="14. UPDATE factura SET estado=? WHERE id_factura=?  →  OK">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="1435" y="483" as="sourcePoint" />
+            <mxPoint x="915" y="483" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m15" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="15. cambio de estado confirmado">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="513" as="sourcePoint" />
+            <mxPoint x="655" y="513" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m16" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="16. detalle.dispose(); cargarTodas()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="543" as="sourcePoint" />
+            <mxPoint x="395" y="543" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m17" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="17. mensaje &quot;Estado actualizado a Procesada&quot;; la factura queda Procesada y cada movimiento de stock generado conserva su vínculo permanente con el ítem de la factura">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="573" as="sourcePoint" />
+            <mxPoint x="135" y="573" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
