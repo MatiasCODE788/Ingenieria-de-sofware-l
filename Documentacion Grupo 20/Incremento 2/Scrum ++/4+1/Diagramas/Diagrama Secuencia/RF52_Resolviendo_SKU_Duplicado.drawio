@@ -1,0 +1,92 @@
+<mxfile host="app.diagrams.net" agent="draw.io">
+  <diagram id="rf52" name="DS-RF52 - Resolviendo SKU Duplicado">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="433" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ttl" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;" value="DS-RF52 - Resolviendo SKU Duplicado" vertex="1">
+          <mxGeometry height="24" width="770" x="20" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="sub" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;" value="CU-58 | RF-52" vertex="1">
+          <mxGeometry height="18" width="770" x="20" y="27" as="geometry" />
+        </mxCell>
+        <mxCell id="p0" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;fontSize=18;" value="Admin / Bodeguero" vertex="1">
+          <mxGeometry height="94" width="60" x="110" y="-44" as="geometry" />
+        </mxCell>
+        <mxCell id="life0" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135" y="78" as="sourcePoint" />
+            <mxPoint x="135" y="373" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="VAjusteInventario" vertex="1">
+          <mxGeometry height="28" width="230" x="280" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life1" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="395" y="78" as="sourcePoint" />
+            <mxPoint x="395" y="373" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="ControladorAjusteInventario" vertex="1">
+          <mxGeometry height="28" width="230" x="540" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life2" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="655" y="78" as="sourcePoint" />
+            <mxPoint x="655" y="373" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="1. intenta &quot;Confirmar ajuste&quot; con SKU duplicados pendientes; confirmarAjuste() lo bloquea y exige resolverlos">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="140" y="100" as="sourcePoint" />
+            <mxPoint x="400" y="100" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="2. clic en &quot;Resolver duplicados...&quot; -&gt; resolverDuplicadosPorGrupo()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="123" as="sourcePoint" />
+            <mxPoint x="655" y="123" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="3. para cada grupo de SKU duplicado, el usuario elige Consolidar o Rechazar grupo (DecisionDuplicado)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="153" as="sourcePoint" />
+            <mxPoint x="655" y="153" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="4. RECHAZAR -&gt; se excluyen todas las filas del grupo; CONSOLIDAR -&gt; total=Math.addExact(cantidades), stockProyectado=calcularStockProyectado(stockActual, total, modalidad), estado=&quot;OK (consolidado)&quot;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="183" as="sourcePoint" />
+            <mxPoint x="655" y="183" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="5. itemsCargados = nuevaLista; duplicadosPendientes.clear()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="213" as="sourcePoint" />
+            <mxPoint x="655" y="213" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="6. mostrarAvisoDuplicados(Map.of()); getPanelErroresEstructura().cargarErrores(erroresConsolidados); refrescarTabla()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="243" as="sourcePoint" />
+            <mxPoint x="395" y="243" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="7. previsualización actualizada: duplicados consolidados o excluidos, y el botón &quot;Confirmar ajuste&quot; se habilita nuevamente">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="273" as="sourcePoint" />
+            <mxPoint x="135" y="273" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
