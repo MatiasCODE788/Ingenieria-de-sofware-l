@@ -1,0 +1,101 @@
+<mxfile host="app.diagrams.net" agent="draw.io">
+  <diagram id="rf35" name="DS-RF35 - Listando Errores de Formato">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="1110" pageHeight="433" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ttl" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;" value="DS-RF35 - Listando Errores de Formato" vertex="1">
+          <mxGeometry height="24" width="1030" x="20" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="sub" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontColor=#666666;" value="CU-50 | RF-35" vertex="1">
+          <mxGeometry height="18" width="1030" x="20" y="27" as="geometry" />
+        </mxCell>
+        <mxCell id="p0" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;labelBackgroundColor=none;verticalAlign=top;html=1;outlineConnect=0;fontSize=18;" value="Adm. / Bodeguero" vertex="1">
+          <mxGeometry height="94" width="60" x="105" y="-44" as="geometry" />
+        </mxCell>
+        <mxCell id="life0" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="135" y="78" as="sourcePoint" />
+            <mxPoint x="135" y="373" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="VAjusteInventario" vertex="1">
+          <mxGeometry height="28" width="230" x="280" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life1" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="395" y="78" as="sourcePoint" />
+            <mxPoint x="395" y="373" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="ControladorAjusteInventario" vertex="1">
+          <mxGeometry height="28" width="230" x="540" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life2" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="655" y="78" as="sourcePoint" />
+            <mxPoint x="655" y="373" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1.5;fillColor=#ffffff;fontSize=11;" value="VReporteErrores" vertex="1">
+          <mxGeometry height="28" width="230" x="800" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="life3" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.2;dashed=1;dashPattern=4 4;strokeColor=#666666;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="915" y="78" as="sourcePoint" />
+            <mxPoint x="915" y="373" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m1" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="1. carga un archivo inválido; el sistema ya ejecutó la validación de estructura y de filas">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="140" y="100" as="sourcePoint" />
+            <mxPoint x="400" y="100" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m2" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="2. cargarPreview() -&gt; procesarResultadoLectura(resultado, modalidad, correccionAutorizada)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="123" as="sourcePoint" />
+            <mxPoint x="655" y="123" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m3" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="3. getPanelErroresEstructura().cargarErrores(erroresConsolidados)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="153" as="sourcePoint" />
+            <mxPoint x="915" y="153" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m4" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="4. por cada ErrorImportacion: agrega fila con getFila(), getColumna(), getCodigoSku(), getDescripcion()">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="183" as="sourcePoint" />
+            <mxPoint x="915" y="183" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m5" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="5. tabla de errores actualizada y panel visible">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="915" y="213" as="sourcePoint" />
+            <mxPoint x="655" y="213" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m6" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=classic;endFill=1;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="6. mostrarError(erroresConsolidados.size() + &quot; error(es) encontrados&quot;)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="655" y="243" as="sourcePoint" />
+            <mxPoint x="395" y="243" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m7" edge="1" parent="1" style="edgeStyle=none;html=1;rounded=0;orthogonalLoop=1;jettySize=auto;endArrow=open;dashed=1;endFill=0;strokeWidth=1.2;fontSize=10;labelBackgroundColor=#ffffff;" value="7. pantalla muestra el listado de errores de formato: número de fila, columna afectada y descripción del problema">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="-9" as="offset" />
+            <mxPoint x="395" y="273" as="sourcePoint" />
+            <mxPoint x="135" y="273" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
