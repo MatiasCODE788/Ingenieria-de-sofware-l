@@ -200,7 +200,7 @@ Decisiones de diseño relevantes:
 ```text
 .
 ├── database/
-│   └── Antucayen_Instalacion_Unica.sql    # Esquema completo y datos de demostración
+│   └── Antucayen_DDL.sql    # Esquema completo y datos de demostración
 ├── instalador/                            # Instalador para Windows (ver Despliegue)
 │   ├── Crear instalador.cmd               # Genera el paquete para el minimarket
 │   ├── CrearInstalador.java               # Lógica del generador: Maven + jpackage
@@ -271,7 +271,7 @@ Decisiones de diseño relevantes:
 2. **Crea la base de datos** ejecutando el script de instalación (ver [Base de datos](#base-de-datos)).
 
 ```bash
-   mariadb -u root -p < database/Antucayen_Instalacion_Unica.sql
+   mariadb -u root -p < database/Antucayen_DDL.sql
 ```
 
 3. **Prepara la cuenta MariaDB para la aplicación.** El instalador SQL incluye
@@ -355,22 +355,22 @@ Con estos valores la aplicación construye la URL `jdbc:mariadb://<host>:<port>/
 
 ### Instalación del esquema
 
-El archivo `database/Antucayen_Instalacion_Unica.sql` es la única fuente del esquema. Crea la base `minimarket` (`utf8mb4`, colación `utf8mb4_spanish_ci`, tablas InnoDB) y carga datos de demostración. El repositorio no incluye migraciones incrementales. **No volver a ejecutar este instalador en una BD en uso:** contiene `DROP DATABASE IF EXISTS minimarket` y borraría los datos. Para habilitar la LAN, usar exclusivamente los GRANT/CREATE USER que se indican en la guía Wi-Fi.
+El archivo `database/Antucayen_DDL.sql` es la única fuente del esquema. Crea la base `minimarket` (`utf8mb4`, colación `utf8mb4_spanish_ci`, tablas InnoDB) y carga datos de demostración. El repositorio no incluye migraciones incrementales. **No volver a ejecutar este instalador en una BD en uso:** contiene `DROP DATABASE IF EXISTS minimarket` y borraría los datos. Para habilitar la LAN, usar exclusivamente los GRANT/CREATE USER que se indican en la guía Wi-Fi.
 
 
 ```bash
 # Linux / macOS
-mariadb -u root -p < database/Antucayen_Instalacion_Unica.sql
+mariadb -u root -p < database/Antucayen_DDL.sql
 ```
 
 ```cmd
 :: CMD de Windows
-mariadb -u root -p < database\Antucayen_Instalacion_Unica.sql
+mariadb -u root -p < database\Antucayen_DDL.sql
 ```
 
 ```powershell
 # PowerShell
-Get-Content .\database\Antucayen_Instalacion_Unica.sql | mariadb -u root -p
+Get-Content .\database\Antucayen_DDL.sql | mariadb -u root -p
 ```
 
 El script está codificado en UTF-8 y sus restricciones contienen valores con tilde (`Válido`, `Débito`, `Crédito`, `Reversión`), por lo que debe ejecutarse conservando esa codificación.
@@ -635,7 +635,7 @@ El asistente se compila con NSIS a partir de `instalador/nsis/instalador.nsi`; s
 
 Sin el instalador, el despliegue consiste en distribuir el JAR ejecutable a cada equipo.
 
-1. **Base de datos.** Instala el esquema con `database/Antucayen_Instalacion_Unica.sql` en un servidor MariaDB accesible desde los equipos de trabajo y prepara la cuenta de la aplicación.
+1. **Base de datos.** Instala el esquema con `database/Antucayen_DDL.sql` en un servidor MariaDB accesible desde los equipos de trabajo y prepara la cuenta de la aplicación.
 2. **Artefacto.** Genera `target/Antucayen-1.0-SNAPSHOT.jar` con `mvn clean package`.
 3. **Equipo de trabajo.** Necesita Java 21 o superior y entorno gráfico.
 4. **Conexión.** Define las variables `ANTUCAYEN_DB_*` en cada equipo. Si en su lugar compilas con `config.properties`, las credenciales quedan dentro del JAR.
@@ -654,7 +654,7 @@ Sin el instalador, el despliegue consiste en distribuir el JAR ejecutable a cada
 ### Limitaciones conocidas
 
 - La expiración de sesión está implementada con 30 minutos de inactividad por defecto, configurable con `-Dantucayen.sesion.inactividad.minutos=N` (N entre 1 y 1440). Los datos aún no confirmados se descartan al expirar.
-- Si el esquema no coincide, el mensaje de `VerificadorEsquema` remite a `database/00_instalacion_completa.sql` y a scripts de `database/migrations/` que no existen en el repositorio. El único script disponible es `database/Antucayen_Instalacion_Unica.sql`.
+- Si el esquema no coincide, el mensaje de `VerificadorEsquema` remite a `database/00_instalacion_completa.sql` y a scripts de `database/migrations/` que no existen en el repositorio. El único script disponible es `database/Antucayen_DDL.sql`.
 - No existe cambio ni restablecimiento de contraseña desde la aplicación, ni reactivación de usuarios desactivados.
 - El Administrador puede consultar la bitácora de archivos desde el módulo «Auditoría de archivos». La auditoría de cambios de proveedores permanece almacenada en `auditoria_proveedor`.
 - El formulario de factura no captura el precio de compra: `precio_unitario_compra` se guarda siempre en 0.
@@ -671,7 +671,7 @@ Sin el instalador, el despliegue consiste en distribuir el JAR ejecutable a cada
 |---|---|---|
 | `Configuración de base de datos incompleta` | No existe `config.properties` en el classpath ni están definidas las variables `ANTUCAYEN_DB_*`, o falta algún valor obligatorio. | Revisa [Configuración](#configuración). Si usas el archivo, vuelve a empaquetar. |
 | `Error de conexión` | MariaDB no está disponible o el host, el puerto, el usuario o la contraseña no son correctos. | Verifica el servidor y las credenciales configuradas. |
-| `La base de datos no corresponde a la versión actual` | El esquema instalado no coincide con el que espera la aplicación. | Respalda los datos y ejecuta `database/Antucayen_Instalacion_Unica.sql`. Ignora los nombres de archivo que sugiere el mensaje. |
+| `La base de datos no corresponde a la versión actual` | El esquema instalado no coincide con el que espera la aplicación. | Respalda los datos y ejecuta `database/Antucayen_DDL.sql`. Ignora los nombres de archivo que sugiere el mensaje. |
 | `Usuario o contraseña incorrectos` | Credenciales erróneas, usuario desactivado o perfil no soportado. | Verifica la cuenta en «Usuarios y permisos» con un Administrador. |
 | `Acceso denegado: su perfil no tiene permisos para esta función` | El rol no tiene permiso para la acción. | Consulta [Roles y permisos](#roles-y-permisos). |
 | `No fue posible leer la imagen con OCR` o `No se encontraron los datos de idioma del OCR` | Tesseract o sus datos de idioma no están disponibles. | Usa la aplicación instalada con el instalador, que trae `tessdata`, o configura `ANTUCAYEN_TESSDATA` y `ANTUCAYEN_OCR_LANG`; también puedes ingresar los ítems manualmente. |

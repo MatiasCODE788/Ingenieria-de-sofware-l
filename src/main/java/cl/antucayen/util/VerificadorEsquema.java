@@ -92,7 +92,7 @@ public final class VerificadorEsquema {
         return new SQLException(
                 "La base de datos no corresponde al esquema requerido: " + detalle
                         + ". Para una instalación limpia ejecuta únicamente "
-                        + "database/Antucayen_Instalacion_Unica.sql.");
+                        + "database/Antucayen_DDL.sql.");
     }
 
     private static Map<String, List<String>> crearContrato() {
