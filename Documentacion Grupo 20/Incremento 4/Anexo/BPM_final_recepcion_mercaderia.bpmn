@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Defs_Antucayen" targetNamespace="http://antucayen.cl/bpmn" exporter="Grupo 20" exporterVersion="1.0">
+<bpmn:dataStore id="DataStore_MariaDB" name="BD MariaDB" />
+<bpmn:collaboration id="Collab_Recepcion">
+<bpmn:participant id="Part_Proveedor" name="Proveedor" processRef="Proc_Proveedor" />
+<bpmn:participant id="Part_Minimarket" name="Minimarket Antucayen – Recepción con el sistema" processRef="Proc_Minimarket" />
+<bpmn:messageFlow id="MsgFlow_1" name="Mercadería y factura" sourceRef="t2" targetRef="s0" />
+</bpmn:collaboration>
+<bpmn:process id="Proc_Proveedor" name="Proveedor" isExecutable="false">
+<bpmn:startEvent id="p0" name="Inicio"><bpmn:outgoing>Flow_01</bpmn:outgoing></bpmn:startEvent>
+<bpmn:manualTask id="t1" name="1. Preparar mercadería y factura"><bpmn:incoming>Flow_01</bpmn:incoming><bpmn:outgoing>Flow_02</bpmn:outgoing></bpmn:manualTask>
+<bpmn:manualTask id="t2" name="2. Entregar mercadería y factura"><bpmn:incoming>Flow_02</bpmn:incoming><bpmn:outgoing>Flow_03</bpmn:outgoing></bpmn:manualTask>
+<bpmn:endEvent id="p9" name="Entrega realizada"><bpmn:incoming>Flow_03</bpmn:incoming></bpmn:endEvent>
+<bpmn:sequenceFlow id="Flow_01" sourceRef="p0" targetRef="t1" />
+<bpmn:sequenceFlow id="Flow_02" sourceRef="t1" targetRef="t2" />
+<bpmn:sequenceFlow id="Flow_03" sourceRef="t2" targetRef="p9" />
+</bpmn:process>
+<bpmn:process id="Proc_Minimarket" name="Recepción de mercadería con el sistema" isExecutable="false">
+<bpmn:laneSet id="LaneSet_1">
+<bpmn:lane id="Lane_Bodeguero" name="Bodeguero"><bpmn:flowNodeRef>s0</bpmn:flowNodeRef><bpmn:flowNodeRef>t3</bpmn:flowNodeRef><bpmn:flowNodeRef>t4</bpmn:flowNodeRef><bpmn:flowNodeRef>t5</bpmn:flowNodeRef><bpmn:flowNodeRef>t7</bpmn:flowNodeRef><bpmn:flowNodeRef>t12</bpmn:flowNodeRef><bpmn:flowNodeRef>t17</bpmn:flowNodeRef><bpmn:flowNodeRef>g3</bpmn:flowNodeRef><bpmn:flowNodeRef>t18</bpmn:flowNodeRef><bpmn:flowNodeRef>g4</bpmn:flowNodeRef><bpmn:flowNodeRef>t20</bpmn:flowNodeRef><bpmn:flowNodeRef>g5</bpmn:flowNodeRef><bpmn:flowNodeRef>e3</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="Lane_Administrador" name="Administrador"><bpmn:flowNodeRef>t14</bpmn:flowNodeRef><bpmn:flowNodeRef>t15</bpmn:flowNodeRef></bpmn:lane>
+<bpmn:lane id="Lane_Sistema" name="Sistema Antucayen"><bpmn:flowNodeRef>t6</bpmn:flowNodeRef><bpmn:flowNodeRef>t8</bpmn:flowNodeRef><bpmn:flowNodeRef>g1</bpmn:flowNodeRef><bpmn:flowNodeRef>t9</bpmn:flowNodeRef><bpmn:flowNodeRef>e1</bpmn:flowNodeRef><bpmn:flowNodeRef>t10</bpmn:flowNodeRef><bpmn:flowNodeRef>t11</bpmn:flowNodeRef><bpmn:flowNodeRef>t13</bpmn:flowNodeRef><bpmn:flowNodeRef>g2</bpmn:flowNodeRef><bpmn:flowNodeRef>t16</bpmn:flowNodeRef><bpmn:flowNodeRef>t19</bpmn:flowNodeRef><bpmn:flowNodeRef>e2</bpmn:flowNodeRef><bpmn:flowNodeRef>t21</bpmn:flowNodeRef></bpmn:lane>
+</bpmn:laneSet>
+<bpmn:startEvent id="s0" name="Llega el proveedor"><bpmn:outgoing>Flow_04</bpmn:outgoing><bpmn:messageEventDefinition id="s0_msg" /></bpmn:startEvent>
+<bpmn:manualTask id="t3" name="3. Recibir mercadería y factura"><bpmn:incoming>Flow_04</bpmn:incoming><bpmn:outgoing>Flow_05</bpmn:outgoing></bpmn:manualTask>
+<bpmn:manualTask id="t4" name="4. Contar y revisar la mercadería física"><bpmn:incoming>Flow_05</bpmn:incoming><bpmn:outgoing>Flow_06</bpmn:outgoing></bpmn:manualTask>
+<bpmn:userTask id="t5" name="5. Cargar factura (PDF o foto) y analizarla"><bpmn:incoming>Flow_06</bpmn:incoming><bpmn:outgoing>Flow_07</bpmn:outgoing></bpmn:userTask>
+<bpmn:serviceTask id="t6" name="6. Extraer folio, fecha, total e ítems (PDF, OCR, Excel, CSV)"><bpmn:incoming>Flow_07</bpmn:incoming><bpmn:outgoing>Flow_08</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:userTask id="t7" name="7. Revisar datos extraídos y guardar factura"><bpmn:incoming>Flow_08</bpmn:incoming><bpmn:outgoing>Flow_09</bpmn:outgoing></bpmn:userTask>
+<bpmn:serviceTask id="t8" name="8. Validar número único por proveedor"><bpmn:incoming>Flow_09</bpmn:incoming><bpmn:outgoing>Flow_10</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:exclusiveGateway id="g1" name="¿Número duplicado?" gatewayDirection="Diverging"><bpmn:incoming>Flow_10</bpmn:incoming><bpmn:outgoing>Flow_11</bpmn:outgoing><bpmn:outgoing>Flow_12</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:serviceTask id="t9" name="9. Alertar factura duplicada"><bpmn:incoming>Flow_12</bpmn:incoming><bpmn:outgoing>Flow_13</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:endEvent id="e1" name="Factura ya registrada"><bpmn:incoming>Flow_13</bpmn:incoming></bpmn:endEvent>
+<bpmn:serviceTask id="t10" name="10. Registrar factura e ítems y archivar documento"><bpmn:incoming>Flow_11</bpmn:incoming><bpmn:outgoing>Flow_14</bpmn:outgoing><bpmn:dataOutputAssociation id="DataAssoc_1"><bpmn:targetRef>doc</bpmn:targetRef></bpmn:dataOutputAssociation></bpmn:serviceTask>
+<bpmn:serviceTask id="t11" name="11. Resolver SKU por equivalencia (ítem a ítem)"><bpmn:incoming>Flow_14</bpmn:incoming><bpmn:incoming>Flow_20</bpmn:incoming><bpmn:outgoing>Flow_15</bpmn:outgoing><bpmn:multiInstanceLoopCharacteristics /></bpmn:serviceTask>
+<bpmn:userTask id="t12" name="12. Procesar factura"><bpmn:incoming>Flow_15</bpmn:incoming><bpmn:outgoing>Flow_16</bpmn:outgoing></bpmn:userTask>
+<bpmn:serviceTask id="t13" name="13. Ingresar stock de ítems válidos y registrar movimiento"><bpmn:incoming>Flow_16</bpmn:incoming><bpmn:outgoing>Flow_17</bpmn:outgoing><bpmn:dataOutputAssociation id="DataAssoc_2"><bpmn:targetRef>db</bpmn:targetRef></bpmn:dataOutputAssociation></bpmn:serviceTask>
+<bpmn:exclusiveGateway id="g2" name="¿Quedan ítems observados?" gatewayDirection="Diverging"><bpmn:incoming>Flow_17</bpmn:incoming><bpmn:outgoing>Flow_18</bpmn:outgoing><bpmn:outgoing>Flow_21</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:userTask id="t14" name="14. Registrar equivalencia o crear producto"><bpmn:incoming>Flow_18</bpmn:incoming><bpmn:outgoing>Flow_19</bpmn:outgoing></bpmn:userTask>
+<bpmn:userTask id="t15" name="15. Autorizar reproceso de la factura"><bpmn:incoming>Flow_19</bpmn:incoming><bpmn:outgoing>Flow_20</bpmn:outgoing></bpmn:userTask>
+<bpmn:serviceTask id="t16" name="16. Mostrar resumen del procesamiento"><bpmn:incoming>Flow_21</bpmn:incoming><bpmn:outgoing>Flow_22</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:userTask id="t17" name="17. Comparar resumen con la mercadería contada"><bpmn:incoming>Flow_22</bpmn:incoming><bpmn:outgoing>Flow_23</bpmn:outgoing></bpmn:userTask>
+<bpmn:exclusiveGateway id="g3" name="¿Recepción conforme?" gatewayDirection="Diverging"><bpmn:incoming>Flow_23</bpmn:incoming><bpmn:outgoing>Flow_24</bpmn:outgoing><bpmn:outgoing>Flow_25</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:userTask id="t18" name="18. Marcar factura como Observada y ajustar inventario"><bpmn:incoming>Flow_25</bpmn:incoming><bpmn:outgoing>Flow_26</bpmn:outgoing></bpmn:userTask>
+<bpmn:serviceTask id="t19" name="19. Registrar ajuste de inventario"><bpmn:incoming>Flow_26</bpmn:incoming><bpmn:outgoing>Flow_27</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:endEvent id="e2" name="Recepción con observaciones"><bpmn:incoming>Flow_27</bpmn:incoming></bpmn:endEvent>
+<bpmn:exclusiveGateway id="g4" name="¿Exportar ítems?" gatewayDirection="Diverging"><bpmn:incoming>Flow_24</bpmn:incoming><bpmn:outgoing>Flow_28</bpmn:outgoing><bpmn:outgoing>Flow_29</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:userTask id="t20" name="20. Exportar ítems válidos a Excel o CSV"><bpmn:incoming>Flow_28</bpmn:incoming><bpmn:outgoing>Flow_30</bpmn:outgoing></bpmn:userTask>
+<bpmn:serviceTask id="t21" name="21. Generar archivo y registrar auditoría"><bpmn:incoming>Flow_30</bpmn:incoming><bpmn:outgoing>Flow_31</bpmn:outgoing></bpmn:serviceTask>
+<bpmn:exclusiveGateway id="g5" name="" gatewayDirection="Converging"><bpmn:incoming>Flow_29</bpmn:incoming><bpmn:incoming>Flow_31</bpmn:incoming><bpmn:outgoing>Flow_32</bpmn:outgoing></bpmn:exclusiveGateway>
+<bpmn:endEvent id="e3" name="Recepción finalizada"><bpmn:incoming>Flow_32</bpmn:incoming></bpmn:endEvent>
+<bpmn:sequenceFlow id="Flow_04" sourceRef="s0" targetRef="t3" />
+<bpmn:sequenceFlow id="Flow_05" sourceRef="t3" targetRef="t4" />
+<bpmn:sequenceFlow id="Flow_06" sourceRef="t4" targetRef="t5" />
+<bpmn:sequenceFlow id="Flow_07" sourceRef="t5" targetRef="t6" />
+<bpmn:sequenceFlow id="Flow_08" sourceRef="t6" targetRef="t7" />
+<bpmn:sequenceFlow id="Flow_09" sourceRef="t7" targetRef="t8" />
+<bpmn:sequenceFlow id="Flow_10" sourceRef="t8" targetRef="g1" />
+<bpmn:sequenceFlow id="Flow_11" name="No" sourceRef="g1" targetRef="t10" />
+<bpmn:sequenceFlow id="Flow_12" name="Sí" sourceRef="g1" targetRef="t9" />
+<bpmn:sequenceFlow id="Flow_13" sourceRef="t9" targetRef="e1" />
+<bpmn:sequenceFlow id="Flow_14" sourceRef="t10" targetRef="t11" />
+<bpmn:sequenceFlow id="Flow_15" sourceRef="t11" targetRef="t12" />
+<bpmn:sequenceFlow id="Flow_16" sourceRef="t12" targetRef="t13" />
+<bpmn:sequenceFlow id="Flow_17" sourceRef="t13" targetRef="g2" />
+<bpmn:sequenceFlow id="Flow_18" name="Sí" sourceRef="g2" targetRef="t14" />
+<bpmn:sequenceFlow id="Flow_19" sourceRef="t14" targetRef="t15" />
+<bpmn:sequenceFlow id="Flow_20" name="reprocesar" sourceRef="t15" targetRef="t11" />
+<bpmn:sequenceFlow id="Flow_21" name="No" sourceRef="g2" targetRef="t16" />
+<bpmn:sequenceFlow id="Flow_22" sourceRef="t16" targetRef="t17" />
+<bpmn:sequenceFlow id="Flow_23" sourceRef="t17" targetRef="g3" />
+<bpmn:sequenceFlow id="Flow_24" name="Sí" sourceRef="g3" targetRef="g4" />
+<bpmn:sequenceFlow id="Flow_25" name="No" sourceRef="g3" targetRef="t18" />
+<bpmn:sequenceFlow id="Flow_26" sourceRef="t18" targetRef="t19" />
+<bpmn:sequenceFlow id="Flow_27" sourceRef="t19" targetRef="e2" />
+<bpmn:sequenceFlow id="Flow_28" name="Sí" sourceRef="g4" targetRef="t20" />
+<bpmn:sequenceFlow id="Flow_29" name="No" sourceRef="g4" targetRef="g5" />
+<bpmn:sequenceFlow id="Flow_30" sourceRef="t20" targetRef="t21" />
+<bpmn:sequenceFlow id="Flow_31" sourceRef="t21" targetRef="g5" />
+<bpmn:sequenceFlow id="Flow_32" sourceRef="g5" targetRef="e3" />
+<bpmn:dataObject id="DataObj_Factura" />
+<bpmn:dataObjectReference id="doc" name="Factura digital" dataObjectRef="DataObj_Factura" />
+<bpmn:dataStoreReference id="db" name="BD MariaDB" dataStoreRef="DataStore_MariaDB" />
+</bpmn:process>
+<bpmndi:BPMNDiagram id="Diagram_1" name="BPM final: recepción de mercadería con el sistema">
+<bpmndi:BPMNPlane id="Plane_1" bpmnElement="Collab_Recepcion">
+<bpmndi:BPMNShape id="Part_Proveedor_di" bpmnElement="Part_Proveedor" isHorizontal="true"><dc:Bounds x="20" y="50" width="2750" height="140" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Part_Minimarket_di" bpmnElement="Part_Minimarket" isHorizontal="true"><dc:Bounds x="20" y="215" width="2750" height="720" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Lane_Bodeguero_di" bpmnElement="Lane_Bodeguero" isHorizontal="true"><dc:Bounds x="50" y="215" width="2720" height="280" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Lane_Administrador_di" bpmnElement="Lane_Administrador" isHorizontal="true"><dc:Bounds x="50" y="495" width="2720" height="160" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="Lane_Sistema_di" bpmnElement="Lane_Sistema" isHorizontal="true"><dc:Bounds x="50" y="655" width="2720" height="280" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="p0_di" bpmnElement="p0"><dc:Bounds x="98" y="103" width="34" height="34" /><bpmndi:BPMNLabel><dc:Bounds x="60" y="138" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t1_di" bpmnElement="t1"><dc:Bounds x="163" y="84" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t2_di" bpmnElement="t2"><dc:Bounds x="333" y="84" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="p9_di" bpmnElement="p9"><dc:Bounds x="523" y="103" width="34" height="34" /><bpmndi:BPMNLabel><dc:Bounds x="485" y="142" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="s0_di" bpmnElement="s0"><dc:Bounds x="388" y="283" width="34" height="34" /><bpmndi:BPMNLabel><dc:Bounds x="350" y="324" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t3_di" bpmnElement="t3"><dc:Bounds x="463" y="264" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t4_di" bpmnElement="t4"><dc:Bounds x="613" y="264" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t5_di" bpmnElement="t5"><dc:Bounds x="778" y="264" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t6_di" bpmnElement="t6"><dc:Bounds x="778" y="709" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t7_di" bpmnElement="t7"><dc:Bounds x="938" y="264" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t8_di" bpmnElement="t8"><dc:Bounds x="938" y="709" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="g1_di" bpmnElement="g1"><dc:Bounds x="1101" y="721" width="48" height="48" /><bpmndi:BPMNLabel><dc:Bounds x="1070" y="685" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t9_di" bpmnElement="t9"><dc:Bounds x="1053" y="826" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="e1_di" bpmnElement="e1"><dc:Bounds x="1223" y="845" width="34" height="34" /><bpmndi:BPMNLabel><dc:Bounds x="1185" y="886" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t10_di" bpmnElement="t10"><dc:Bounds x="1183" y="709" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="doc_di" bpmnElement="doc"><dc:Bounds x="1328" y="834" width="34" height="44" /><bpmndi:BPMNLabel><dc:Bounds x="1295" y="890" width="100" height="20" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t11_di" bpmnElement="t11"><dc:Bounds x="1398" y="709" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t12_di" bpmnElement="t12"><dc:Bounds x="1568" y="264" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t13_di" bpmnElement="t13"><dc:Bounds x="1568" y="709" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="db_di" bpmnElement="db"><dc:Bounds x="1614" y="841" width="52" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1590" y="903" width="100" height="20" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="g2_di" bpmnElement="g2"><dc:Bounds x="1746" y="721" width="48" height="48" /><bpmndi:BPMNLabel><dc:Bounds x="1715" y="779" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t14_di" bpmnElement="t14"><dc:Bounds x="1698" y="539" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t15_di" bpmnElement="t15"><dc:Bounds x="1853" y="539" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t16_di" bpmnElement="t16"><dc:Bounds x="1853" y="709" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t17_di" bpmnElement="t17"><dc:Bounds x="2058" y="264" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="g3_di" bpmnElement="g3"><dc:Bounds x="2226" y="276" width="48" height="48" /><bpmndi:BPMNLabel><dc:Bounds x="2195" y="236" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t18_di" bpmnElement="t18"><dc:Bounds x="2273" y="384" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t19_di" bpmnElement="t19"><dc:Bounds x="2273" y="709" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="e2_di" bpmnElement="e2"><dc:Bounds x="2328" y="845" width="34" height="34" /><bpmndi:BPMNLabel><dc:Bounds x="2290" y="886" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="g4_di" bpmnElement="g4"><dc:Bounds x="2336" y="276" width="48" height="48" /><bpmndi:BPMNLabel><dc:Bounds x="2305" y="330" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t20_di" bpmnElement="t20"><dc:Bounds x="2443" y="264" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="t21_di" bpmnElement="t21"><dc:Bounds x="2443" y="709" width="144" height="72" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="g5_di" bpmnElement="g5"><dc:Bounds x="2628" y="276" width="48" height="48" /></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="e3_di" bpmnElement="e3"><dc:Bounds x="2713" y="283" width="34" height="34" /><bpmndi:BPMNLabel><dc:Bounds x="2675" y="324" width="110" height="32" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="Flow_01_di" bpmnElement="Flow_01"><di:waypoint x="132" y="120" /><di:waypoint x="163" y="120" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_02_di" bpmnElement="Flow_02"><di:waypoint x="307" y="120" /><di:waypoint x="333" y="120" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_03_di" bpmnElement="Flow_03"><di:waypoint x="477" y="120" /><di:waypoint x="523" y="120" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="MsgFlow_1_di" bpmnElement="MsgFlow_1"><di:waypoint x="405" y="156" /><di:waypoint x="405" y="283" /><bpmndi:BPMNLabel><dc:Bounds x="325" y="195" width="160" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_04_di" bpmnElement="Flow_04"><di:waypoint x="422" y="300" /><di:waypoint x="463" y="300" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_05_di" bpmnElement="Flow_05"><di:waypoint x="607" y="300" /><di:waypoint x="613" y="300" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_06_di" bpmnElement="Flow_06"><di:waypoint x="757" y="300" /><di:waypoint x="778" y="300" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_07_di" bpmnElement="Flow_07"><di:waypoint x="850" y="336" /><di:waypoint x="850" y="709" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_08_di" bpmnElement="Flow_08"><di:waypoint x="922" y="745" /><di:waypoint x="930" y="745" /><di:waypoint x="930" y="300" /><di:waypoint x="938" y="300" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_09_di" bpmnElement="Flow_09"><di:waypoint x="1010" y="336" /><di:waypoint x="1010" y="709" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10"><di:waypoint x="1082" y="745" /><di:waypoint x="1101" y="745" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11"><di:waypoint x="1149" y="745" /><di:waypoint x="1183" y="745" /><bpmndi:BPMNLabel><dc:Bounds x="1151" y="724" width="30" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_12_di" bpmnElement="Flow_12"><di:waypoint x="1125" y="769" /><di:waypoint x="1125" y="826" /><bpmndi:BPMNLabel><dc:Bounds x="1126" y="784" width="30" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13"><di:waypoint x="1197" y="862" /><di:waypoint x="1223" y="862" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="DataAssoc_1_di" bpmnElement="DataAssoc_1"><di:waypoint x="1255" y="781" /><di:waypoint x="1255" y="805" /><di:waypoint x="1345" y="805" /><di:waypoint x="1345" y="834" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_14_di" bpmnElement="Flow_14"><di:waypoint x="1327" y="745" /><di:waypoint x="1398" y="745" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_15_di" bpmnElement="Flow_15"><di:waypoint x="1542" y="745" /><di:waypoint x="1555" y="745" /><di:waypoint x="1555" y="300" /><di:waypoint x="1568" y="300" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_16_di" bpmnElement="Flow_16"><di:waypoint x="1640" y="336" /><di:waypoint x="1640" y="709" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="DataAssoc_2_di" bpmnElement="DataAssoc_2"><di:waypoint x="1640" y="781" /><di:waypoint x="1640" y="841" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_17_di" bpmnElement="Flow_17"><di:waypoint x="1712" y="745" /><di:waypoint x="1746" y="745" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_18_di" bpmnElement="Flow_18"><di:waypoint x="1770" y="721" /><di:waypoint x="1770" y="611" /><bpmndi:BPMNLabel><dc:Bounds x="1769" y="671" width="30" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_19_di" bpmnElement="Flow_19"><di:waypoint x="1842" y="575" /><di:waypoint x="1853" y="575" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_20_di" bpmnElement="Flow_20"><di:waypoint x="1925" y="539" /><di:waypoint x="1925" y="515" /><di:waypoint x="1470" y="515" /><di:waypoint x="1470" y="709" /><bpmndi:BPMNLabel><dc:Bounds x="1650" y="506" width="80" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_21_di" bpmnElement="Flow_21"><di:waypoint x="1794" y="745" /><di:waypoint x="1853" y="745" /><bpmndi:BPMNLabel><dc:Bounds x="1797" y="724" width="30" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_22_di" bpmnElement="Flow_22"><di:waypoint x="1997" y="745" /><di:waypoint x="2025" y="745" /><di:waypoint x="2025" y="300" /><di:waypoint x="2058" y="300" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_23_di" bpmnElement="Flow_23"><di:waypoint x="2202" y="300" /><di:waypoint x="2226" y="300" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_24_di" bpmnElement="Flow_24"><di:waypoint x="2274" y="300" /><di:waypoint x="2336" y="300" /><bpmndi:BPMNLabel><dc:Bounds x="2290" y="279" width="30" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_25_di" bpmnElement="Flow_25"><di:waypoint x="2250" y="324" /><di:waypoint x="2250" y="420" /><di:waypoint x="2273" y="420" /><bpmndi:BPMNLabel><dc:Bounds x="2251" y="361" width="30" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_26_di" bpmnElement="Flow_26"><di:waypoint x="2345" y="456" /><di:waypoint x="2345" y="709" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_27_di" bpmnElement="Flow_27"><di:waypoint x="2345" y="781" /><di:waypoint x="2345" y="845" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_28_di" bpmnElement="Flow_28"><di:waypoint x="2384" y="300" /><di:waypoint x="2443" y="300" /><bpmndi:BPMNLabel><dc:Bounds x="2397" y="279" width="30" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_29_di" bpmnElement="Flow_29"><di:waypoint x="2360" y="276" /><di:waypoint x="2360" y="240" /><di:waypoint x="2652" y="240" /><di:waypoint x="2652" y="276" /><bpmndi:BPMNLabel><dc:Bounds x="2500" y="231" width="30" height="18" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_30_di" bpmnElement="Flow_30"><di:waypoint x="2515" y="336" /><di:waypoint x="2515" y="709" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_31_di" bpmnElement="Flow_31"><di:waypoint x="2587" y="745" /><di:waypoint x="2652" y="745" /><di:waypoint x="2652" y="324" /></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="Flow_32_di" bpmnElement="Flow_32"><di:waypoint x="2676" y="300" /><di:waypoint x="2713" y="300" /></bpmndi:BPMNEdge>
+</bpmndi:BPMNPlane></bpmndi:BPMNDiagram></bpmn:definitions>
