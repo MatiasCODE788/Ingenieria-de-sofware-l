@@ -1,61 +1,59 @@
 # Minimarket Antucayen — Sistema de Gestión
 
-> **Versión distribuible para Windows:** para generar `Antucayen.exe` y el instalador del minimarket sigue [`GUIA_INSTALACION_CLIENTE.md`](GUIA_INSTALACION_CLIENTE.md) y ejecuta `CREAR_EJECUTABLE_WINDOWS.cmd`. Las instrucciones antiguas sobre una carpeta `instalador/` no corresponden al paquete actual.
-
-
 ![Java 21](https://img.shields.io/badge/Java-21-orange)
 ![UI Swing + FlatLaf](https://img.shields.io/badge/UI-Swing%20%2B%20FlatLaf-blue)
 ![Base de datos MariaDB](https://img.shields.io/badge/BD-MariaDB-003545)
 ![Build Maven](https://img.shields.io/badge/build-Maven-C71A36)
-![Pruebas JUnit 5](https://img.shields.io/badge/tests-JUnit%205-25A162)
+![Pruebas JUnit 5](https://img.shields.io/badge/tests-97%20JUnit%205-25A162)
 
-Aplicación de escritorio **Java/Swing** para la gestión del minimarket Antucayen: productos y stock, proveedores, facturas de compra, punto de venta, historial de movimientos, reportes y usuarios con control de acceso por roles, sobre una base de datos **MariaDB**.
+Aplicación de escritorio **Java/Swing** para la gestión del Minimarket Antucayen de San Bernardo: productos y stock, proveedores, facturas de compra, punto de venta, historial de movimientos, reportes y usuarios con control de acceso por roles, sobre una base de datos **MariaDB**.
+
+Proyecto del **Grupo 20** de Ingeniería de Software, desarrollado en cuatro incrementos con Scrum++ para el cliente don Guido de Lapeyra Úbeda.
 
 ## Tabla de contenidos
 
 1. [Descripción](#descripción)
-2. [Objetivo](#objetivo)
-3. [Funcionalidades](#funcionalidades)
-4. [Tecnologías](#tecnologías)
-5. [Arquitectura](#arquitectura)
-6. [Estructura del proyecto](#estructura-del-proyecto)
-7. [Requisitos](#requisitos)
-8. [Instalación](#instalación)
-9. [Configuración](#configuración)
-10. [Base de datos](#base-de-datos)
-11. [Ejecución](#ejecución)
-12. [Uso](#uso)
-13. [API y endpoints](#api-y-endpoints)
-14. [Roles y permisos](#roles-y-permisos)
-15. [Pruebas](#pruebas)
-16. [Despliegue](#despliegue)
+2. [Funcionalidades](#funcionalidades)
+3. [Tecnologías](#tecnologías)
+4. [Arquitectura](#arquitectura)
+5. [Estructura del repositorio](#estructura-del-repositorio)
+6. [Requisitos](#requisitos)
+7. [Instalación rápida](#instalación-rápida)
+8. [Configuración](#configuración)
+9. [Base de datos](#base-de-datos)
+10. [Ejecución](#ejecución)
+11. [Uso](#uso)
+12. [API y endpoints](#api-y-endpoints)
+13. [Roles y permisos](#roles-y-permisos)
+14. [Pruebas](#pruebas)
+15. [Despliegue en Windows](#despliegue-en-windows)
+16. [Documentación del proyecto](#documentación-del-proyecto)
 17. [Estado actual](#estado-actual)
 18. [Solución de problemas](#solución-de-problemas)
-19. [Licencia](#licencia)
+19. [Equipo](#equipo)
+20. [Licencia](#licencia)
 
 ## Descripción
 
-**Minimarket Antucayen** es un sistema de gestión de escritorio que cubre la operación diaria de un minimarket desde una única aplicación:
+**Minimarket Antucayen** reemplaza la gestión manual del inventario y de las facturas de proveedores por un sistema de escritorio que cubre la operación diaria del local:
 
 - Catálogo de productos y control de stock.
 - Proveedores y equivalencias entre los códigos de cada proveedor y los SKU internos.
-- Registro y procesamiento de facturas de compra, con ingreso manual o extracción de ítems desde PDF e imágenes (texto embebido u OCR).
+- Registro y procesamiento de facturas de compra, con ingreso manual o extracción de ítems desde PDF, imágenes, Excel o CSV.
 - Ajustes masivos de inventario desde archivos Excel o CSV, con validación y previsualización.
 - Punto de venta con pago en efectivo, débito, crédito o combinado, cálculo de vuelto y comprobante imprimible.
-- Historial de movimientos de inventario, reportes y exportaciones a CSV y Excel.
+- Historial de movimientos de inventario, reportes, exportaciones y auditoría de archivos.
 - Administración de usuarios con tres roles: Administrador, Bodeguero y Cajero.
+
+Cada compra, venta, ajuste o reversión modifica el stock mediante operaciones transaccionales que registran un movimiento de inventario asociado al usuario que las ejecuta.
 
 | Dato | Valor |
 |---|---|
-| Tipo de aplicación | Escritorio (Java Swing) |
+| Tipo de aplicación | Escritorio, Java Swing |
 | Artefacto Maven | `cl.antucayen:Antucayen:1.0-SNAPSHOT` |
 | Clase principal | `cl.antucayen.Main` |
 | Base de datos | MariaDB, base `minimarket` |
-| Versión de esquema requerida | `20260929` |
-
-## Objetivo
-
-Mantener un inventario confiable y trazable para el minimarket. Cada compra, venta, ajuste o reversión modifica el stock mediante operaciones transaccionales que registran un movimiento de inventario asociado al usuario que las ejecuta. Sobre esa base, el sistema ofrece la operación de caja, la homologación de códigos de proveedores, la generación de reportes y un control de acceso por roles que se aplica tanto en la interfaz como en la capa de servicios.
+| Scripts SQL | `database/Antucayen_DDL.sql` y `database/Antucayen_DML.sql` |
 
 ## Funcionalidades
 
@@ -63,7 +61,7 @@ Mantener un inventario confiable y trazable para el minimarket. Cada compra, ven
 
 - Inicio de sesión con usuario y contraseña. Solo ingresan usuarios activos cuyo perfil sea uno de los tres roles soportados.
 - Contraseñas almacenadas con PBKDF2-HMAC-SHA256 (210.000 iteraciones y sal aleatoria de 16 bytes). Los hashes SHA-256 heredados se aceptan y se migran automáticamente a PBKDF2 tras un inicio de sesión correcto.
-- Verificación del esquema de la base de datos antes de autenticar: versión, tablas, columnas y catálogo de perfiles.
+- Verificación del esquema de la base de datos antes de autenticar: tablas, columnas y catálogo de perfiles.
 - Pantalla inicial según el rol: Dashboard (Administrador), Productos (Bodeguero) o Punto de Venta (Cajero).
 - Cierre de sesión con confirmación y expiración automática tras 30 minutos de inactividad por defecto (configurable con `-Dantucayen.sesion.inactividad.minutos=10`, por ejemplo).
 
@@ -90,7 +88,8 @@ Consulta para los tres roles; gestión para Administrador y Bodeguero.
 - Búsqueda por nombre, SKU o código de barras.
 - Alta, edición e inactivación lógica de productos. El SKU y el código de barras son únicos y cada producto puede asociarse a uno o más proveedores.
 - El stock no se edita desde la ficha del producto: solo cambia mediante compras, ventas, ajustes y reversiones.
-- Consulta del stock actual y de los últimos 10 movimientos de un producto.
+- Consulta del stock actual y de los últimos 10 movimientos de un producto con «Stock + últimos 10».
+- Al confirmar una venta se valida el stock por SKU, sumando las líneas repetidas del carrito antes de compararlas con el disponible.
 
 ### Proveedores y equivalencias
 
@@ -138,7 +137,7 @@ Disponibles para los tres roles.
 | Reporte generado en pantalla | Reportes → «Exportar Excel» | XLSX |
 | Plantilla de importación | Importar inventario → «Descargar plantilla» | CSV, XLSX |
 
-Los CSV se generan en UTF-8 con BOM y separados por comas. Cada importación, exportación y plantilla queda registrada en la tabla `log_archivo`.
+Los CSV se generan en UTF-8 con BOM y separados por comas. Cada importación, exportación y plantilla queda registrada en la tabla `log_archivo`, que el Administrador consulta en el módulo «Auditoría» del menú.
 
 ### Usuarios y personalización
 
@@ -182,8 +181,8 @@ flowchart TD
 | Controlador | `cl.antucayen.controller` | Conectan los eventos de las vistas con los servicios y muestran los resultados. |
 | Servicio | `cl.antucayen.model.service` | Reglas de negocio, validaciones, autorización y transacciones. |
 | Acceso a datos | `cl.antucayen.model.dao` | SQL sobre MariaDB mediante `PreparedStatement`. |
-| Modelo | `cl.antucayen.model.entity`, `cl.antucayen.model.dto` | Entidades y proyecciones de lectura. |
-| Seguridad | `cl.antucayen.security` | Roles (`RolSistema`), autorización (`Autorizacion`) y hash de contraseñas (`PasswordHasher`). |
+| Modelo | `cl.antucayen.model.entity`, `cl.antucayen.model.dto`, `cl.antucayen.model.domain` | Entidades, proyecciones de lectura y enumeraciones de estado. |
+| Seguridad | `cl.antucayen.security` | Roles (`RolSistema`), autorización (`Autorizacion`), hash de contraseñas (`PasswordHasher`), sesión (`SesionActual`) y expiración por inactividad (`ControlInactividadSesion`). |
 | Utilidades | `cl.antucayen.util` | Conexión (`DBConexion`), sesión (`SesionActual`), verificación de esquema (`VerificadorEsquema`) y temas (`GestorTemas`, `Tema`). |
 
 Decisiones de diseño relevantes:
@@ -192,107 +191,111 @@ Decisiones de diseño relevantes:
 - **Sesión en memoria.** `SesionActual` mantiene el usuario autenticado durante la ejecución de la aplicación.
 - **Conexión única y transacciones.** `DBConexion` es un singleton con una conexión JDBC compartida. Las operaciones que afectan a varias tablas se ejecutan con `ejecutarEnTransaccion(...)`, que confirma o revierte el conjunto y se integra en una transacción ya abierta.
 - **Bloqueo de filas.** Las operaciones sobre stock, ventas, facturas y ajustes leen con `SELECT ... FOR UPDATE` antes de modificar.
-- **Contrato de esquema.** `VerificadorEsquema` comprueba al iniciar sesión que la base de datos corresponde a la versión `20260929`.
-- **Valores enteros.** Precios, montos y cantidades se almacenan como `INT`.
+- **Contrato de esquema.** `VerificadorEsquema` comprueba al iniciar sesión que existan las tablas, columnas y perfiles que usa la aplicación.
+- **Montos enteros.** Precios y montos se almacenan como `INT` en pesos; el stock y las cantidades de los movimientos usan `DECIMAL(12,3)`.
 
-## Estructura del proyecto
+## Estructura del repositorio
 
 ```text
 .
+├── .github/workflows/
+│   ├── generar-instalador-windows.yml   # Genera el instalador y el portable en GitHub Actions
+│   └── build-windows-exe.yml            # Genera la imagen de aplicación Windows
+├── Documentacion Grupo 20/
+│   ├── Documento 0/                     # Requerimientos iniciales
+│   ├── Incremento 1/ … Incremento 4/    # Informes, diagramas y evidencias de cada incremento
+│   └── Proveedores.pdf
 ├── database/
-│   └── Antucayen_DDL.sql    # Esquema completo y datos de demostración
-├── instalador/                            # Instalador para Windows (ver Despliegue)
-│   ├── Crear instalador.cmd               # Genera el paquete para el minimarket
-│   ├── CrearInstalador.java               # Lógica del generador: Maven + jpackage
-│   ├── nsis/                              # Fuente del asistente «Instalar Antucayen.exe»
-│   └── recursos/                          # Ícono, asistente compilado, idioma OCR y herramientas de BD
+│   ├── Antucayen_DDL.sql                # Crea la base minimarket, sus 15 tablas y el usuario de la aplicación
+│   └── Antucayen_DML.sql                # Carga perfiles, usuarios, productos, proveedores y equivalencias
+├── despliegue-windows/
+│   ├── Generar-Windows.ps1              # jpackage + Inno Setup: portable .zip e instalador .exe
+│   ├── Antucayen-Setup.iss              # Script del instalador Inno Setup
+│   ├── antucayen.ico
+│   └── tessdata/                        # Aquí se copian los .traineddata opcionales del OCR
 ├── src/
 │   ├── main/
 │   │   ├── java/cl/antucayen/
-│   │   │   ├── Main.java                  # Punto de entrada
-│   │   │   ├── controller/                # 12 controladores
+│   │   │   ├── Main.java                # Punto de entrada
+│   │   │   ├── controller/              # 13 controladores
 │   │   │   ├── model/
-│   │   │   │   ├── dao/                   # 15 DAO (JDBC)
-│   │   │   │   ├── dto/                   # ProductoVendido, ReporteTabular
-│   │   │   │   ├── entity/                # 17 entidades
-│   │   │   │   ├── exception/             # EquivalenciaDuplicadaException
-│   │   │   │   └── service/               # 17 servicios de negocio
-│   │   │   ├── security/                  # Autorizacion, PasswordHasher, RolSistema
-│   │   │   ├── util/                      # DBConexion, SesionActual, VerificadorEsquema, GestorTemas, Tema
-│   │   │   └── view/                      # 20 vistas Swing
-│   │   │       └── components/            # ComponentesSwing, SelectorFecha
+│   │   │   │   ├── dao/                 # 15 DAO con JDBC
+│   │   │   │   ├── domain/              # 5 enumeraciones de estado
+│   │   │   │   ├── dto/                 # 4 proyecciones de lectura
+│   │   │   │   ├── entity/              # 17 entidades
+│   │   │   │   ├── exception/           # EquivalenciaDuplicadaException
+│   │   │   │   └── service/             # 20 servicios de negocio
+│   │   │   ├── security/                # Autorizacion, PasswordHasher, RolSistema, SesionActual, ControlInactividadSesion
+│   │   │   ├── util/                    # DBConexion, VerificadorEsquema, GestorTemas, Tema
+│   │   │   └── view/                    # 23 vistas Swing
+│   │   │       └── components/          # 5 componentes visuales reutilizables
 │   │   └── resources/
-│   │       └── config.properties.example  # Plantilla de configuración de la conexión
-│   └── test/java/cl/antucayen/            # 6 clases de prueba (JUnit 5)
-├── .idea/                                 # Configuración de IntelliJ IDEA
+│   │       ├── branding/                # Logo e imágenes de la interfaz
+│   │       └── config.properties.example
+│   └── test/java/cl/antucayen/          # 18 clases de prueba, 97 pruebas JUnit 5
 ├── .gitattributes
 ├── .gitignore
 ├── pom.xml
 └── README.md
 ```
 
+Las vistas, los controladores y los scripts de base de datos que se piden en la entrega están en `src/main/java/cl/antucayen/view/`, `src/main/java/cl/antucayen/controller/` y `database/`.
+
 ### Mapa de módulos
 
 | Módulo | Vistas | Controlador | Servicios principales |
 |---|---|---|---|
-| Inicio de sesión | `VLogin` | `ControladorLogin` | `ServicioAutenticacion` |
+| Inicio de sesión | `VLogin`, `DialogoConexion` | `ControladorLogin` | `ServicioAutenticacion` |
 | Ventana principal | `VPrincipal` | `ControladorPrincipal` | — |
 | Dashboard | `VDashboard` | `ControladorDashboard` | `ServicioDashboard` |
-| Punto de Venta | `VVentas`, `VComprobanteVenta` | `ControladorVenta` | `ServicioVenta`, `ServicioComprobanteVenta`, `ServicioProducto` |
+| Punto de Venta | `VVentas`, `VComprobanteVenta` | `ControladorVenta` | `ServicioVenta`, `ServicioComprobanteVenta`, `CalculadoraImpuestos` |
 | Productos | `VBuscadorProductos`, `VFormularioProducto`, `VHistorialProducto` | `ControladorProducto` | `ServicioProducto`, `ServicioInventario`, `ServicioExportacionDatos` |
-| Proveedores y equivalencias | `VBuscadorProveedores`, `VFormularioProveedor`, `VConsultaEquivalencias` | `ControladorProveedor` | `ServicioProveedor`, `ServicioEquivalencia` |
-| Facturas | `VFacturas`, `VFormularioFactura`, `VDetalleFactura` | `ControladorFactura` | `ServicioFactura`, `ServicioArchivoFactura`, `ServicioExtraccionFacturaDigital` |
+| Proveedores y equivalencias | `VBuscadorProveedores`, `VFormularioProveedor`, `VAuditoriaProveedor`, `VConsultaEquivalencias` | `ControladorProveedor` | `ServicioProveedor`, `ServicioEquivalencia` |
+| Facturas | `VFacturas`, `VFormularioFactura`, `VDetalleFactura` | `ControladorFactura` | `ServicioFactura`, `ServicioArchivoFactura`, `ServicioExtraccionFacturaDigital`, `ReconstructorTablaFactura`, `PreprocesadorImagenFactura` |
 | Procesamiento de factura | `VProcesamientoFactura`, `VReporteErrores` | `ControladorProcesamientoFactura` | `ServicioProcesamientoFactura`, `ServicioExportacionDatos` |
-| Importación de inventario | `VAjusteInventario`, `VReporteErrores` | `ControladorAjusteInventario` | `ServicioImportacionInventario`, `ServicioInventario`, `ServicioAuditoriaArchivos` |
+| Importación de inventario | `VAjusteInventario`, `VReporteErrores` | `ControladorAjusteInventario` | `ServicioImportacionInventario`, `ServicioInventario`, `ServicioExportacionDatos` |
 | Historial | `VHistorial` | `ControladorHistorial` | `ServicioInventario`, `ServicioExportacionDatos` |
 | Reportes | `VReportes` | `ControladorReportes` | `ServicioReportes`, `ServicioExportacionDatos` |
 | Usuarios | `VGestionUsuarios` | `ControladorUsuario` | `ServicioUsuario` |
+| Auditoría de archivos | `VAuditoriaArchivos` | `ControladorAuditoriaArchivos` | `ServicioAuditoriaArchivos` |
 
 ## Requisitos
 
 | Requisito | Detalle |
 |---|---|
-| JDK | 21 o superior. El `pom.xml` compila con `maven.compiler.release=21`; la configuración de IntelliJ incluida en `.idea/misc.xml` apunta a un JDK 25. |
-| Apache Maven | 3.9 o superior (recomendado). El repositorio no incluye Maven Wrapper. |
-| MariaDB | Servidor 10.6 o superior (recomendado). |
-| Cliente `mariadb` | Para ejecutar el script de instalación de la base de datos. |
-| Tesseract OCR | Opcional. Solo es necesario, junto con sus datos de idioma (`tessdata`), para extraer ítems de imágenes o PDF escaneados. |
+| JDK | 21 o superior; el `pom.xml` compila con `maven.compiler.release=21`. |
+| Apache Maven | 3.9 o superior. El repositorio no incluye Maven Wrapper; en IntelliJ IDEA se puede usar el Maven integrado. |
+| MariaDB | Servidor 10.6 o superior recomendado. |
+| Cliente `mariadb` | Para ejecutar los scripts DDL y DML. También sirven HeidiSQL o DBeaver. |
+| Tesseract OCR | Opcional. Solo hace falta su carpeta `tessdata` para leer imágenes o PDF escaneados. |
 | Entorno gráfico | La aplicación abre ventanas Swing. |
 
-## Instalación
+## Instalación rápida
 
-1. **Clona el repositorio** y entra en su carpeta.
+1. **Clona el repositorio.**
 
-```bash
-   git clone <URL_DEL_REPOSITORIO>
-   cd <CARPETA_DEL_REPOSITORIO>
-```
+   ```bash
+   git clone https://github.com/MatiasCODE788/Ingenieria-de-sofware-l.git
+   cd Ingenieria-de-sofware-l
+   ```
 
-2. **Crea la base de datos** ejecutando el script de instalación (ver [Base de datos](#base-de-datos)).
+2. **Crea la base de datos y carga los datos**, en este orden. Ver [Base de datos](#base-de-datos).
 
-```bash
+   ```bash
    mariadb -u root -p < database/Antucayen_DDL.sql
-```
+   mariadb -u root -p minimarket < database/Antucayen_DML.sql
+   ```
 
-3. **Prepara la cuenta MariaDB para la aplicación.** El instalador SQL incluye
-   usuarios de desarrollo locales (`antucayen_app`), pero **no** crea un usuario
-   accesible desde la LAN. Para una instalación Wi-Fi en `192.168.100.x`, sigue
-   [INSTALACION_RED_WIFI_192.168.100.md](INSTALACION_RED_WIFI_192.168.100.md)
-   para agregar permisos de la subred sin perder los datos ya instalados.
+3. **Configura la conexión** con el botón de la pantalla de inicio, con `config.properties` o con variables de entorno. Ver [Configuración](#configuración).
 
-4. **Configura la conexión** con `config.properties` o con variables de entorno (ver [Configuración](#configuración)).
+4. **Compila, prueba y ejecuta.**
 
-5. **Compila y empaqueta.** Este comando también ejecuta las pruebas.
-
-```bash
+   ```bash
    mvn clean package
-```
-
-6. **Ejecuta la aplicación** (ver [Ejecución](#ejecución)).
-
-```bash
    java -jar target/Antucayen-1.0-SNAPSHOT.jar
-```
+   ```
+
+5. **Ingresa** con `guido_admin` / `admin123`. Ver [Usuarios de demostración](#usuarios-de-demostración).
 
 ## Configuración
 
@@ -304,7 +307,7 @@ La conexión se puede definir de dos formas. Si una variable de entorno tiene va
 inicio de sesión usa **«Configurar conexión a la base de datos (Wi-Fi/LAN)»**.
 Escribe la IP **del administrador/servidor**, no la IP del cajero. La configuración
 se guarda en `~/.antucayen/config.properties`, por usuario de Windows, fuera del JAR.
-No es necesario recompilar para cambiar la IP. La nueva distribución **no incluye
+No es necesario recompilar para cambiar la IP. La distribución **no incluye
 credenciales privadas dentro del JAR**. También se puede usar un archivo
 `config.properties` externo, tomando como guía `src/main/resources/config.properties.example`.
 
@@ -353,27 +356,45 @@ Con estos valores la aplicación construye la URL `jdbc:mariadb://<host>:<port>/
 
 ## Base de datos
 
-### Instalación del esquema
+### Instalación del esquema y los datos
 
-El archivo `database/Antucayen_DDL.sql` es la única fuente del esquema. Crea la base `minimarket` (`utf8mb4`, colación `utf8mb4_spanish_ci`, tablas InnoDB) y carga datos de demostración. El repositorio no incluye migraciones incrementales. **No volver a ejecutar este instalador en una BD en uso:** contiene `DROP DATABASE IF EXISTS minimarket` y borraría los datos. Para habilitar la LAN, usar exclusivamente los GRANT/CREATE USER que se indican en la guía Wi-Fi.
+La base se instala con dos scripts, siempre en este orden:
 
+| Script | Qué hace |
+|---|---|
+| `database/Antucayen_DDL.sql` | Elimina y vuelve a crear la base `minimarket` con `utf8mb4` y colación `utf8mb4_spanish_ci`, crea las 15 tablas InnoDB con sus claves, índices y restricciones `CHECK`, y crea la cuenta `antucayen_app` para `localhost` y `127.0.0.1` con permisos `SELECT`, `INSERT`, `UPDATE` y `DELETE`. |
+| `database/Antucayen_DML.sql` | Carga los datos iniciales. No incluye `USE minimarket;`, por lo que hay que indicar la base al ejecutarlo. |
 
 ```bash
 # Linux / macOS
 mariadb -u root -p < database/Antucayen_DDL.sql
+mariadb -u root -p minimarket < database/Antucayen_DML.sql
 ```
 
 ```cmd
 :: CMD de Windows
 mariadb -u root -p < database\Antucayen_DDL.sql
+mariadb -u root -p minimarket < database\Antucayen_DML.sql
 ```
 
 ```powershell
 # PowerShell
-Get-Content .\database\Antucayen_DDL.sql | mariadb -u root -p
+Get-Content -Encoding UTF8 .\database\Antucayen_DDL.sql | mariadb -u root -p
+Get-Content -Encoding UTF8 .\database\Antucayen_DML.sql | mariadb -u root -p minimarket
 ```
 
-El script está codificado en UTF-8 y sus restricciones contienen valores con tilde (`Válido`, `Débito`, `Crédito`, `Reversión`), por lo que debe ejecutarse conservando esa codificación.
+En HeidiSQL o DBeaver: abre y ejecuta primero el DDL completo; luego selecciona la base `minimarket` y ejecuta el DML.
+
+> **Cuidado:** el DDL comienza con `DROP DATABASE IF EXISTS minimarket`. No lo vuelvas a ejecutar sobre una base en uso porque borra todos los datos. Respáldala antes con `mariadb-dump`.
+
+Los scripts están en UTF-8 y sus restricciones contienen valores con tilde como `Válido`, `Débito`, `Crédito` y `Reversión`, por lo que deben ejecutarse conservando esa codificación.
+
+La cuenta `antucayen_app` usa la contraseña de desarrollo `antucayen123` y solo es accesible desde el mismo equipo. Para que una caja se conecte por Wi-Fi o LAN, crea en el servidor una cuenta para la subred y cambia la contraseña:
+
+```sql
+CREATE USER 'antucayen_app'@'192.168.100.%' IDENTIFIED BY 'una_contrasena_segura';
+GRANT SELECT, INSERT, UPDATE, DELETE ON minimarket.* TO 'antucayen_app'@'192.168.100.%';
+```
 
 ### Modelo de datos
 
@@ -394,15 +415,12 @@ erDiagram
     producto ||--o{ equivalencia : "homologa"
     producto |o--o{ item_factura : "resuelve"
     producto ||--o{ item_venta : "se vende"
-    producto ||--o{ item_ajuste : "se ajusta"
     producto ||--o{ movimiento_inventario : "registra"
     factura ||--o{ item_factura : "contiene"
-    factura |o--o{ movimiento_inventario : "origina"
     item_factura |o--o{ movimiento_inventario : "origina"
     venta ||--o{ item_venta : "contiene"
     venta ||--o{ pago_venta : "se paga con"
-    venta |o--o{ movimiento_inventario : "origina"
-    ajuste_inventario ||--o{ item_ajuste : "contiene"
+    item_venta |o--o{ movimiento_inventario : "origina"
     ajuste_inventario |o--o{ movimiento_inventario : "origina"
 ```
 
@@ -410,21 +428,19 @@ erDiagram
 |---|---|
 | `perfil` | Catálogo de roles: `Administrador`, `Bodeguero` y `Cajero`. |
 | `usuario` | Usuarios, hash de contraseña, estado activo y perfil. |
-| `producto` | SKU (clave primaria), nombre, código de barras único, unidad de medida, precio de venta, stock actual y estado. |
+| `producto` | SKU como clave primaria, nombre, código de barras único, unidad de medida, precio de venta, stock actual y estado. |
 | `proveedor` | RUT opcional y único, nombre único, teléfono y correo electrónico. |
 | `producto_proveedor` | Relación muchos a muchos entre productos y proveedores. |
-| `equivalencia` | Código interno del proveedor asociado a un SKU; la clave es proveedor + código. |
 | `auditoria_proveedor` | Cambios por campo en los proveedores: valor anterior, valor nuevo, usuario y fecha. |
+| `equivalencia` | Código interno del proveedor asociado a un SKU; la clave es proveedor más código. |
 | `factura` | Facturas de compra: número, fecha de emisión, estado, valor total y ruta del archivo digital. Única por proveedor y número. |
 | `item_factura` | Ítems de factura: código del proveedor, descripción, SKU resuelto, cantidad, precio unitario de compra y estado. |
-| `venta` | Ventas: fecha y hora, usuario, medio de pago, monto total y estado. |
+| `venta` | Ventas: fecha y hora, usuario, medio de pago, monto total, monto recibido, vuelto y estado. |
 | `item_venta` | Ítems de venta: SKU, cantidad, precio unitario y subtotal. |
 | `pago_venta` | Pagos aplicados a cada venta por medio de pago; permite pagos divididos. |
-| `ajuste_inventario` | Cabecera de cada ajuste masivo: modalidad, estado y usuario. |
-| `item_ajuste` | Detalle del ajuste: cantidad aplicada, stock anterior y stock resultante. |
-| `movimiento_inventario` | Historial de movimientos de stock, con referencia opcional a factura, ítem de factura, venta o ajuste y marca `vigente`. |
+| `ajuste_inventario` | Cada ajuste masivo: modalidad, estado y usuario. Su detalle queda en `movimiento_inventario`. |
+| `movimiento_inventario` | Historial de stock con stock anterior, cantidad aplicada, stock resultante, referencia al ítem de factura, al ítem de venta o al ajuste que lo originó, motivo y marca `vigente`. |
 | `log_archivo` | Bitácora de importaciones, exportaciones y plantillas generadas. |
-| `app_schema_version` | Versión del esquema instalada. |
 
 ### Valores controlados por el esquema
 
@@ -433,52 +449,49 @@ erDiagram
 | `producto.estado` | `Activo`, `Inactivo` |
 | `factura.estado` | `Pendiente`, `Procesada`, `Observada` |
 | `item_factura.estado_item` | `Válido`, `Observado`, `No Procesado` |
-| `venta.estado` | `En curso`, `Pagada`, `Anulada` |
+| `venta.estado` | `En curso`, `Pagada`, `Anulada`, `Cancelada` |
 | `venta.medio_pago` | `Pendiente`, `Efectivo`, `Débito`, `Crédito`, `Mixto` |
 | `pago_venta.medio_pago` | `Efectivo`, `Débito`, `Crédito` |
 | `ajuste_inventario.modalidad_ajuste` | `Sumar al stock actual`, `Reemplazar stock actual` |
 | `ajuste_inventario.estado_ajuste` | `Pendiente`, `Aplicado`, `Revertido` |
-| `movimiento_inventario.tipo_movimiento` | `Ingreso por compra`, `Venta`, `Ajuste positivo`, `Ajuste negativo`, `Reversión` |
+| `movimiento_inventario.tipo_movimiento` | `Stock inicial`, `Ingreso por compra`, `Venta`, `Ajuste positivo`, `Ajuste negativo`, `Reversión` |
 | `log_archivo.tipo_operacion` | `IMPORTACION`, `EXPORTACION`, `PLANTILLA` |
 | `log_archivo.resultado` | `EXITOSO`, `ERROR` |
 
-El esquema también impide precios, montos y stock negativos mediante restricciones `CHECK`.
+Otras restricciones `CHECK` impiden precios, montos y stock negativos, exigen que `stock_resultante = stock_anterior + cantidad_aplicada`, que cada movimiento apunte al origen que corresponde a su tipo y que toda `Reversión` tenga motivo.
 
-### Datos de demostración
+### Datos iniciales
 
-La instalación carga los 3 perfiles, 3 usuarios (ver [Uso](#uso)), 6 productos, 2 proveedores, 3 asociaciones producto–proveedor, 2 equivalencias y el registro de versión `20260929` en `app_schema_version`.
+`Antucayen_DML.sql` carga:
+
+- los 3 perfiles y 3 usuarios de demostración, ver [Uso](#uso);
+- 872 productos del catálogo real del minimarket;
+- 13 proveedores y sus asociaciones producto–proveedor;
+- las equivalencias de código de los proveedores principales, generadas a partir del catálogo;
+- un movimiento `Stock inicial` por cada producto con stock mayor que cero, para que el historial cuadre desde el primer día.
 
 ### Verificación del esquema
 
-Antes de autenticar, `VerificadorEsquema` comprueba que:
-
-- exista la tabla `app_schema_version` y su versión máxima sea `20260929` o superior;
-- existan las 16 tablas de negocio con las columnas que la aplicación utiliza;
-- la tabla `perfil` contenga exactamente los tres perfiles soportados.
-
-Si alguna comprobación falla, el inicio de sesión se rechaza con un mensaje que indica la diferencia detectada.
+Antes de autenticar, `VerificadorEsquema` comprueba que existan las 15 tablas con las columnas que la aplicación utiliza y que `perfil` contenga exactamente los tres perfiles soportados. Si alguna comprobación falla, el inicio de sesión se rechaza con un mensaje que indica la diferencia detectada.
 
 ## Ejecución
 
-Desde la raíz del proyecto, con la base de datos instalada y la conexión configurada:
+Desde la raíz del proyecto, con la base instalada y la conexión configurada:
 
 ```bash
 mvn clean package
 java -jar target/Antucayen-1.0-SNAPSHOT.jar
 ```
 
-`maven-shade-plugin` genera un JAR ejecutable con todas las dependencias y con `cl.antucayen.Main` como clase principal. Como alternativa, se puede ejecutar esa clase directamente desde el IDE.
+`maven-shade-plugin` genera un JAR ejecutable con todas las dependencias y con `cl.antucayen.Main` como clase principal. También se puede ejecutar esa clase directamente desde IntelliJ IDEA.
 
-Ten en cuenta que:
-
-- Si creas o modificas `config.properties` después de empaquetar, debes volver a ejecutar `mvn clean package` o usar las variables de entorno.
-- Los archivos adjuntos de las facturas se guardan en `archivos/facturas/` dentro del directorio de trabajo. Ejecuta siempre la aplicación desde la misma carpeta para que las rutas registradas sigan siendo válidas.
+Los archivos adjuntos de las facturas se guardan en `archivos/facturas/` dentro del directorio de trabajo, así que conviene ejecutar la aplicación siempre desde la misma carpeta.
 
 ## Uso
 
 ### Usuarios de demostración
 
-Tras una instalación nueva de la base de datos están disponibles estas cuentas:
+Tras cargar `database/Antucayen_DML.sql` están disponibles estas cuentas:
 
 | Usuario | Contraseña | Perfil | Pantalla inicial |
 |---|---|---|---|
@@ -486,7 +499,7 @@ Tras una instalación nueva de la base de datos están disponibles estas cuentas
 | `matias_bodega` | `bodega123` | Bodeguero | Productos |
 | `diego_cajero` | `cajero123` | Cajero | Punto de Venta |
 
-
+Cámbialas o desactívalas antes de usar el sistema con datos reales.
 
 ### Menú lateral
 
@@ -503,6 +516,7 @@ Tras una instalación nueva de la base de datos están disponibles estas cuentas
 | ANÁLISIS | Historial | Movimientos de inventario | Todos |
 | ANÁLISIS | Reportes | Reportes y exportación a Excel | Todos |
 | ADMINISTRACIÓN | Usuarios y permisos | Gestión de usuarios | Administrador |
+| ADMINISTRACIÓN | Auditoría | Bitácora de importaciones, exportaciones y plantillas | Administrador |
 
 En la parte inferior del menú están «Cambiar tema» y «Cerrar sesión».
 
@@ -583,6 +597,7 @@ El sistema reconoce exclusivamente tres roles: **Administrador**, **Bodeguero** 
 | Historial de movimientos y su exportación | ✅ | ✅ | ✅ |
 | Reportes y su exportación | ✅ | ✅ | ✅ |
 | Gestionar usuarios | ✅ | ❌ | ❌ |
+| Consultar la auditoría de archivos | ✅ | ❌ | ❌ |
 
 Los permisos se aplican en varios niveles:
 
@@ -601,83 +616,135 @@ Las pruebas usan JUnit 5 y se ejecutan con Maven Surefire:
 mvn clean test
 ```
 
-El proyecto incluye 43 pruebas declaradas con `@Test` en 11 clases (incluidas las pruebas de regresión de esta revisión):
+En IntelliJ IDEA, sin Maven en el PATH: presiona dos veces Ctrl para abrir «Run Anything» y escribe `mvn clean test`. Para correr solo las del Incremento 4 en PowerShell, el filtro va entre comillas:
+
+```powershell
+mvn test "-Dtest=ServicioExportacionItemsValidosTest,ServicioPlantillaImportacionTest,ServicioVentaValidacionStockTest"
+```
+
+El proyecto incluye **97 pruebas en 18 clases**. Ninguna abre conexiones a la base de datos, por lo que no requieren MariaDB ni `config.properties`.
 
 | Clase | Pruebas | Qué verifica |
 |---|:---:|---|
 | `AutorizacionRBACTest` | 5 | Permisos de Cajero, Bodeguero y Administrador, y bloqueo de perfiles no reconocidos. |
 | `PasswordHasherTest` | 2 | Generación y verificación PBKDF2 y compatibilidad con hashes SHA-256 heredados. |
-| `ServicioVentaPagoTest` | 10 | Cálculo del vuelto: pago exacto, efectivo superior, pago mixto, sobrepago electrónico y pago insuficiente. |
-| `ServicioImportacionInventarioTest` | 7 | Lectura de CSV, encabezados válidos, filas vacías, límite de 10 MB y detección de duplicados. |
-| `ServicioExtraccionFacturaDigitalTest` | 9 | Interpretación de líneas de factura y conservación de ítems ilegibles como `No Procesado`. |
-| `EstadosDominioTest` | 2 | Estados de dominio de productos, facturas y ventas. |
 | `RolSistemaTest` | 2 | Conversión y reconocimiento de nombres de rol. |
-| `VAjusteInventarioTest` | 1 | Modalidad de ajuste sin valor por defecto y textos de los botones de la vista. |
-| `VVentasPagoTest` | 2 | Pagos válidos y rechazo de montos inválidos. |
-| `ControladorVentaEdicionTest` | 1 | Confirmación de la cantidad que continúa en edición. |
 | `ControlInactividadSesionTest` | 2 | Límite exacto de inactividad y tiempo configurable. |
+| `EstadosDominioTest` | 2 | Estados de dominio de productos, facturas y ventas. |
+| `ServicioVentaPagoTest` | 10 | Cálculo del vuelto: pago exacto, efectivo superior, pago mixto, sobrepago electrónico y pago insuficiente. |
+| `CalculadoraImpuestosTest` | 4 | IVA incluido en el precio final sin alterarlo, montos grandes y rechazo de totales negativos. |
+| `VComprobanteVentaIvaTest` | 3 | Neto, IVA y total iguales en la vista previa y en la impresión del comprobante. |
+| `VVentasPagoTest` | 2 | Pagos válidos y rechazo de montos inválidos. |
+| `VVentasCarritoTest` | 2 | «Quitar seleccionado» elimina solo la fila elegida y no borra nada sin selección. |
+| `ControladorVentaEdicionTest` | 1 | Confirmación de la cantidad que continúa en edición. |
+| `ServicioImportacionInventarioTest` | 7 | Lectura de CSV, encabezados válidos, filas vacías, límite de 10 MB y detección de duplicados. |
+| `VAjusteInventarioTest` | 1 | Modalidad de ajuste sin valor por defecto y textos de la vista. |
+| `ServicioExtraccionFacturaDigitalTest` | 21 | Interpretación de líneas de factura y conservación de ítems ilegibles como `No Procesado`. |
+| `ReconstructorTablaFacturaTest` | 12 | Reconstrucción de la tabla de ítems desde el OCR: montos corridos, cantidades ilegibles, timbre y pie, facturas sin códigos. |
+| `ServicioExportacionItemsValidosTest` | 6 | Incremento 4: exporta a CSV o Excel solo los ítems válidos con SKU, registra la auditoría y bloquea al Cajero. |
+| `ServicioPlantillaImportacionTest` | 7 | Incremento 4: genera la plantilla `SKU,cantidad`, que la importación acepta una vez completada, y la audita. |
+| `ServicioVentaValidacionStockTest` | 8 | Incremento 4: rechaza ventas sin stock suficiente, suma las líneas del mismo SKU y valida perfil, producto y fecha. |
 
-Las pruebas no abren conexiones a la base de datos, por lo que no requieren MariaDB ni `config.properties`. El repositorio no incluye pruebas de integración contra la base de datos.
+`AuditoriaArchivosFalsa` es un doble de prueba que registra en memoria lo que se escribiría en `log_archivo`. El repositorio no incluye pruebas de integración contra MariaDB; esas validaciones se documentan como pruebas funcionales en los informes de cada incremento.
 
-## Despliegue
+## Despliegue en Windows
 
-### Instalador para Windows
+La carpeta `despliegue-windows/` genera un **ejecutable portable** y un **instalador `.exe`** que llevan su propio Java gracias a `jpackage`, por lo que el PC del minimarket no necesita instalar JDK ni Maven.
 
-La carpeta `instalador/` genera un paquete que se instala en el PC del minimarket sin instalar Java ni Tesseract: la aplicación lleva su propio Java, creado con `jpackage`, y el idioma español del OCR.
+### Opción A: generar en GitHub Actions
 
-1. **Generar el paquete**, en el PC de un integrante, con JDK 21 o superior: doble clic en `instalador/Crear instalador.cmd`. Compila con `mvn clean package`, o usa el JAR de `target` si no encuentra Maven, y deja el resultado en `instalador/salida/Antucayen_Instalador`, además de un `.zip`. Opciones: `--sin-pruebas` y `--usar-jar-existente`.
-2. **Instalar**: copiar la carpeta `Antucayen_Instalador` completa al PC del minimarket y ejecutar `Instalar Antucayen.exe`. Instala en `C:\Antucayen` sin permisos de administrador, pide la dirección y el puerto del servidor MariaDB, escribe `config.properties` en la carpeta de instalación y crea los accesos directos y el desinstalador. Al actualizar se conservan la configuración y `archivos/facturas`.
-3. **Base de datos**: en el PC servidor, la carpeta «Herramientas base de datos» trae scripts para crear la base, permitir la conexión desde la caja por la red 192.168.100.x, respaldar y restaurar. El paso a paso para el minimarket está en `instalador/recursos/LEEME.txt`.
+1. En GitHub abre **Actions → «Generar instalador Antucayen (Windows)» → Run workflow**.
+2. Al terminar, descarga el artefacto `Antucayen-Instalador-Windows-x64`, que contiene `Antucayen-Instalador-Windows-x64.exe`.
 
-El asistente se compila con NSIS a partir de `instalador/nsis/instalador.nsi`; solo hay que recompilarlo si se modifica ese archivo.
+El workflow `build-windows-exe.yml` genera solo la imagen de la aplicación y también se puede lanzar a mano.
 
-### Despliegue manual
+### Opción B: generar en un PC con Windows
 
-Sin el instalador, el despliegue consiste en distribuir el JAR ejecutable a cada equipo.
+Requisitos del equipo que compila: Windows 10/11 x64, JDK 21+ con `jpackage` y Maven 3.9+ en el PATH. Inno Setup 6 es opcional; sin él solo se genera el portable.
 
-1. **Base de datos.** Instala el esquema con `database/Antucayen_DDL.sql` en un servidor MariaDB accesible desde los equipos de trabajo y prepara la cuenta de la aplicación.
-2. **Artefacto.** Genera `target/Antucayen-1.0-SNAPSHOT.jar` con `mvn clean package`.
-3. **Equipo de trabajo.** Necesita Java 21 o superior y entorno gráfico.
-4. **Conexión.** Define las variables `ANTUCAYEN_DB_*` en cada equipo. Si en su lugar compilas con `config.properties`, las credenciales quedan dentro del JAR.
-5. **SSL/TLS.** Activa `db.ssl` o `ANTUCAYEN_DB_SSL` solo si el servidor MariaDB está configurado para ello.
-6. **OCR.** Si se van a procesar facturas escaneadas, instala Tesseract con sus datos de idioma y define `ANTUCAYEN_TESSDATA` y `ANTUCAYEN_OCR_LANG`.
-7. **Directorio de trabajo.** Ejecuta el JAR siempre desde la misma carpeta. Los adjuntos se guardan localmente en `archivos/facturas/` y la base de datos conserva su ruta absoluta, de modo que un adjunto solo puede abrirse en un equipo donde esa ruta exista.
-8. **Cuentas.** Crea usuarios propios y desactiva los de demostración.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\despliegue-windows\Generar-Windows.ps1
+# Para omitir las pruebas:
+powershell -ExecutionPolicy Bypass -File .\despliegue-windows\Generar-Windows.ps1 -SinPruebas
+```
+
+El resultado queda en `dist/`:
+
+| Archivo | Uso |
+|---|---|
+| `Antucayen-Portable-Windows-x64.zip` | Se descomprime y se ejecuta `Antucayen.exe`, sin instalar. |
+| `Antucayen-Instalador-Windows-x64.exe` | Instala en `%LOCALAPPDATA%\Programs\Antucayen` sin permisos de administrador y crea los accesos directos. |
+
+Para habilitar el OCR en el paquete, copia `spa.traineddata` o `eng.traineddata` de una fuente oficial de Tesseract en `despliegue-windows/tessdata/` antes de generar. Sin esos archivos el punto de venta, el inventario y el registro manual de facturas funcionan igual.
+
+### Puesta en marcha en el minimarket
+
+1. **Servidor:** instala MariaDB, ejecuta el DDL y el DML y crea la cuenta de red de la sección [Base de datos](#base-de-datos).
+2. **Cada equipo:** instala la aplicación, abre «Configurar conexión a la base de datos (Wi-Fi/LAN)» en la pantalla de inicio y escribe la IP del servidor.
+3. **Cuentas:** crea usuarios propios y desactiva los de demostración.
+4. **SSL/TLS:** activa `db.ssl` o `ANTUCAYEN_DB_SSL` solo si el servidor MariaDB está configurado para ello.
+
+## Documentación del proyecto
+
+La carpeta `Documentacion Grupo 20/` reúne la documentación entregada:
+
+| Carpeta | Contenido |
+|---|---|
+| `Documento 0` | Requerimientos del cliente, RF y RNF. |
+| `Incremento 1` a `Incremento 4` | Informe de cada incremento: UR, casos de uso, diagramas de secuencia, componentes, BD física, árbol de navegación, pruebas, retrospectiva y evidencias. |
+| `Proveedores.pdf` | Información de los proveedores del minimarket. |
+
+Los identificadores `RF-xx`, `UR-xx`, `CU-xx` y `RN-xx` que aparecen en el código y en las pruebas se corresponden con esos documentos.
 
 ## Estado actual
 
-- Versión del artefacto: `1.0-SNAPSHOT`. Versión del esquema de base de datos: `20260929`.
-- Todos los módulos del menú están implementados y conectados: Dashboard, Punto de Venta, Productos, Proveedores, Equivalencias, Facturas, Importar inventario, Historial, Reportes y Usuarios y permisos.
-- Pruebas automatizadas con 43 casos declarados; no hay pruebas de integración en MariaDB.
-- No hay integración continua, contenedores ni instaladores.
+- **Proyecto cerrado:** los 72 requerimientos se completaron en cuatro incrementos y el cliente firmó la carta de aceptación el 10 de noviembre de 2026.
+
+  | Incremento | Período | Requerimientos | Avance acumulado |
+  |---|---|:---:|:---:|
+  | 1 | Abril a junio | 24 | 33,3 % |
+  | 2 | Agosto a septiembre | 26 | 69,4 % |
+  | 3 | Septiembre a octubre | 19 | 95,8 % |
+  | 4 | Octubre a noviembre | 3 | 100 % |
+
+- Todos los módulos del menú están implementados y conectados: Dashboard, Punto de Venta, Productos, Proveedores, Equivalencias, Facturas, Importar inventario, Historial, Reportes, Usuarios y permisos, y Auditoría.
+- 97 pruebas unitarias automatizadas; sin pruebas de integración contra MariaDB.
+- Generación del instalador de Windows con GitHub Actions.
 
 ### Limitaciones conocidas
 
-- La expiración de sesión está implementada con 30 minutos de inactividad por defecto, configurable con `-Dantucayen.sesion.inactividad.minutos=N` (N entre 1 y 1440). Los datos aún no confirmados se descartan al expirar.
-- Si el esquema no coincide, el mensaje de `VerificadorEsquema` remite a `database/00_instalacion_completa.sql` y a scripts de `database/migrations/` que no existen en el repositorio. El único script disponible es `database/Antucayen_DDL.sql`.
+- Si el esquema no coincide, el mensaje de `VerificadorEsquema` dice que se ejecute «únicamente» `database/Antucayen_DDL.sql`; en realidad también hay que cargar `Antucayen_DML.sql`, que trae los perfiles y usuarios.
 - No existe cambio ni restablecimiento de contraseña desde la aplicación, ni reactivación de usuarios desactivados.
-- El Administrador puede consultar la bitácora de archivos desde el módulo «Auditoría de archivos». La auditoría de cambios de proveedores permanece almacenada en `auditoria_proveedor`.
-- El formulario de factura no captura el precio de compra: `precio_unitario_compra` se guarda siempre en 0.
-- Abrir el Punto de Venta no reserva una venta ni consume números. El ID se crea al confirmar el cobro; la compatibilidad con borradores heredados permanece disponible.
-- El stock inicial ingresado al crear un producto se registra como movimiento de inventario.
+- El formulario de factura no captura el precio de compra: `precio_unitario_compra` se guarda en 0.
+- Los adjuntos de facturas se guardan en el disco del equipo que los registró; otro equipo de la red no puede abrirlos sin una carpeta compartida.
 - Cada instancia usa una única conexión JDBC compartida; no hay pool de conexiones.
-- El OCR usa `spa` como idioma por defecto si `spa.traineddata` está disponible; si no, `eng`.
-- La carpeta `.idea/` está versionada aunque figura en `.gitignore`, y la carpeta `archivos/` que genera la aplicación no está excluida de Git.
-- El código hace referencia a identificadores de requisitos (`RF-xx`, `RN-xx`, `UR-xx`), pero el documento de requisitos no forma parte del repositorio.
+- La sesión expira tras 30 minutos de inactividad por defecto, configurable con `-Dantucayen.sesion.inactividad.minutos=N`, con N entre 1 y 1440. Los datos no confirmados se descartan al expirar.
 
 ## Solución de problemas
 
 | Mensaje | Causa | Solución |
 |---|---|---|
-| `Configuración de base de datos incompleta` | No existe `config.properties` en el classpath ni están definidas las variables `ANTUCAYEN_DB_*`, o falta algún valor obligatorio. | Revisa [Configuración](#configuración). Si usas el archivo, vuelve a empaquetar. |
-| `Error de conexión` | MariaDB no está disponible o el host, el puerto, el usuario o la contraseña no son correctos. | Verifica el servidor y las credenciales configuradas. |
-| `La base de datos no corresponde a la versión actual` | El esquema instalado no coincide con el que espera la aplicación. | Respalda los datos y ejecuta `database/Antucayen_DDL.sql`. Ignora los nombres de archivo que sugiere el mensaje. |
-| `Usuario o contraseña incorrectos` | Credenciales erróneas, usuario desactivado o perfil no soportado. | Verifica la cuenta en «Usuarios y permisos» con un Administrador. |
+| `Configuración de base de datos incompleta` | No hay `config.properties` ni variables `ANTUCAYEN_DB_*`, o falta un valor obligatorio. | Usa el botón de conexión del inicio de sesión o revisa [Configuración](#configuración). |
+| `Error de conexión` | MariaDB no está disponible, o el host, el puerto, el usuario o la contraseña no son correctos. | Verifica el servidor, el firewall del puerto 3306 y que la cuenta tenga permiso desde la IP del equipo. |
+| `Access denied for user 'antucayen_app'@'192.168…'` | La cuenta del DDL solo admite `localhost` y `127.0.0.1`. | Crea la cuenta para la subred como se indica en [Base de datos](#base-de-datos). |
+| Mensaje de `VerificadorEsquema` sobre tablas, columnas o perfiles | El esquema no coincide o falta cargar el DML. | Respalda los datos, ejecuta el DDL y después el DML. |
+| `Usuario o contraseña incorrectos` | Credenciales erróneas, usuario desactivado o datos iniciales sin cargar. | Comprueba que se ejecutó `Antucayen_DML.sql` o revisa la cuenta en «Usuarios y permisos». |
+| `No database selected` al ejecutar el DML | `Antucayen_DML.sql` no incluye `USE minimarket;`. | Ejecútalo indicando la base: `mariadb -u root -p minimarket < database/Antucayen_DML.sql`. |
+| Caracteres raros en estados como `VÃ¡lido` | El script se ejecutó con otra codificación. | Vuelve a ejecutarlo en UTF-8; en PowerShell usa `Get-Content -Encoding UTF8`. |
 | `Acceso denegado: su perfil no tiene permisos para esta función` | El rol no tiene permiso para la acción. | Consulta [Roles y permisos](#roles-y-permisos). |
-| `No fue posible leer la imagen con OCR` o `No se encontraron los datos de idioma del OCR` | Tesseract o sus datos de idioma no están disponibles. | Usa la aplicación instalada con el instalador, que trae `tessdata`, o configura `ANTUCAYEN_TESSDATA` y `ANTUCAYEN_OCR_LANG`; también puedes ingresar los ítems manualmente. |
-| `No se pudo cargar el motor OCR (Tesseract)` | Falta el entorno de ejecución de Visual C++ que usa la librería nativa de Tesseract. | Instala «Microsoft Visual C++ Redistributable 2015-2022 (x64)». |
-| `Estructura inválida: faltan las columnas SKU o cantidad` | El archivo de importación no tiene los encabezados exigidos. | Usa la plantilla de «Descargar plantilla». |
+| `No se encontraron los datos de idioma del OCR` | Falta la carpeta `tessdata`. | Configura `ANTUCAYEN_TESSDATA` o agrega los `.traineddata` al paquete; los ítems también se pueden ingresar a mano. |
+| `No se pudo cargar el motor OCR (Tesseract)` | Falta el entorno de Visual C++ que usa la librería nativa. | Instala «Microsoft Visual C++ Redistributable 2015-2022 x64». |
+| `Estructura inválida: faltan las columnas SKU o cantidad` | El archivo de importación no tiene los encabezados exigidos. | Usa «Descargar plantilla». |
+| `'mvn' no se reconoce como un comando` | Maven no está en el PATH. | Usa «Run Anything» de IntelliJ o agrega la carpeta `bin` de Maven al PATH. |
+
+## Equipo
+
+Grupo 20 · Ingeniería de Software · Universidad Andrés Bello
+
+Matías Ale · Fabián Gómez · Erick Hernández · Diego Lobos · Nicolás López · Cristóbal Osorio · Felipe Salas
+
+Cliente: Minimarket Antucayen, Avenida Central 273, San Bernardo.
 
 ## Licencia
 
-El repositorio no incluye un archivo de licencia.
+El repositorio no incluye un archivo de licencia. Proyecto académico desarrollado para el Minimarket Antucayen.
